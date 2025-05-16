@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <title>Fritz2 Template App</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="TODO DESCRIPTION" />
+    <meta property="og:title" content="TODO TITLE" />
+    <meta property="og:description" content="Rankquest Studio allows you to benchmark search relevance metrics for your search APIs. Start optimizing your search experience today!" />
+    <meta property="og:image" content="TODO" />
+    <meta property="og:url" content="TODO" />
+    <meta property="og:type" content="website" />
+    <!-- needs to point at src because that's where vite expects source code
+    the vite tailwind plugin picks it up from there and then does the right thing to
+    produce the proper css
+    -->
+    <link href="/src/styles.css" rel="stylesheet" />
+</head>
+<body>
+<div id="target"></div>
+
+<!-- needs to point at the app.js file produced by webpack
+-->
+<script src="build/kotlin-webpack/js/developmentExecutable/app.js"></script>
+</body>
+</html>
