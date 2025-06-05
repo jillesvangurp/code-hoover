@@ -65,7 +65,7 @@ suspend fun main() {
                                 clicks handledBy {
                                     codeReader.decodeFromInputVideoDeviceContinuously(
                                         null,
-                                        "video"
+                                        "video",
                                     ) { result, _ ->
                                         if (result != null) {
                                             val text = result.text
@@ -75,8 +75,8 @@ suspend fun main() {
                                                 scansStore.update(
                                                     existing + ScanResult(
                                                         text,
-                                                        format
-                                                    )
+                                                        format,
+                                                    ),
                                                 )
                                             }
                                         }
@@ -122,9 +122,9 @@ suspend fun main() {
             }
 
             footer("mt-auto p-4 text-center space-y-2") {
-                translationStore.data.render { currentBundle ->
-                    val currentLocale = currentBundle.bundles.first().locale.first()
-                    div("flex flex-row gap-2.5 justify-center") {
+                div("flex flex-row gap-2.5 justify-center") {
+                    translationStore.data.render { currentBundle ->
+                        val currentLocale = currentBundle.bundles.first().locale.first()
                         Locales.entries.forEach { locale ->
                             if (currentLocale == locale.title) {
                                 p {
@@ -140,16 +140,16 @@ suspend fun main() {
                             }
                         }
                     }
-                }
-                button("btn btn-ghost btn-sm hover:opacity-80 active:opacity-60 transition") {
-                    translate(DefaultLangStrings.DarkMode)
-                    clicks handledBy {
-                        val html = document.documentElement!!
-                        val current = html.getAttribute("data-theme")
-                        if (current == "dark") {
-                            html.setAttribute("data-theme", "light")
-                        } else {
-                            html.setAttribute("data-theme", "dark")
+                    button("btn btn-ghost btn-sm hover:opacity-80 active:opacity-60 transition") {
+                        translate(DefaultLangStrings.DarkMode)
+                        clicks handledBy {
+                            val html = document.documentElement!!
+                            val current = html.getAttribute("data-theme")
+                            if (current == "dark") {
+                                html.setAttribute("data-theme", "light")
+                            } else {
+                                html.setAttribute("data-theme", "dark")
+                            }
                         }
                     }
                 }
