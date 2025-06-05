@@ -13,9 +13,7 @@ export default defineConfig({
   },
   clearScreen: false,
   plugins: [
-    tailwindcss({
-      plugins: [daisyui]
-    }),
+    tailwindcss(),
   ],
 //  publicDir: kotlinOutputDir,
   build: {

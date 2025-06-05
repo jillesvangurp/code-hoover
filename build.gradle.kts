@@ -63,7 +63,6 @@ kotlin {
 
                 // fluent-js
                 implementation("com.tryformation:fluent-kotlin:_")
-                implementation(npm("daisyui", "_"))
             }
         }
 
