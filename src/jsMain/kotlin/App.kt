@@ -1,8 +1,37 @@
 import com.tryformation.localization.Translatable
 import dev.fritz2.core.storeOf
+import kotlinx.browser.document
+import kotlinx.browser.window
 import localization.Locales
 import localization.TranslationStore
+import localization.getTranslationString
 import localization.translate
+
+data class ScanResult(val text: String, val format: Int)
+
+private val barcodeFormatNames = arrayOf(
+    "AZTEC",
+    "CODABAR",
+    "CODE_39",
+    "CODE_93",
+    "CODE_128",
+    "DATA_MATRIX",
+    "EAN_8",
+    "EAN_13",
+    "ITF",
+    "MAXICODE",
+    "PDF_417",
+    "QR_CODE",
+    "RSS_14",
+    "RSS_EXPANDED",
+    "UPC_A",
+    "UPC_E",
+    "UPC_EAN_EXTENSION",
+)
+
+
+fun barcodeFormatName(ordinal: Int): String =
+    if (ordinal in barcodeFormatNames.indices) barcodeFormatNames[ordinal] else "Unknown"
 
 suspend fun main() {
 
@@ -12,80 +41,114 @@ suspend fun main() {
             hints = null,
             timeBetweenScansMillis = 300,
         )
-        val scansStore = storeOf(listOf<String>())
+        val scansStore = storeOf(listOf<ScanResult>())
         val scanningStore = storeOf(false)
-        article("p-5") {
-            h1("text-red-700") {
-                translate(DefaultLangStrings.PageTitle)
-            }
-            scanningStore.data.render {scanning ->
-                if(scanning) {
-                    button("btn btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg xl:btn-xl") {
-                        translate(DefaultLangStrings.Stop)
-                        clicks handledBy {
-                            console.log("STOP")
-                            codeReader.stopContinuousDecode()
-                            scanningStore.update(false)
-                        }
-                    }
-
-                } else {
-                    button("btn btn-primary btn-xs sm:btn-sm md:btn-md lg:btn-lg xl:btn-xl") {
-                        translate(DefaultLangStrings.Scan)
-
-                        clicks handledBy {
-                            codeReader.decodeFromInputVideoDeviceContinuously(null, "video") { result, err ->
-                                if (result != null) {
-                                    console.log(result)
-                                    val text = result.text
-                                    val existing = scansStore.current
-                                    scansStore.update(
-                                        if (text !in existing) existing + text else existing,
-                                    )
-                                }
-                            }
-                            scanningStore.update(true)
-
-                        }
-                    }
+        val translationStore = withKoin { get<TranslationStore>() }
+        div("min-h-screen flex flex-col") {
+            article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
+                h1("text-red-700 text-center") {
+                    translate(DefaultLangStrings.PageTitle)
                 }
-            }
-        }
-        p {
-            translate(DefaultLangStrings.WelcomeText)
-        }
-
-        video("m-5 h-1/2", id = "video") {
-
-        }
-
-        ul {
-            scansStore.data.renderEach {
-                li {
-                    +it
-                }
-            }
-        }
-
-        // here's how you do stuff with the translation store
-        withKoin {
-            val translationStore = get<TranslationStore>()
-            translationStore.data.render { currentBundle ->
-                val currentLocale = currentBundle.bundles.first().locale.first()
-                div("flex flex-row gap-2.5") {
-                    Locales.entries.forEach { locale ->
-                        if (currentLocale == locale.title) {
-                            p {
-                                em {
-                                    +locale.title
+                scanningStore.data.render { scanning ->
+                    div("flex gap-2 justify-center") {
+                        if (scanning) {
+                            button("btn btn-error btn-sm hover:opacity-80 active:opacity-60 transition") {
+                                translate(DefaultLangStrings.Stop)
+                                clicks handledBy {
+                                    codeReader.stopContinuousDecode()
+                                    scanningStore.update(false)
                                 }
                             }
                         } else {
-                            a {
-                                +locale.title
+                            button("btn btn-primary btn-sm hover:opacity-80 active:opacity-60 transition") {
+                                translate(DefaultLangStrings.Scan)
                                 clicks handledBy {
-                                    translationStore.updateLocale(locale.title)
+                                    codeReader.decodeFromInputVideoDeviceContinuously(
+                                        null,
+                                        "video",
+                                    ) { result, _ ->
+                                        if (result != null) {
+                                            val text = result.text
+                                            val format = result.format
+                                            val existing = scansStore.current
+                                            if (existing.none { it.text == text }) {
+                                                scansStore.update(
+                                                    existing + ScanResult(
+                                                        text,
+                                                        format,
+                                                    ),
+                                                )
+                                            }
+                                        }
+                                    }
+                                    scanningStore.update(true)
                                 }
+                            }
+                        }
+                        button("btn btn-secondary btn-sm hover:opacity-80 active:opacity-60 transition") {
+                            translate(DefaultLangStrings.Clear)
+                            clicks handledBy {
+                                scansStore.update(emptyList())
+                            }
+                        }
+                    }
+                }
+
+                p {
+                    translate(DefaultLangStrings.WelcomeText)
+                }
+
+                scanningStore.data.render { scanning ->
+                    if (scanning) {
+                        video("mx-auto w-full h-[33vh] border rounded-md", id = "video") {}
+                    }
+                }
+
+                ul("space-y-2") {
+                    scansStore.data.renderEach { scan ->
+                        li("card bg-base-200 p-3") {
+                            p("break-words") { +scan.text }
+                            p("text-sm opacity-70") { +barcodeFormatName(scan.format) }
+                            button("btn btn-outline btn-xs mt-2 hover:opacity-80 active:opacity-60 transition") {
+                                attr("title", getTranslationString(DefaultLangStrings.Copy))
+                                translate(DefaultLangStrings.Copy)
+                                clicks handledBy {
+                                    window.navigator.clipboard.writeText(scan.text)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            footer("mt-auto p-4 text-center space-y-2") {
+                div("flex flex-row gap-2.5 justify-center") {
+                    translationStore.data.render { currentBundle ->
+                        val currentLocale = currentBundle.bundles.first().locale.first()
+                        Locales.entries.forEach { locale ->
+                            if (currentLocale == locale.title) {
+                                p {
+                                    em { +locale.title }
+                                }
+                            } else {
+                                a {
+                                    +locale.title
+                                    clicks handledBy {
+                                        translationStore.updateLocale(locale.title)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    button("btn btn-ghost btn-sm hover:opacity-80 active:opacity-60 transition") {
+                        translate(DefaultLangStrings.DarkMode)
+                        clicks handledBy {
+                            val html = document.documentElement!!
+                            val current = html.getAttribute("data-theme")
+                            if (current == "dark") {
+                                html.setAttribute("data-theme", "light")
+                            } else {
+                                html.setAttribute("data-theme", "dark")
                             }
                         }
                     }
@@ -101,7 +164,10 @@ enum class DefaultLangStrings : Translatable {
     PageTitle,
     WelcomeText,
     Scan,
-    Stop
+    Stop,
+    Clear,
+    Copy,
+    DarkMode
     ;
 
     // fluent files have identifiers with this prefix and the camel
