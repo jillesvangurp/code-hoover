@@ -1,4 +1,4 @@
-rootProject.name = "skanner"
+rootProject.name = "code-hoover"
 
 pluginManagement {
     repositories {
