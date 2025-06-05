@@ -1,4 +1,4 @@
-rootProject.name = "my-fritz2-application"
+rootProject.name = "skanner"
 
 pluginManagement {
     repositories {

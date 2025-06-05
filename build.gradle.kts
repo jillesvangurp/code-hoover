@@ -34,7 +34,6 @@ kotlin {
     }.binaries.executable()
 
     sourceSets {
-
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
@@ -46,7 +45,6 @@ kotlin {
                 implementation("com.jillesvangurp:kotlinx-serialization-extensions:_")
                 implementation(KotlinX.serialization.json)
                 implementation(Koin.core)
-
             }
         }
 
@@ -55,9 +53,9 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("io.kotest:kotest-assertions-core:_")
+                implementation(npm("@zxing/library","_"))
             }
         }
-
 
         jsMain  {
             dependencies {

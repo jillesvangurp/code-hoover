@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner with ZXing</title>
+    <script src="https://unpkg.com/@zxing/library@0.21.0/umd/index.min.js"></script>
+</head>
+<body>
+<button id="startButton">Start Scanning</button>
+<br />
+
+<video id="video" style="width:50%; border: 1px solid gray;"></video>
+<br />
+<pre id="output"></pre>
+
+<script>
+    const video = document.getElementById('video');
+    const output = document.getElementById('output');
+    const codeReader = new ZXing.BrowserMultiFormatReader();
+
+    // copied this from the zxing typescript enum
+    const BarcodeFormat = [
+    "AZTEC",
+    "CODABAR",
+    "CODE_39",
+    "CODE_93",
+    "CODE_128",
+    "DATA_MATRIX",
+    "EAN_8",
+    "EAN_13",
+    "ITF",
+    "MAXICODE",
+    "PDF_417",
+    "QR_CODE",
+    "RSS_14",
+    "RSS_EXPANDED",
+    "UPC_A",
+    "UPC_E",
+    "UPC_EAN_EXTENSION"
+];
+
+function getBarcodeFormatName(ordinal) {
+    if (ordinal >= 0 && ordinal < BarcodeFormat.length) {
+        return BarcodeFormat[ordinal];
+    } else {
+        return "Invalid Ordinal"; // Return error message if ordinal is out of range
+    }
+}
+
+    document.getElementById('startButton').addEventListener('click', () => {
+        codeReader.decodeFromVideoDevice(null, 'video', (result, err) => {
+            if (result) {
+                result["format_name"]=getBarcodeFormatName(result.format)
+                output.textContent = JSON.stringify(result, null, 4);
+                codeReader.reset(); // Stop scanning
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error(err);
+                output.textContent = err;
+            }
+        });
+    });
+</script>
+</body>
+</html>

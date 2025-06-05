@@ -1,3 +1,4 @@
-default-page-title=OHAI There.
+default-page-title=Skanner App
 default-welcome-text=
-    These strings are localized with fluent kotlin.
+    Point your camera at codes to scan and copy.
+default-scan=Start Scanning
