@@ -1,8 +1,10 @@
 import com.tryformation.localization.Translatable
 import dev.fritz2.core.storeOf
+import kotlinx.browser.document
 import kotlinx.browser.window
 import localization.Locales
 import localization.TranslationStore
+import localization.getTranslationString
 import localization.translate
 
 data class ScanResult(val text: String, val format: Int)
@@ -40,14 +42,16 @@ suspend fun main() {
         )
         val scansStore = storeOf(listOf<ScanResult>())
         val scanningStore = storeOf(false)
-        article("p-4 max-w-screen-sm mx-auto space-y-4") {
+        val translationStore = withKoin { get<TranslationStore>() }
+        div("min-h-screen flex flex-col") {
+        article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
             h1("text-red-700 text-center") {
                 translate(DefaultLangStrings.PageTitle)
             }
             scanningStore.data.render { scanning ->
                 div("flex gap-2 justify-center") {
                     if (scanning) {
-                        button("btn btn-error btn-sm") {
+                        button("btn btn-error btn-sm hover:opacity-80 active:opacity-60 transition") {
                             translate(DefaultLangStrings.Stop)
                             clicks handledBy {
                                 codeReader.stopContinuousDecode()
@@ -55,7 +59,7 @@ suspend fun main() {
                             }
                         }
                     } else {
-                        button("btn btn-primary btn-sm") {
+                        button("btn btn-primary btn-sm hover:opacity-80 active:opacity-60 transition") {
                             translate(DefaultLangStrings.Scan)
                             clicks handledBy {
                                 codeReader.decodeFromInputVideoDeviceContinuously(null, "video") { result, _ ->
@@ -72,7 +76,7 @@ suspend fun main() {
                             }
                         }
                     }
-                    button("btn btn-secondary btn-sm") {
+                    button("btn btn-secondary btn-sm hover:opacity-80 active:opacity-60 transition") {
                         translate(DefaultLangStrings.Clear)
                         clicks handledBy {
                             scansStore.update(emptyList())
@@ -96,9 +100,9 @@ suspend fun main() {
                     li("card bg-base-200 p-3") {
                         p("break-words") { +scan.text }
                         p("text-sm opacity-70") { +barcodeFormatName(scan.format) }
-                        button("btn btn-outline btn-xs mt-2") {
-                            attrs { title = "Copy" }
-                            +"Copy"
+                        button("btn btn-outline btn-xs mt-2 hover:opacity-80 active:opacity-60 transition") {
+                            attrs { title = getTranslationString(DefaultLangStrings.Copy) }
+                            translate(DefaultLangStrings.Copy)
                             clicks handledBy {
                                 window.navigator.clipboard.writeText(scan.text)
                             }
@@ -108,18 +112,14 @@ suspend fun main() {
             }
         }
 
-        // here's how you do stuff with the translation store
-        withKoin {
-            val translationStore = get<TranslationStore>()
+        footer("mt-auto p-4 text-center space-y-2") {
             translationStore.data.render { currentBundle ->
                 val currentLocale = currentBundle.bundles.first().locale.first()
-                div("flex flex-row gap-2.5") {
+                div("flex flex-row gap-2.5 justify-center") {
                     Locales.entries.forEach { locale ->
                         if (currentLocale == locale.title) {
                             p {
-                                em {
-                                    +locale.title
-                                }
+                                em { +locale.title }
                             }
                         } else {
                             a {
@@ -129,6 +129,18 @@ suspend fun main() {
                                 }
                             }
                         }
+                    }
+                }
+            }
+            button("btn btn-ghost btn-sm hover:opacity-80 active:opacity-60 transition") {
+                translate(DefaultLangStrings.DarkMode)
+                clicks handledBy {
+                    val html = document.documentElement!!
+                    val current = html.getAttribute("data-theme")
+                    if (current == "dark") {
+                        html.setAttribute("data-theme", "light")
+                    } else {
+                        html.setAttribute("data-theme", "dark")
                     }
                 }
             }
@@ -143,7 +155,9 @@ enum class DefaultLangStrings : Translatable {
     WelcomeText,
     Scan,
     Stop,
-    Clear
+    Clear,
+    Copy,
+    DarkMode
     ;
 
     // fluent files have identifiers with this prefix and the camel

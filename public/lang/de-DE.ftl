@@ -4,3 +4,5 @@ default-welcome-text=
 default-scan=Wusch!
 default-stop=Stopp
 default-clear=Leeren
+default-copy=Kopieren
+default-dark-mode=Dunkelmodus

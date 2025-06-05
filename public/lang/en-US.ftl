@@ -4,3 +4,5 @@ default-welcome-text=
 default-scan=Wooosh!
 default-stop=Stop
 default-clear=Clear
+default-copy=Copy
+default-dark-mode=Dark Mode
