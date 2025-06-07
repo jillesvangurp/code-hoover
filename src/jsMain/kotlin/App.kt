@@ -33,6 +33,10 @@ private val barcodeFormatNames = arrayOf(
 fun barcodeFormatName(ordinal: Int): String =
     if (ordinal in barcodeFormatNames.indices) barcodeFormatNames[ordinal] else "Unknown"
 
+private const val darkMode = "night"
+
+private const val lightMode = "emerald"
+
 suspend fun main() {
 
     // starts up koin and initializes the TranslationStore
@@ -154,9 +158,9 @@ suspend fun main() {
                                     val prefersDark =
                                         window.matchMedia("(prefers-color-scheme: dark)").matches
                                     val newTheme = when (current) {
-                                        "dark" -> "light"
-                                        "light" -> "dark"
-                                        else -> if (prefersDark) "light" else "dark"
+                                        darkMode -> lightMode
+                                        lightMode -> darkMode
+                                        else -> if (prefersDark) lightMode else darkMode
                                     }
                                     html.setAttribute("data-theme", newTheme)
                                 }
