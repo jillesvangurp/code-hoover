@@ -92,12 +92,15 @@ suspend fun main() {
                             }
                         }
                     }
-                    if (!scanning) {
-                        p {
-                            translate(DefaultLangStrings.WelcomeText)
+                    div("mt-5") {
+
+                        if (!scanning) {
+                            p {
+                                translate(DefaultLangStrings.WelcomeText)
+                            }
+                        } else {
+                            video("mx-auto w-full h-[33vh] border rounded-md", id = "video") {}
                         }
-                    } else {
-                        video("mx-auto w-full h-[33vh] mt-5 border rounded-md", id = "video") {}
                     }
 
                 }
