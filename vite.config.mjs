@@ -1,27 +1,26 @@
 import { defineConfig } from 'vite'
-import { readdirSync } from 'fs'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
-const isDev = process.env.NODE_ENV === 'development';
-const kotlinEntry = isDev
-? resolve(__dirname, 'build/kotlin-webpack/js/developmentExecutable/app.js')
-: resolve(__dirname, 'build/kotlin-webpack/js/productionExecutable/app.js')
+export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
 
-export default defineConfig({
-  root: '.', // or wherever your `index.html` lives
-  server: {
-    port: 5173,
-  },
-  clearScreen: false,
-  plugins: [
-    tailwindcss(),
-  ],
-//  publicDir: kotlinOutputDir,
-  build: {
-    outDir: 'dist',
-    rollupOptions: {
-      input: ['index.html',kotlinEntry],
+  const appJsPath = isDev
+    ? '/build/kotlin-webpack/js/developmentExecutable/app.js'
+    : '/build/kotlin-webpack/js/productionExecutable/app.js';
+
+  const appCssPath = '/src/styles.css';
+
+  return {
+    root: '.',
+    plugins: [
+      tailwindcss()
+    ],
+    build: {
+      outDir: 'dist',
+      rollupOptions: {
+        input: resolve(__dirname, 'index.html')
+      }
     }
-  }
-})
+  };
+});
