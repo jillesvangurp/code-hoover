@@ -1,34 +1,42 @@
-# JsonDsl
+# Code Hoover
 
-This is an opinionated template for creating kotlin-js applications using the [Fritz2](https://www.fritz2.dev/) application framework
+Code Hoover is a small web application that lets you scan QR codes and barcodes directly in the browser. It is written in Kotlin/JS using the fritz2 framework and relies on the excellent [ZXing JavaScript library](https://github.com/zxing-js/library) for the heavy lifting when decoding codes.
 
-This works for me and might help you bootstrap your kotlin projects.
+## Building with Gradle
 
-## Batteries included
-
-My goal with this is to waste less time setting up new projects. Kotlin multiplatform can be a bit fiddly to get going with and there are a lot of things that I want to add to projects. This gets me there with minimal fiddling.
-
-- Uses Tailwind 4.x.y for styling with Vite. Vite is a bit more efficient than webpack and also not as tangled up with the gradle build process. 
-- Gradle wrapper with recent version of gradle & kts dialect
-- [Refresh versions plugin](https://splitties.github.io/refreshVersions/) - Great way to manage dependencies and stay on top of updates.
-- Some dependencies for testing (junit, kotest-assertions, etc.) and test setup for junit
-
-TODO: document some more
-
-## How to run
-
-Run this to build the js
+The Kotlin/JS build still produces a Webpack bundle. For a fast development loop run:
 
 ```bash
-gradle jsBrowserDevelopmentWebpack --continuous
+./gradlew jsBrowserDevelopmentWebpack --continuous
 ```
 
-And then this to run vite
+The `.run/webpack.run.xml` file contains an IntelliJ run configuration with this command so you can start it straight from the IDE.
+
+For a production bundle use:
 
 ```bash
-# run this once
+./gradlew jsBrowserProductionWebpack
+```
+
+## Running with Vite
+
+Vite serves the output that Gradle produces. Install the node dependencies once:
+
+```bash
 npm install
-# runs the dev server; should pick up changes from gradle
+```
+
+Then start the dev server:
+
+```bash
 npm run dev
 ```
+
+For a production build run:
+
+```bash
+npm run build
+```
+
+Unlike the normal Vite setup where it performs the bundling with esbuild, here Gradle already creates an `app.js` file. The Vite configuration in `vite.config.mjs` simply uses that file and adds Tailwind processing.
 
