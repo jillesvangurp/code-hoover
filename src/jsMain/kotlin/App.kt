@@ -46,7 +46,7 @@ suspend fun main() {
         val translationStore = withKoin { get<TranslationStore>() }
         div("min-h-screen flex flex-col") {
             article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
-                h1("text-red-700 text-center") {
+                h1("text-center text-2xl sm:text-3xl font-bold text-primary") {
                     translate(DefaultLangStrings.PageTitle)
                 }
                 scanningStore.data.render { scanning ->
@@ -92,16 +92,14 @@ suspend fun main() {
                             }
                         }
                     }
-                }
-
-                p {
-                    translate(DefaultLangStrings.WelcomeText)
-                }
-
-                scanningStore.data.render { scanning ->
-                    if (scanning) {
-                        video("mx-auto w-full h-[33vh] border rounded-md", id = "video") {}
+                    if (!scanning) {
+                        p {
+                            translate(DefaultLangStrings.WelcomeText)
+                        }
+                    } else {
+                        video("mx-auto w-full h-[33vh] mt-5 border rounded-md", id = "video") {}
                     }
+
                 }
 
                 ul("space-y-2") {
