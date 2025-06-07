@@ -3,7 +3,10 @@ import { readdirSync } from 'fs'
 import { resolve } from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
-const kotlinEntry = resolve(__dirname, '/build/kotlin-webpack/js/developmentExecutable/app.js')
+const isDev = process.env.NODE_ENV === 'development';
+const kotlinEntry = isDev
+? resolve(__dirname, 'build/kotlin-webpack/js/developmentExecutable/app.js')
+: resolve(__dirname, 'build/kotlin-webpack/js/productionExecutable/app.js')
 
 export default defineConfig({
   root: '.', // or wherever your `index.html` lives
