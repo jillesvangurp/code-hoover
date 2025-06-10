@@ -77,10 +77,12 @@ suspend fun main() {
                                             val existing = scansStore.current
                                             if (existing.none { it.text == text }) {
                                                 scansStore.update(
-                                                    existing + ScanResult(
-                                                        text,
-                                                        format,
-                                                    ),
+                                                    listOf(
+                                                        ScanResult(
+                                                            text,
+                                                            format,
+                                                        ),
+                                                    ) + existing,
                                                 )
                                             }
                                         }
@@ -109,16 +111,36 @@ suspend fun main() {
 
                 }
 
+                scansStore.data.render { scans ->
+                    p("font-semibold mb-2") { +"${scans.size} scanned codes" }
+                }
+
                 ul("space-y-2") {
                     scansStore.data.renderEach { scan ->
                         li("card bg-base-200 p-3") {
-                            p("break-words") { +scan.text }
-                            p("text-sm opacity-70") { +barcodeFormatName(scan.format) }
-                            button("btn btn-outline btn-xs mt-2 hover:opacity-80 active:opacity-60 transition") {
-                                attr("title", getTranslationString(DefaultLangStrings.Copy))
-                                translate(DefaultLangStrings.Copy)
-                                clicks handledBy {
-                                    window.navigator.clipboard.writeText(scan.text)
+                            p("break-words font-mono") { +scan.text }
+                            p("text-xs opacity-70") { +barcodeFormatName(scan.format) }
+                            div("mt-2 flex gap-2") {
+                                button("btn btn-primary btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                    attr("title", getTranslationString(DefaultLangStrings.Copy))
+                                    translate(DefaultLangStrings.Copy)
+                                    clicks handledBy {
+                                        window.navigator.clipboard.writeText(scan.text)
+                                    }
+                                }
+                                if (scan.text.startsWith("http://") || scan.text.startsWith("https://")) {
+                                    button("btn btn-secondary btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                        +"Open"
+                                        clicks handledBy {
+                                            window.open(scan.text, "_blank")
+                                        }
+                                    }
+                                }
+                                button("btn btn-warning btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                    +"Delete"
+                                    clicks handledBy {
+                                        scansStore.update(scansStore.current.filterNot { it == scan })
+                                    }
                                 }
                             }
                         }
