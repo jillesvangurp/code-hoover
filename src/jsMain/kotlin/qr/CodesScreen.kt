@@ -1,7 +1,6 @@
 package qr
 
 import dev.fritz2.core.*
-import dev.fritz2.core.dom.RenderContext
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.decodeFromString
@@ -10,7 +9,7 @@ import kotlinx.serialization.json.Json
 import QrForm
 
 fun RenderContext.codesScreen(
-    savedCodesStore: RootStore<List<SavedQrCode>>,
+    savedCodesStore: Store<List<SavedQrCode>>,
     json: Json
 ) {
     val formStore = storeOf(QrForm())
@@ -18,26 +17,15 @@ fun RenderContext.codesScreen(
 
     editingStore.data.render { editing ->
         if (editing) {
-            val name = formStore.sub(QrForm::name)
-            val type = formStore.sub(QrForm::type)
-            val url = formStore.sub(QrForm::url)
-            val text = formStore.sub(QrForm::text)
-            val fullName = formStore.sub(QrForm::fullName)
-            val phone = formStore.sub(QrForm::phone)
-            val email = formStore.sub(QrForm::email)
-            val ssid = formStore.sub(QrForm::ssid)
-            val password = formStore.sub(QrForm::password)
-            val encryption = formStore.sub(QrForm::encryption)
-
             div("space-y-2") {
                 input("input input-bordered w-full") {
                     placeholder("Name")
-                    value(name)
-                    changes.values() handledBy name.update
+                    value(formStore.data.map { it.name })
+                    changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
                 }
                 select("select select-bordered w-full") {
-                    value(type)
-                    changes.values().map { QrType.valueOf(it) } handledBy type.update
+                    value(formStore.data.map { it.type.name })
+                    changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
                     QrType.values().forEach {
                         option {
                             +it.name
@@ -45,50 +33,50 @@ fun RenderContext.codesScreen(
                         }
                     }
                 }
-                type.data.render { t ->
+                formStore.data.map { it.type }.render { t: QrType ->
                     when (t) {
                         QrType.URL -> input("input input-bordered w-full") {
                             placeholder("Url")
-                            value(url)
-                            changes.values() handledBy url.update
+                            value(formStore.data.map { it.url })
+                            changes.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
                         }
                         QrType.TEXT -> textarea("textarea textarea-bordered w-full") {
                             placeholder("Text")
-                            value(text)
-                            changes.values() handledBy text.update
+                            value(formStore.data.map { it.text })
+                            changes.values() handledBy formStore.handle { f, v -> f.copy(text = v) }
                         }
                         QrType.VCARD -> {
                             input("input input-bordered w-full") {
                                 placeholder("Full Name")
-                                value(fullName)
-                                changes.values() handledBy fullName.update
+                                value(formStore.data.map { it.fullName })
+                                changes.values() handledBy formStore.handle { f, v -> f.copy(fullName = v) }
                             }
                             input("input input-bordered w-full") {
                                 placeholder("Phone")
-                                value(phone)
-                                changes.values() handledBy phone.update
+                                value(formStore.data.map { it.phone })
+                                changes.values() handledBy formStore.handle { f, v -> f.copy(phone = v) }
                             }
                             input("input input-bordered w-full") {
                                 placeholder("Email")
-                                value(email)
-                                changes.values() handledBy email.update
+                                value(formStore.data.map { it.email })
+                                changes.values() handledBy formStore.handle { f, v -> f.copy(email = v) }
                             }
                         }
                         QrType.WIFI -> {
                             input("input input-bordered w-full") {
                                 placeholder("SSID")
-                                value(ssid)
-                                changes.values() handledBy ssid.update
+                                value(formStore.data.map { it.ssid })
+                                changes.values() handledBy formStore.handle { f, v -> f.copy(ssid = v) }
                             }
                             input("input input-bordered w-full") {
                                 placeholder("Password")
-                                value(password)
-                                changes.values() handledBy password.update
+                                value(formStore.data.map { it.password })
+                                changes.values() handledBy formStore.handle { f, v -> f.copy(password = v) }
                             }
                             input("input input-bordered w-full") {
                                 placeholder("Encryption")
-                                value(encryption)
-                                changes.values() handledBy encryption.update
+                                value(formStore.data.map { it.encryption })
+                                changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                             }
                         }
                     }
@@ -151,7 +139,9 @@ fun RenderContext.codesScreen(
                     val index = savedCodesStore.current.indexOf(code)
                     li("card bg-base-200 p-4 space-y-2") {
                         h3("font-bold") { +code.name }
-                        div { unsafe { +generateQrSvg(code.text) } }
+                        val svg = generateQrSvg(code.text)
+                        val encoded = window.btoa(svg)
+                        img { src("data:image/svg+xml;base64,$encoded") }
                         pre("whitespace-pre-wrap") { +code.data.format() }
                         div("flex gap-2") {
                             button("btn btn-xs btn-primary") {

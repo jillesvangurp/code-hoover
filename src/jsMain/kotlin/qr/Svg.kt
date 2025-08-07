@@ -1,8 +1,7 @@
 package qr
 
-@file:JsModule("@zxing/browser")
-@file:JsNonModule
-
+@JsModule("@zxing/browser")
+@JsNonModule
 external class BrowserQRCodeSvgWriter {
     fun write(contents: String, width: Int, height: Int): dynamic
 }
