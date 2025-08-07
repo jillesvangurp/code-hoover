@@ -1,7 +1,10 @@
 package qr
 
+import kotlin.js.JsName
+
 @JsModule("@zxing/browser")
 @JsNonModule
+@JsName("BrowserQRCodeSvgWriter")
 external class BrowserQRCodeSvgWriter {
     fun write(contents: String, width: Int, height: Int): dynamic
 }
