@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
+
 plugins {
     kotlin("multiplatform")
     kotlin("plugin.serialization")
@@ -63,6 +65,8 @@ kotlin {
 
                 // fluent-js
                 implementation("com.tryformation:fluent-kotlin:_")
+                implementation(npm("@zxing/library","_"))
+                implementation(npm("qrcode","_"))
             }
         }
 
@@ -79,6 +83,12 @@ kotlin {
             }
         }
     }
+}
+
+tasks.withType<KotlinJsTest>().configureEach {
+    // Gradle 9 defaults to failing if no tests are discovered.
+    // Disable this behavior to allow build to succeed without tests.
+    failOnNoDiscoveredTests = false
 }
 
 

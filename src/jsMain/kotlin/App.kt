@@ -1,13 +1,40 @@
 import com.tryformation.localization.Translatable
 import dev.fritz2.core.storeOf
 import kotlinx.browser.document
+import kotlinx.browser.localStorage
 import kotlinx.browser.window
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import qr.QrData
+import qr.QrType
+import qr.SavedQrCode
+import qr.asText
+import qr.format
+import qr.codesScreen
 import localization.Locales
 import localization.TranslationStore
 import localization.getTranslationString
 import localization.translate
 
 data class ScanResult(val text: String, val format: Int)
+
+data class QrForm(
+    val name: String = "",
+    val type: QrType = QrType.URL,
+    val url: String = "",
+    val text: String = "",
+    val fullName: String = "",
+    val phone: String = "",
+    val email: String = "",
+    val ssid: String = "",
+    val password: String = "",
+    val encryption: String = "WPA",
+    val index: Int? = null,
+)
 
 private val barcodeFormatNames = arrayOf(
     "AZTEC",
@@ -37,6 +64,8 @@ private const val darkMode = "night"
 
 private const val lightMode = "emerald"
 
+enum class Screen { Codes, Scan }
+
 suspend fun main() {
 
     // starts up koin and initializes the TranslationStore
@@ -47,99 +76,142 @@ suspend fun main() {
         )
         val scansStore = storeOf(listOf<ScanResult>())
         val scanningStore = storeOf(false)
+        val json = Json { prettyPrint = true }
+        val savedCodesStore = storeOf(listOf<SavedQrCode>())
+        localStorage.getItem("codes")?.let {
+            try {
+                val stored = json.decodeFromString<List<SavedQrCode>>(it)
+                    .map { c -> if (c.name.isBlank()) c.copy(name = c.text) else c }
+                savedCodesStore.update(stored)
+            } catch (_: Throwable) {
+            }
+        }
+        savedCodesStore.data.onEach { codes ->
+            localStorage.setItem("codes", json.encodeToString(codes))
+        }.launchIn(MainScope())
+        val screenStore = storeOf(Screen.Codes)
         val translationStore = withKoin { get<TranslationStore>() }
         div("min-h-screen flex flex-col") {
             article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
                 h1("text-center text-2xl sm:text-3xl font-bold text-primary") {
                     translate(DefaultLangStrings.PageTitle)
                 }
-                scanningStore.data.render { scanning ->
-                    div("flex gap-2 justify-center") {
-                        if (scanning) {
-                            button("btn btn-error btn-sm hover:opacity-80 active:opacity-60 transition") {
-                                translate(DefaultLangStrings.Stop)
-                                clicks handledBy {
-                                    codeReader.stopContinuousDecode()
-                                    scanningStore.update(false)
-                                }
-                            }
-                        } else {
-                            button("btn btn-primary btn-sm hover:opacity-80 active:opacity-60 transition") {
-                                translate(DefaultLangStrings.Scan)
-                                clicks handledBy {
-                                    codeReader.decodeFromInputVideoDeviceContinuously(
-                                        null,
-                                        "video",
-                                    ) { result, _ ->
-                                        if (result != null) {
-                                            val text = result.text
-                                            val format = result.format
-                                            val existing = scansStore.current
-                                            if (existing.none { it.text == text }) {
-                                                scansStore.update(
-                                                    listOf(
-                                                        ScanResult(
-                                                            text,
-                                                            format,
-                                                        ),
-                                                    ) + existing,
-                                                )
+                div("flex gap-2 justify-center mb-4") {
+                    button("btn btn-sm") {
+                        +"Codes"
+                        clicks handledBy { screenStore.update(Screen.Codes) }
+                    }
+                    button("btn btn-sm") {
+                        +"Scan"
+                        clicks handledBy { screenStore.update(Screen.Scan) }
+                    }
+                }
+                screenStore.data.render { screen ->
+                    when (screen) {
+                        Screen.Codes -> {
+                            codesScreen(savedCodesStore, json)
+                        }
+                        Screen.Scan -> {
+                            scanningStore.data.render { scanning ->
+                                div("flex gap-2 justify-center") {
+                                    if (scanning) {
+                                        button("btn btn-error btn-sm hover:opacity-80 active:opacity-60 transition") {
+                                            translate(DefaultLangStrings.Stop)
+                                            clicks handledBy {
+                                                codeReader.stopContinuousDecode()
+                                                scanningStore.update(false)
+                                            }
+                                        }
+                                    } else {
+                                        button("btn btn-primary btn-sm hover:opacity-80 active:opacity-60 transition") {
+                                            translate(DefaultLangStrings.Scan)
+                                            clicks handledBy {
+                                                codeReader.decodeFromInputVideoDeviceContinuously(
+                                                    null,
+                                                    "video",
+                                                ) { result, _ ->
+                                                    if (result != null) {
+                                                        val text = result.text
+                                                        val format = result.format
+                                                        val existing = scansStore.current
+                                                        if (existing.none { it.text == text }) {
+                                                            scansStore.update(
+                                                                listOf(
+                                                                    ScanResult(
+                                                                        text,
+                                                                        format,
+                                                                    ),
+                                                                ) + existing,
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                                scanningStore.update(true)
                                             }
                                         }
                                     }
-                                    scanningStore.update(true)
-                                }
-                            }
-                        }
-                        button("btn btn-secondary btn-sm hover:opacity-80 active:opacity-60 transition") {
-                            translate(DefaultLangStrings.Clear)
-                            clicks handledBy {
-                                scansStore.update(emptyList())
-                            }
-                        }
-                    }
-                    div("mt-5") {
-
-                        if (!scanning) {
-                            p {
-                                translate(DefaultLangStrings.WelcomeText)
-                            }
-                        } else {
-                            video("mx-auto w-full h-[33vh] border rounded-md", id = "video") {}
-                        }
-                    }
-
-                }
-
-                scansStore.data.render { scans ->
-                    p("font-semibold mb-2") { +"${scans.size} scanned codes" }
-                }
-
-                ul("space-y-2") {
-                    scansStore.data.renderEach { scan ->
-                        li("card bg-base-200 p-3") {
-                            p("break-words font-mono") { +scan.text }
-                            p("text-xs opacity-70") { +barcodeFormatName(scan.format) }
-                            div("mt-2 flex gap-2") {
-                                button("btn btn-primary btn-xs hover:opacity-80 active:opacity-60 transition") {
-                                    attr("title", getTranslationString(DefaultLangStrings.Copy))
-                                    translate(DefaultLangStrings.Copy)
-                                    clicks handledBy {
-                                        window.navigator.clipboard.writeText(scan.text)
-                                    }
-                                }
-                                if (scan.text.startsWith("http://") || scan.text.startsWith("https://")) {
-                                    button("btn btn-secondary btn-xs hover:opacity-80 active:opacity-60 transition") {
-                                        +"Open"
+                                    button("btn btn-secondary btn-sm hover:opacity-80 active:opacity-60 transition") {
+                                        translate(DefaultLangStrings.Clear)
                                         clicks handledBy {
-                                            window.open(scan.text, "_blank")
+                                            scansStore.update(emptyList())
                                         }
                                     }
                                 }
-                                button("btn btn-warning btn-xs hover:opacity-80 active:opacity-60 transition") {
-                                    +"Delete"
-                                    clicks handledBy {
-                                        scansStore.update(scansStore.current.filterNot { it == scan })
+                                div("mt-5") {
+                                    if (!scanning) {
+                                        p { translate(DefaultLangStrings.WelcomeText) }
+                                    } else {
+                                        video("mx-auto w-full h-[33vh] border rounded-md", id = "video") {}
+                                    }
+                                }
+                            }
+                            scansStore.data.render { scans ->
+                                p("font-semibold mb-2") { +"${'$'}{scans.size} scanned codes" }
+                            }
+                            ul("space-y-2") {
+                                scansStore.data.renderEach { scan ->
+                                    li("card bg-base-200 p-3") {
+                                        p("break-words font-mono") { +scan.text }
+                                        p("text-xs opacity-70") { +barcodeFormatName(scan.format) }
+                                        div("mt-2 flex gap-2") {
+                                            button("btn btn-primary btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                                attr("title", getTranslationString(DefaultLangStrings.Copy))
+                                                translate(DefaultLangStrings.Copy)
+                                                clicks handledBy {
+                                                    window.navigator.clipboard.writeText(scan.text)
+                                                }
+                                            }
+                                            if (scan.text.startsWith("http://") || scan.text.startsWith("https://")) {
+                                                button("btn btn-secondary btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                                    +"Open"
+                                                    clicks handledBy { window.open(scan.text, "_blank") }
+                                                }
+                                            }
+                                            button("btn btn-accent btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                                +"Save"
+                                                clicks handledBy {
+                                                    val entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
+                                                        try {
+                                                            json.decodeFromString<SavedQrCode>(scan.text)
+                                                                .let { if (it.name.isBlank()) it.copy(name = it.text) else it }
+                                                        } catch (_: Throwable) {
+                                                            val data = QrData.Text(scan.text)
+                                                            SavedQrCode(scan.text, data.asText(), data)
+                                                        }
+                                                    } else {
+                                                        val data = QrData.Text(scan.text)
+                                                        SavedQrCode(scan.text, data.asText(), data)
+                                                    }
+                                                    savedCodesStore.update(savedCodesStore.current + entry)
+                                                }
+                                            }
+                                            button("btn btn-warning btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                                +"Delete"
+                                                clicks handledBy {
+                                                    scansStore.update(scansStore.current.filterNot { it == scan })
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
