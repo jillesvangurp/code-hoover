@@ -1,7 +1,11 @@
 import com.tryformation.localization.Translatable
 import dev.fritz2.core.storeOf
 import kotlinx.browser.document
+import kotlinx.browser.localStorage
 import kotlinx.browser.window
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -72,9 +76,19 @@ suspend fun main() {
         )
         val scansStore = storeOf(listOf<ScanResult>())
         val scanningStore = storeOf(false)
-        val savedCodesStore = storeOf(listOf<SavedQrCode>())
-        val screenStore = storeOf(Screen.Scan)
         val json = Json { prettyPrint = true }
+        val savedCodesStore = storeOf(listOf<SavedQrCode>())
+        localStorage.getItem("codes")?.let {
+            try {
+                val stored = json.decodeFromString<List<SavedQrCode>>(it)
+                savedCodesStore.update(stored)
+            } catch (_: Throwable) {
+            }
+        }
+        savedCodesStore.data.onEach { codes ->
+            localStorage.setItem("codes", json.encodeToString(codes))
+        }.launchIn(MainScope())
+        val screenStore = storeOf(Screen.Scan)
         val translationStore = withKoin { get<TranslationStore>() }
         div("min-h-screen flex flex-col") {
             article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
@@ -167,6 +181,23 @@ suspend fun main() {
                                                 button("btn btn-secondary btn-xs hover:opacity-80 active:opacity-60 transition") {
                                                     +"Open"
                                                     clicks handledBy { window.open(scan.text, "_blank") }
+                                                }
+                                            }
+                                            button("btn btn-accent btn-xs hover:opacity-80 active:opacity-60 transition") {
+                                                +"Save"
+                                                clicks handledBy {
+                                                    val entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
+                                                        try {
+                                                            json.decodeFromString<SavedQrCode>(scan.text)
+                                                        } catch (_: Throwable) {
+                                                            val data = QrData.Text(scan.text)
+                                                            SavedQrCode(scan.text, data.asText(), data)
+                                                        }
+                                                    } else {
+                                                        val data = QrData.Text(scan.text)
+                                                        SavedQrCode(scan.text, data.asText(), data)
+                                                    }
+                                                    savedCodesStore.update(savedCodesStore.current + entry)
                                                 }
                                             }
                                             button("btn btn-warning btn-xs hover:opacity-80 active:opacity-60 transition") {
