@@ -10,7 +10,6 @@ import qr.QrType
 import qr.SavedQrCode
 import qr.asText
 import qr.format
-import qr.generateQrSvg
 import qr.codesScreen
 import localization.Locales
 import localization.TranslationStore
