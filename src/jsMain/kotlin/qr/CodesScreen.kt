@@ -1,6 +1,7 @@
 package qr
 
 import dev.fritz2.core.*
+import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.map
@@ -8,6 +9,9 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.w3c.dom.HTMLAnchorElement
+import org.w3c.dom.HTMLInputElement
+import org.w3c.files.FileReader
 import QrForm
 
 fun RenderContext.codesScreen(
@@ -116,23 +120,48 @@ fun RenderContext.codesScreen(
                         editingStore.update(true)
                     }
                 }
+
+                val fileInput = input("hidden") {
+                    type("file")
+                    accept(".json")
+                }.apply {
+                    domNode.addEventListener("change", { event ->
+                        val inputElement = event.target as HTMLInputElement
+                        val file = inputElement.files?.item(0)
+                        if (file != null) {
+                            val reader = FileReader()
+                            reader.onload = { loadEvent ->
+                                val text = (loadEvent.target as FileReader).result as String
+                                try {
+                                    val list = json.decodeFromString<List<SavedQrCode>>(text)
+                                    savedCodesStore.update(list)
+                                } catch (e: Throwable) {
+                                    window.alert("Invalid JSON")
+                                }
+                                inputElement.value = ""
+                            }
+                            reader.readAsText(file)
+                        }
+                    })
+                }
+
                 button("btn btn-secondary btn-sm") {
                     +"Import"
                     clicks handledBy {
-                        val txt = window.prompt("Paste JSON") ?: return@handledBy
-                        try {
-                            val list = json.decodeFromString<List<SavedQrCode>>(txt)
-                            savedCodesStore.update(list)
-                        } catch (e: Throwable) {
-                            window.alert("Invalid JSON")
-                        }
+                        fileInput.domNode.click()
                     }
                 }
                 button("btn btn-secondary btn-sm") {
                     +"Export"
                     clicks handledBy {
                         val txt = json.encodeToString(savedCodesStore.current)
-                        window.navigator.clipboard.writeText(txt)
+                        val encoded = js("encodeURIComponent")(txt) as String
+                        val link = document.createElement("a") as HTMLAnchorElement
+                        link.href = "data:application/json;charset=utf-8,$encoded"
+                        link.download = "codes.json"
+                        document.body?.appendChild(link)
+                        link.click()
+                        document.body?.removeChild(link)
                     }
                 }
             }
