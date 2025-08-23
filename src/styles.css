@@ -1,50 +1,81 @@
 @import "tailwindcss";
+
+/* enable themes */
 @plugin "daisyui" {
-  themes: qr-light --default, qr-dark --prefersdark;
+    themes: qr-light --default, qr-dark --prefersdark;
 }
 
-:root,
-:root:has(input.theme-controller[value=qr-light]:checked),
-[data-theme="qr-light"] {
-  color-scheme: light;
-  --color-primary: 15 15 15;
-  --color-primary-content: 250 250 250;
+/* --- LIGHT (black on white) --- */
+@plugin "daisyui/theme" {
+    name: qr-light;
+    color-scheme: light;
 
-  --color-base-100: 250 250 248;
-  --color-base-200: 235 235 232;
-  --color-base-300: 215 215 212;
-  --color-base-content: 15 15 15;
+    --color-base-100: oklch(100% 0 0);  /* white */
+    --color-base-200: oklch(95% 0 0);
+    --color-base-300: oklch(88% 0 0);
+    --color-base-content: oklch(10% 0 0); /* black */
 
-  --color-secondary: 95 95 95;
-  --color-secondary-content: 250 250 250;
+    --color-primary: oklch(0% 0 0);       /* black */
+    --color-primary-content: oklch(98% 0 0);
 
-  --color-accent: 60 60 60;
-  --color-accent-content: 250 250 250;
+    --color-secondary: oklch(35% 0 0);    /* dark gray */
+    --color-secondary-content: oklch(98% 0 0);
 
-  --color-error: 220 38 38;
-  --color-error-content: 255 255 255;
+    --color-accent: oklch(70% 0 0);       /* mid gray */
+    --color-accent-content: oklch(12% 0 0);
+
+    --color-neutral: oklch(50% 0 0);
+    --color-neutral-content: oklch(98% 0 0);
+
+    --color-info: oklch(75% 0 0);
+    --color-info-content: oklch(10% 0 0);
+
+    --color-success: oklch(65% 0 0);
+    --color-success-content: oklch(10% 0 0);
+
+    --color-warning: oklch(80% 0 0);
+    --color-warning-content: oklch(10% 0 0);
+
+    --color-error: oklch(55% 0 0);
+    --color-error-content: oklch(98% 0 0);
 }
 
-:root:has(input.theme-controller[value=qr-dark]:checked),
-[data-theme="qr-dark"] {
-  color-scheme: dark;
-  --color-primary: 240 240 240;
-  --color-primary-content: 16 16 16;
+/* --- DARK (white on black) --- */
+@plugin "daisyui/theme" {
+    name: qr-dark;
+    color-scheme: dark;
 
-  --color-base-100: 16 16 16;
-  --color-base-200: 32 32 32;
-  --color-base-300: 48 48 48;
-  --color-base-content: 240 240 240;
+    --color-base-100: oklch(10% 0 0);   /* near-black */
+    --color-base-200: oklch(18% 0 0);
+    --color-base-300: oklch(26% 0 0);
+    --color-base-content: oklch(98% 0 0); /* white */
 
-  --color-secondary: 130 130 130;
-  --color-secondary-content: 16 16 16;
+    --color-primary: oklch(98% 0 0);      /* white */
+    --color-primary-content: oklch(10% 0 0);
 
-  --color-accent: 90 90 90;
-  --color-accent-content: 16 16 16;
+    --color-secondary: oklch(70% 0 0);
+    --color-secondary-content: oklch(12% 0 0);
 
-  --color-error: 220 38 38;
-  --color-error-content: 255 255 255;
+    --color-accent: oklch(55% 0 0);
+    --color-accent-content: oklch(12% 0 0);
+
+    --color-neutral: oklch(35% 0 0);
+    --color-neutral-content: oklch(96% 0 0);
+
+    --color-info: oklch(75% 0 0);
+    --color-info-content: oklch(12% 0 0);
+
+    --color-success: oklch(65% 0 0);
+    --color-success-content: oklch(12% 0 0);
+
+    --color-warning: oklch(80% 0 0);
+    --color-warning-content: oklch(12% 0 0);
+
+    --color-error: oklch(60% 0 0);
+    --color-error-content: oklch(12% 0 0);
 }
+
+/* define qr-dark */
 
 @layer base {
   h1 {
