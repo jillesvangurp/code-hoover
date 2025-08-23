@@ -11,7 +11,6 @@ build
 out
 .kotlintest
 localRepo
-kotlin-js-store/
 .kotlin
 .DS_Store
 node_modules
