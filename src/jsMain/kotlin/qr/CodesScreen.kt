@@ -171,8 +171,9 @@ fun RenderContext.codesScreen(
                 }
             }
             ul("space-y-4") {
-                savedCodesStore.data.renderEach { code ->
-                    val index = savedCodesStore.current.indexOf(code)
+                savedCodesStore.data.map { it.withIndex().toList() }.renderEach { indexed ->
+                    val index = indexed.index
+                    val code = indexed.value
                     val displayName = code.name.ifBlank { code.text }
                     val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
                     li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer") {
