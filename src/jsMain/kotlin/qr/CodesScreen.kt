@@ -11,6 +11,8 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.DragEvent
+import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
 import QrForm
 
@@ -20,6 +22,7 @@ fun RenderContext.codesScreen(
 ) {
     val formStore = storeOf(QrForm())
     val editingStore = storeOf(false)
+    val selectedIndexStore = storeOf<Int?>(null)
 
     editingStore.data.render { editing ->
         if (editing) {
@@ -98,7 +101,8 @@ fun RenderContext.codesScreen(
                                 QrType.VCARD -> QrData.VCard(f.fullName, f.phone, f.email)
                                 QrType.WIFI -> QrData.Wifi(f.ssid, f.password, f.encryption)
                             }
-                            val entry = SavedQrCode(f.name, data.asText(), data)
+                            val name = if (f.name.isBlank()) data.asText() else f.name
+                            val entry = SavedQrCode(name, data.asText(), data)
                             val list = savedCodesStore.current.toMutableList()
                             if (f.index != null) list[f.index] = entry else list.add(entry)
                             savedCodesStore.update(list)
@@ -134,6 +138,7 @@ fun RenderContext.codesScreen(
                                 val text = (loadEvent.target as FileReader).result as String
                                 try {
                                     val list = json.decodeFromString<List<SavedQrCode>>(text)
+                                        .map { if (it.name.isBlank()) it.copy(name = it.text) else it }
                                     savedCodesStore.update(list)
                                 } catch (e: Throwable) {
                                     window.alert("Invalid JSON")
@@ -168,35 +173,76 @@ fun RenderContext.codesScreen(
             ul("space-y-4") {
                 savedCodesStore.data.renderEach { code ->
                     val index = savedCodesStore.current.indexOf(code)
-                    li("card bg-base-200 p-4 space-y-2") {
-                        h3("font-bold") { +code.name }
-                        val imgElem = img {}
-                        MainScope().launch {
-                            val svg = generateQrSvg(code.text)
-                            val encoded = window.btoa(svg)
-                            imgElem.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
-                        }
-                        pre("whitespace-pre-wrap") { +code.data.format() }
-                        div("flex gap-2") {
-                            button("btn btn-xs btn-primary") {
-                                +"Edit"
-                                clicks handledBy {
-                                    val f = when (val d = code.data) {
-                                        is QrData.Url -> QrForm(code.name, QrType.URL, url = d.url, index = index)
-                                        is QrData.Text -> QrForm(code.name, QrType.TEXT, text = d.text, index = index)
-                                        is QrData.VCard -> QrForm(code.name, QrType.VCARD, fullName = d.name, phone = d.phone, email = d.email, index = index)
-                                        is QrData.Wifi -> QrForm(code.name, QrType.WIFI, ssid = d.ssid, password = d.password, encryption = d.encryption, index = index)
-                                    }
-                                    formStore.update(f)
-                                    editingStore.update(true)
-                                }
+                    val displayName = code.name.ifBlank { code.text }
+                    val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
+                    li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer") {
+                        attr("draggable", "true")
+                        attr("data-index", index.toString())
+                        p("mr-2 flex-grow truncate") { +truncated }
+                        button("btn btn-xs btn-warning") {
+                            +"Delete"
+                            clicks.map { it.stopPropagation(); Unit } handledBy {
+                                val list = savedCodesStore.current.toMutableList()
+                                list.removeAt(index)
+                                savedCodesStore.update(list)
                             }
-                            button("btn btn-xs btn-warning") {
-                                +"Delete"
-                                clicks handledBy {
-                                    val list = savedCodesStore.current.toMutableList()
-                                    list.removeAt(index)
-                                    savedCodesStore.update(list)
+                        }
+                        clicks handledBy { selectedIndexStore.update(index) }
+                        domNode.addEventListener("dragstart", { event ->
+                            val e = event as DragEvent
+                            e.dataTransfer?.setData("text/plain", index.toString())
+                        })
+                        domNode.addEventListener("dragover", { event ->
+                            val e = event as DragEvent
+                            e.preventDefault()
+                        })
+                        domNode.addEventListener("drop", { event ->
+                            val e = event as DragEvent
+                            e.preventDefault()
+                            val fromIndex = e.dataTransfer?.getData("text/plain")?.toInt() ?: return@addEventListener
+                            val toIndex = (e.currentTarget as HTMLElement).getAttribute("data-index")!!.toInt()
+                            val list = savedCodesStore.current.toMutableList()
+                            val item = list.removeAt(fromIndex)
+                            val insertAt = if (fromIndex < toIndex) toIndex - 1 else toIndex
+                            list.add(insertAt, item)
+                            savedCodesStore.update(list)
+                        })
+                    }
+                }
+            }
+
+            // Modal for displaying selected code
+            selectedIndexStore.data.render { idx ->
+                if (idx != null) {
+                    val code = savedCodesStore.current[idx]
+                    div("modal modal-open") {
+                        div("modal-box w-full h-full max-w-full space-y-4") {
+                            val nameStore = storeOf(code.name.ifBlank { code.text })
+                            val imgElem = img("mx-auto") {}
+                            MainScope().launch {
+                                val svg = generateQrSvg(code.text, 500)
+                                val encoded = window.btoa(svg)
+                                imgElem.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
+                            }
+                            input("input input-bordered w-full text-center text-xl") {
+                                value(nameStore.data)
+                                changes.values() handledBy nameStore.update
+                            }
+                            pre("whitespace-pre-wrap break-words") { +code.data.format() }
+                            div("modal-action") {
+                                button("btn") {
+                                    +"Close"
+                                    clicks handledBy { selectedIndexStore.update(null) }
+                                }
+                                button("btn btn-primary") {
+                                    +"Save"
+                                    clicks handledBy {
+                                        val newName = nameStore.current.ifBlank { code.text }
+                                        val list = savedCodesStore.current.toMutableList()
+                                        list[idx] = list[idx].copy(name = newName)
+                                        savedCodesStore.update(list)
+                                        selectedIndexStore.update(null)
+                                    }
                                 }
                             }
                         }

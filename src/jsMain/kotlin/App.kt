@@ -81,6 +81,7 @@ suspend fun main() {
         localStorage.getItem("codes")?.let {
             try {
                 val stored = json.decodeFromString<List<SavedQrCode>>(it)
+                    .map { c -> if (c.name.isBlank()) c.copy(name = c.text) else c }
                 savedCodesStore.update(stored)
             } catch (_: Throwable) {
             }
@@ -189,6 +190,7 @@ suspend fun main() {
                                                     val entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
                                                         try {
                                                             json.decodeFromString<SavedQrCode>(scan.text)
+                                                                .let { if (it.name.isBlank()) it.copy(name = it.text) else it }
                                                         } catch (_: Throwable) {
                                                             val data = QrData.Text(scan.text)
                                                             SavedQrCode(scan.text, data.asText(), data)
