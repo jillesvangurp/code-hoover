@@ -1,6 +1,8 @@
 package qr
 
 import kotlinx.serialization.Serializable
+import DefaultLangStrings
+import localization.getTranslationString
 
 @Serializable
 enum class QrType {
@@ -55,9 +57,17 @@ fun QrData.format(): String = when (this) {
     is QrData.Url -> url
     is QrData.Text -> text
     is QrData.VCard -> listOf(
-        "Name: $name",
-        phone.takeIf { it.isNotBlank() }?.let { "Phone: $it" },
-        email.takeIf { it.isNotBlank() }?.let { "Email: $it" },
+        getTranslationString(DefaultLangStrings.NameLabel, mapOf("value" to name)),
+        phone.takeIf { it.isNotBlank() }?.let {
+            getTranslationString(DefaultLangStrings.PhoneLabel, mapOf("value" to it))
+        },
+        email.takeIf { it.isNotBlank() }?.let {
+            getTranslationString(DefaultLangStrings.EmailLabel, mapOf("value" to it))
+        },
     ).filterNotNull().joinToString("\n")
-    is QrData.Wifi -> "SSID: $ssid\nPassword: $password\nType: $encryption"
+    is QrData.Wifi -> listOf(
+        getTranslationString(DefaultLangStrings.SsidLabel, mapOf("value" to ssid)),
+        getTranslationString(DefaultLangStrings.PasswordLabel, mapOf("value" to password)),
+        getTranslationString(DefaultLangStrings.TypeLabel, mapOf("value" to encryption)),
+    ).joinToString("\n")
 }

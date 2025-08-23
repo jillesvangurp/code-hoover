@@ -15,6 +15,9 @@ import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
 import QrForm
+import DefaultLangStrings
+import localization.getTranslationString
+import localization.translate
 
 fun RenderContext.codesScreen(
     savedCodesStore: Store<List<SavedQrCode>>,
@@ -23,12 +26,16 @@ fun RenderContext.codesScreen(
     val formStore = storeOf(QrForm())
     val editingStore = storeOf(false)
     val selectedIndexStore = storeOf<Int?>(null)
+    var draggedIndex: Int? = null
+    val placeholder = (document.createElement("li") as HTMLElement).apply {
+        className = "h-12 rounded-md border-2 border-dashed border-base-content/40"
+    }
 
     editingStore.data.render { editing ->
         if (editing) {
-            div("space-y-2") {
+            div("flex flex-col gap-4") {
                 input("input input-bordered w-full") {
-                    placeholder("Name")
+                    placeholder(getTranslationString(DefaultLangStrings.Name))
                     value(formStore.data.map { it.name })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
                 }
@@ -37,7 +44,14 @@ fun RenderContext.codesScreen(
                     changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
                     QrType.values().forEach {
                         option {
-                            +it.name
+                            translate(
+                                when (it) {
+                                    QrType.URL -> DefaultLangStrings.Url
+                                    QrType.TEXT -> DefaultLangStrings.Text
+                                    QrType.VCARD -> DefaultLangStrings.VCard
+                                    QrType.WIFI -> DefaultLangStrings.Wifi
+                                }
+                            )
                             value(it.name)
                         }
                     }
@@ -45,45 +59,45 @@ fun RenderContext.codesScreen(
                 formStore.data.map { it.type }.render { t: QrType ->
                     when (t) {
                         QrType.URL -> input("input input-bordered w-full") {
-                            placeholder("Url")
+                            placeholder(getTranslationString(DefaultLangStrings.Url))
                             value(formStore.data.map { it.url })
                             changes.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
                         }
                         QrType.TEXT -> textarea("textarea textarea-bordered w-full") {
-                            placeholder("Text")
+                            placeholder(getTranslationString(DefaultLangStrings.Text))
                             value(formStore.data.map { it.text })
                             changes.values() handledBy formStore.handle { f, v -> f.copy(text = v) }
                         }
                         QrType.VCARD -> {
                             input("input input-bordered w-full") {
-                                placeholder("Full Name")
+                                placeholder(getTranslationString(DefaultLangStrings.FullName))
                                 value(formStore.data.map { it.fullName })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(fullName = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Phone")
+                                placeholder(getTranslationString(DefaultLangStrings.Phone))
                                 value(formStore.data.map { it.phone })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(phone = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Email")
+                                placeholder(getTranslationString(DefaultLangStrings.Email))
                                 value(formStore.data.map { it.email })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(email = v) }
                             }
                         }
                         QrType.WIFI -> {
                             input("input input-bordered w-full") {
-                                placeholder("SSID")
+                                placeholder(getTranslationString(DefaultLangStrings.Ssid))
                                 value(formStore.data.map { it.ssid })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(ssid = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Password")
+                                placeholder(getTranslationString(DefaultLangStrings.Password))
                                 value(formStore.data.map { it.password })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(password = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Encryption")
+                                placeholder(getTranslationString(DefaultLangStrings.Encryption))
                                 value(formStore.data.map { it.encryption })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                             }
@@ -92,7 +106,7 @@ fun RenderContext.codesScreen(
                 }
                 div("flex gap-2") {
                     button("btn btn-primary btn-sm") {
-                        +"Save"
+                        translate(DefaultLangStrings.Save)
                         clicks handledBy {
                             val f = formStore.current
                             val data = when (f.type) {
@@ -110,15 +124,15 @@ fun RenderContext.codesScreen(
                         }
                     }
                     button("btn btn-secondary btn-sm") {
-                        +"Cancel"
+                        translate(DefaultLangStrings.Cancel)
                         clicks handledBy { editingStore.update(false) }
                     }
                 }
             }
         } else {
-            div("flex gap-2 mb-4") {
+            div("flex gap-4 mb-6") {
                 button("btn btn-primary btn-sm") {
-                    +"Add"
+                    translate(DefaultLangStrings.Add)
                     clicks handledBy {
                         formStore.update(QrForm())
                         editingStore.update(true)
@@ -141,7 +155,7 @@ fun RenderContext.codesScreen(
                                         .map { if (it.name.isBlank()) it.copy(name = it.text) else it }
                                     savedCodesStore.update(list)
                                 } catch (e: Throwable) {
-                                    window.alert("Invalid JSON")
+                                    window.alert(getTranslationString(DefaultLangStrings.InvalidJson))
                                 }
                                 inputElement.value = ""
                             }
@@ -151,13 +165,13 @@ fun RenderContext.codesScreen(
                 }
 
                 button("btn btn-secondary btn-sm") {
-                    +"Import"
+                    translate(DefaultLangStrings.Import)
                     clicks handledBy {
                         fileInput.domNode.click()
                     }
                 }
                 button("btn btn-secondary btn-sm") {
-                    +"Export"
+                    translate(DefaultLangStrings.Export)
                     clicks handledBy {
                         val txt = json.encodeToString(savedCodesStore.current)
                         val encoded = js("encodeURIComponent")(txt) as String
@@ -170,7 +184,55 @@ fun RenderContext.codesScreen(
                     }
                 }
             }
-            ul("space-y-4") {
+            ul("flex flex-col gap-4") {
+                val listElement = domNode
+
+                listElement.addEventListener("dragover", { event ->
+                    val e = event as DragEvent
+                    e.preventDefault()
+                    val children = listElement.children
+                    var inserted = false
+                    for (i in 0 until children.length) {
+                        val child = children.item(i) as HTMLElement
+                        if (child == placeholder) continue
+                        val rect = child.getBoundingClientRect()
+                        if (e.clientY < rect.top + rect.height / 2) {
+                            listElement.insertBefore(placeholder, child)
+                            inserted = true
+                            break
+                        }
+                    }
+                    if (!inserted) listElement.appendChild(placeholder)
+                })
+
+                listElement.addEventListener("drop", { event ->
+                    val e = event as DragEvent
+                    e.preventDefault()
+                    val fromIndex = draggedIndex ?: return@addEventListener
+                    val children = listElement.children
+                    var toIndex = children.length
+                    for (i in 0 until children.length) {
+                        if (children.item(i) == placeholder) {
+                            toIndex = i
+                            break
+                        }
+                    }
+                    placeholder.remove()
+                    val list = savedCodesStore.current.toMutableList()
+                    val item = list.removeAt(fromIndex)
+                    val insertAt = if (toIndex <= fromIndex) toIndex else toIndex - 1
+                    list.add(insertAt, item)
+                    savedCodesStore.update(list)
+                    draggedIndex = null
+                })
+
+                listElement.addEventListener("dragleave", { event ->
+                    val e = event as DragEvent
+                    if (e.target == listElement && e.relatedTarget == null) {
+                        placeholder.remove()
+                    }
+                })
+
                 savedCodesStore.data.map { it.withIndex().toList() }.renderEach { indexed ->
                     val index = indexed.index
                     val code = indexed.value
@@ -178,59 +240,23 @@ fun RenderContext.codesScreen(
                     val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
                     li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer") {
                         attr("draggable", "true")
-                        attr("data-index", index.toString())
                         p("mr-2 flex-grow truncate") { +truncated }
                         button("btn btn-xs btn-warning") {
-                            +"Delete"
+                            translate(DefaultLangStrings.Delete)
                             clicks.map { it.stopPropagation(); Unit } handledBy {
                                 val list = savedCodesStore.current.toMutableList()
                                 list.removeAt(index)
                                 savedCodesStore.update(list)
                             }
                         }
-                        val element = domNode
-                        fun clearIndicators() {
-                            element.classList.remove("border-t-2", "border-b-2", "border-red-500")
-                        }
                         clicks handledBy { selectedIndexStore.update(index) }
                         domNode.addEventListener("dragstart", { event ->
                             val e = event as DragEvent
+                            draggedIndex = index
                             e.dataTransfer?.setData("text/plain", index.toString())
+                            placeholder.remove()
                         })
-                        domNode.addEventListener("dragover", { event ->
-                            val e = event as DragEvent
-                            e.preventDefault()
-                            val target = e.currentTarget as HTMLElement
-                            val rect = target.getBoundingClientRect()
-                            val insertBefore = e.clientY < rect.top + rect.height / 2
-                            if (insertBefore) {
-                                target.classList.add("border-t-2", "border-red-500")
-                                target.classList.remove("border-b-2")
-                            } else {
-                                target.classList.add("border-b-2", "border-red-500")
-                                target.classList.remove("border-t-2")
-                            }
-                        })
-                        domNode.addEventListener("dragleave", { event ->
-                            clearIndicators()
-                        })
-                        domNode.addEventListener("drop", { event ->
-                            val e = event as DragEvent
-                            e.preventDefault()
-                            val target = e.currentTarget as HTMLElement
-                            val rect = target.getBoundingClientRect()
-                            val insertBefore = e.clientY < rect.top + rect.height / 2
-                            clearIndicators()
-                            val fromIndex = e.dataTransfer?.getData("text/plain")?.toInt() ?: return@addEventListener
-                            val toIndex = target.getAttribute("data-index")!!.toInt()
-                            if (fromIndex == toIndex) return@addEventListener
-                            val list = savedCodesStore.current.toMutableList()
-                            val item = list.removeAt(fromIndex)
-                            var insertAt = toIndex + if (insertBefore) 0 else 1
-                            if (fromIndex < insertAt) insertAt--
-                            list.add(insertAt, item)
-                            savedCodesStore.update(list)
-                        })
+                        domNode.addEventListener("dragend", { _ -> placeholder.remove() })
                     }
                 }
             }
@@ -255,11 +281,11 @@ fun RenderContext.codesScreen(
                             pre("whitespace-pre-wrap break-words") { +code.data.format() }
                             div("modal-action") {
                                 button("btn") {
-                                    +"Close"
+                                    translate(DefaultLangStrings.Close)
                                     clicks handledBy { selectedIndexStore.update(null) }
                                 }
                                 button("btn btn-primary") {
-                                    +"Save"
+                                    translate(DefaultLangStrings.Save)
                                     clicks handledBy {
                                         val newName = nameStore.current.ifBlank { code.text }
                                         val list = savedCodesStore.current.toMutableList()

@@ -1,12 +1,81 @@
 @import "tailwindcss";
+
+/* enable themes */
 @plugin "daisyui" {
-  themes: emerald --default, night --prefersdark;
-  root: ":root";
-  include: ;
-  exclude: ;
-  prefix: ;
-  logs: true;
+    themes: qr-light --default, qr-dark --prefersdark;
 }
+
+/* --- LIGHT (black on white) --- */
+@plugin "daisyui/theme" {
+    name: qr-light;
+    color-scheme: light;
+
+    --color-base-100: oklch(100% 0 0);  /* white */
+    --color-base-200: oklch(95% 0 0);
+    --color-base-300: oklch(88% 0 0);
+    --color-base-content: oklch(10% 0 0); /* black */
+
+    --color-primary: oklch(0% 0 0);       /* black */
+    --color-primary-content: oklch(98% 0 0);
+
+    --color-secondary: oklch(35% 0 0);    /* dark gray */
+    --color-secondary-content: oklch(98% 0 0);
+
+    --color-accent: oklch(70% 0 0);       /* mid gray */
+    --color-accent-content: oklch(12% 0 0);
+
+    --color-neutral: oklch(50% 0 0);
+    --color-neutral-content: oklch(98% 0 0);
+
+    --color-info: oklch(75% 0 0);
+    --color-info-content: oklch(10% 0 0);
+
+    --color-success: oklch(65% 0 0);
+    --color-success-content: oklch(10% 0 0);
+
+    --color-warning: oklch(80% 0 0);
+    --color-warning-content: oklch(10% 0 0);
+
+    --color-error: oklch(55% 0 0);
+    --color-error-content: oklch(98% 0 0);
+}
+
+/* --- DARK (white on black) --- */
+@plugin "daisyui/theme" {
+    name: qr-dark;
+    color-scheme: dark;
+
+    --color-base-100: oklch(10% 0 0);   /* near-black */
+    --color-base-200: oklch(18% 0 0);
+    --color-base-300: oklch(26% 0 0);
+    --color-base-content: oklch(98% 0 0); /* white */
+
+    --color-primary: oklch(98% 0 0);      /* white */
+    --color-primary-content: oklch(10% 0 0);
+
+    --color-secondary: oklch(70% 0 0);
+    --color-secondary-content: oklch(12% 0 0);
+
+    --color-accent: oklch(55% 0 0);
+    --color-accent-content: oklch(12% 0 0);
+
+    --color-neutral: oklch(35% 0 0);
+    --color-neutral-content: oklch(96% 0 0);
+
+    --color-info: oklch(75% 0 0);
+    --color-info-content: oklch(12% 0 0);
+
+    --color-success: oklch(65% 0 0);
+    --color-success-content: oklch(12% 0 0);
+
+    --color-warning: oklch(80% 0 0);
+    --color-warning-content: oklch(12% 0 0);
+
+    --color-error: oklch(60% 0 0);
+    --color-error-content: oklch(12% 0 0);
+}
+
+/* define qr-dark */
 
 @layer base {
   h1 {
