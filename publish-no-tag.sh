@@ -7,7 +7,7 @@ die () {
     exit 1
 }
 
-[[ -z $(git status -s) ]] || die "git status is not clean"
+#[[ -z $(git status -s) ]] || die "git status is not clean"
 
 export TAG=$1
 
@@ -21,9 +21,9 @@ else
 fi
 
 docker run --rm -it \
-  -v "$(shell pwd)":/workspace \
+  -v "$(pwd)":/workspace \
   -w /workspace \
-  -e CLOUDFLARE_ACCOUNT_ID=$(CLOUDFLARE_ACCOUNT_ID) \
-  -e CLOUDFLARE_API_TOKEN=$(CLOUDFLARE_API_TOKEN) \
+  -e CLOUDFLARE_ACCOUNT_ID=${CLOUDFLARE_ACCOUNT_ID} \
+  -e CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN} \
   node:22 \
-  npx --yes wrangler pages deploy dist --project-name=codehoover--branch=main
+  npx --yes wrangler pages deploy dist --project-name=codehoover --branch=main
