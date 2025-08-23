@@ -38,4 +38,4 @@ docker run --rm -it \
   -e CLOUDFLARE_ACCOUNT_ID=$(CLOUDFLARE_ACCOUNT_ID) \
   -e CLOUDFLARE_API_TOKEN=$(CLOUDFLARE_API_TOKEN) \
   node:22 \
-  npx --yes wrangler pages deploy public --project-name=codehoover--branch=master
+  npx --yes wrangler pages deploy public --project-name=codehoover--branch=main
