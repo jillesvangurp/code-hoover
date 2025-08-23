@@ -96,7 +96,7 @@ suspend fun main() {
         }.launchIn(MainScope())
         val screenStore = storeOf(Screen.Codes)
         val translationStore = withKoin { get<TranslationStore>() }
-        div("min-h-screen flex flex-col") {
+        div("min-h-screen flex flex-col bg-base-100 text-base-content") {
             article("p-6 max-w-screen-sm mx-auto flex flex-col gap-6 flex-grow") {
                 h1("text-center text-2xl sm:text-3xl font-bold text-primary") {
                     translate(DefaultLangStrings.PageTitle)

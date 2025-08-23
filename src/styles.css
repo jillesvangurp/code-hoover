@@ -1,50 +1,50 @@
 @import "tailwindcss";
 @plugin "daisyui" {
   themes: qr-light --default, qr-dark --prefersdark;
-  root: ":root";
-  include: ;
-  exclude: ;
-  prefix: ;
-  logs: true;
 }
 
-  @theme qr-light {
-    --color-primary: 0 0 0;
-    --color-primary-content: 255 255 255;
+:root,
+:root:has(input.theme-controller[value=qr-light]:checked),
+[data-theme="qr-light"] {
+  color-scheme: light;
+  --color-primary: 0 0 0;
+  --color-primary-content: 255 255 255;
 
-    --color-base-100: 255 255 255;
-    --color-base-200: 240 240 240;
-    --color-base-300: 220 220 220;
-    --color-base-content: 0 0 0;
+  --color-base-100: 255 255 255;
+  --color-base-200: 240 240 240;
+  --color-base-300: 220 220 220;
+  --color-base-content: 0 0 0;
 
-    --color-secondary: 80 80 80;
-    --color-secondary-content: 255 255 255;
+  --color-secondary: 80 80 80;
+  --color-secondary-content: 255 255 255;
 
-    --color-accent: 40 40 40;
-    --color-accent-content: 255 255 255;
+  --color-accent: 40 40 40;
+  --color-accent-content: 255 255 255;
 
-    --color-error: 220 38 38;
-    --color-error-content: 255 255 255;
-  }
+  --color-error: 220 38 38;
+  --color-error-content: 255 255 255;
+}
 
-  @theme qr-dark {
-    --color-primary: 255 255 255;
-    --color-primary-content: 0 0 0;
+:root:has(input.theme-controller[value=qr-dark]:checked),
+[data-theme="qr-dark"] {
+  color-scheme: dark;
+  --color-primary: 255 255 255;
+  --color-primary-content: 0 0 0;
 
-    --color-base-100: 0 0 0;
-    --color-base-200: 26 26 26;
-    --color-base-300: 51 51 51;
-    --color-base-content: 255 255 255;
+  --color-base-100: 0 0 0;
+  --color-base-200: 26 26 26;
+  --color-base-300: 51 51 51;
+  --color-base-content: 255 255 255;
 
-    --color-secondary: 160 160 160;
-    --color-secondary-content: 0 0 0;
+  --color-secondary: 160 160 160;
+  --color-secondary-content: 0 0 0;
 
-    --color-accent: 120 120 120;
-    --color-accent-content: 0 0 0;
+  --color-accent: 120 120 120;
+  --color-accent-content: 0 0 0;
 
-    --color-error: 220 38 38;
-    --color-error-content: 255 255 255;
-  }
+  --color-error: 220 38 38;
+  --color-error-content: 255 255 255;
+}
 
 @layer base {
   h1 {
