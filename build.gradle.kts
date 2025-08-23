@@ -64,7 +64,7 @@ kotlin {
                 // fluent-js
                 implementation("com.tryformation:fluent-kotlin:_")
                 implementation(npm("@zxing/library","_"))
-                implementation(npm("@zxing/browser","_"))
+                implementation(npm("qrcode","_"))
             }
         }
 

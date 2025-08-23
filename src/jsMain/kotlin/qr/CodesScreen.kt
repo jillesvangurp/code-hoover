@@ -2,7 +2,9 @@ package qr
 
 import dev.fritz2.core.*
 import kotlinx.browser.window
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -139,9 +141,12 @@ fun RenderContext.codesScreen(
                     val index = savedCodesStore.current.indexOf(code)
                     li("card bg-base-200 p-4 space-y-2") {
                         h3("font-bold") { +code.name }
-                        val svg = generateQrSvg(code.text)
-                        val encoded = window.btoa(svg)
-                        img { src("data:image/svg+xml;base64,$encoded") }
+                        val imgElem = img {}
+                        MainScope().launch {
+                            val svg = generateQrSvg(code.text)
+                            val encoded = window.btoa(svg)
+                            imgElem.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
+                        }
                         pre("whitespace-pre-wrap") { +code.data.format() }
                         div("flex gap-2") {
                             button("btn btn-xs btn-primary") {
