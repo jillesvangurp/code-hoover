@@ -234,22 +234,25 @@ suspend fun main() {
                 div("flex flex-row justify-center items-center gap-6") {
                     translationStore.data.render { currentBundle ->
                         val currentLocale = currentBundle.bundles.first().locale.first()
-                        Locales.entries.forEach { locale ->
-                            val flag = when (locale) {
-                                Locales.EN_US -> "🇺🇸"
-                                Locales.DE_DE -> "🇩🇪"
-                                Locales.NL_NL -> "🇳🇱"
-                                Locales.FR_FR -> "🇫🇷"
-                                Locales.JA_JP -> "🇯🇵"
-                            }
-                            button("btn btn-ghost btn-sm") {
-                                +flag
-                                attr("aria-label", locale.title)
-                                if (currentLocale == locale.title) className("opacity-50")
-                                clicks handledBy {
-                                    translationStore.updateLocale(locale.title)
+                        div("flex flex-row justify-center items-center gap-1") {
+                            Locales.entries.forEach { locale ->
+                                val flag = when (locale) {
+                                    Locales.EN_US -> "🇺🇸"
+                                    Locales.DE_DE -> "🇩🇪"
+                                    Locales.NL_NL -> "🇳🇱"
+                                    Locales.FR_FR -> "🇫🇷"
+                                    Locales.JA_JP -> "🇯🇵"
+                                }
+                                button("btn btn-ghost btn-sm w-10 text-3xl") {
+                                    +flag
+                                    attr("aria-label", locale.title)
+                                    if (currentLocale == locale.title) className("opacity-50")
+                                    clicks handledBy {
+                                        translationStore.updateLocale(locale.title)
+                                    }
                                 }
                             }
+
                         }
 
                         label("swap swap-rotate") {
