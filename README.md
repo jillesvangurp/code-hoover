@@ -8,9 +8,11 @@ Code Hoover is a small web application that lets you scan QR codes and barcodes 
 - No ads, no nonsense.
 - Quickly scan multiple qr or bar codes - the camera view stays open and tries to scan everything you point it at.
 - Get a list of all the codes you scan
+- Opens straight to your stash of codes so you're never starting from an empty page
 - Copy the raw text to the clipboard or open links in a new tab
 - Localized in multiple languages!
 - Darkmode/lightmode support
+- Sports a cute hoover favicon to tidy up your tabs
 
 Is this useful? Maybe not for everyone. But I often want to know what the raw content of a QR or bar code is and that's what this is for.
 

@@ -64,7 +64,7 @@ private const val darkMode = "night"
 
 private const val lightMode = "emerald"
 
-enum class Screen { Scan, Codes }
+enum class Screen { Codes, Scan }
 
 suspend fun main() {
 
@@ -89,7 +89,7 @@ suspend fun main() {
         savedCodesStore.data.onEach { codes ->
             localStorage.setItem("codes", json.encodeToString(codes))
         }.launchIn(MainScope())
-        val screenStore = storeOf(Screen.Scan)
+        val screenStore = storeOf(Screen.Codes)
         val translationStore = withKoin { get<TranslationStore>() }
         div("min-h-screen flex flex-col") {
             article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
@@ -98,16 +98,19 @@ suspend fun main() {
                 }
                 div("flex gap-2 justify-center mb-4") {
                     button("btn btn-sm") {
-                        +"Scan"
-                        clicks handledBy { screenStore.update(Screen.Scan) }
-                    }
-                    button("btn btn-sm") {
                         +"Codes"
                         clicks handledBy { screenStore.update(Screen.Codes) }
+                    }
+                    button("btn btn-sm") {
+                        +"Scan"
+                        clicks handledBy { screenStore.update(Screen.Scan) }
                     }
                 }
                 screenStore.data.render { screen ->
                     when (screen) {
+                        Screen.Codes -> {
+                            codesScreen(savedCodesStore, json)
+                        }
                         Screen.Scan -> {
                             scanningStore.data.render { scanning ->
                                 div("flex gap-2 justify-center") {
@@ -212,9 +215,6 @@ suspend fun main() {
                                     }
                                 }
                             }
-                        }
-                        Screen.Codes -> {
-                            codesScreen(savedCodesStore, json)
                         }
                     }
                 }
