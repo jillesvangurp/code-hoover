@@ -1,5 +1,3 @@
-package qr
-
 import dev.fritz2.core.*
 import kotlinx.browser.document
 import kotlinx.browser.window
@@ -9,12 +7,17 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
-import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
-import QrForm
+import qr.QrData
+import qr.QrType
+import qr.SavedQrCode
+import qr.asText
+import qr.format
+import qr.generateQrSvg
 import DefaultLangStrings
 import localization.getTranslationString
 import localization.translate
@@ -130,8 +133,8 @@ fun RenderContext.codesScreen(
                 }
             }
         } else {
-            div("flex gap-4 mb-6") {
-                button("btn btn-primary btn-sm") {
+            div("join flex-wrap mb-6") {
+                button("btn btn-primary btn-sm w-24") {
                     translate(DefaultLangStrings.Add)
                     clicks handledBy {
                         formStore.update(QrForm())
@@ -164,13 +167,13 @@ fun RenderContext.codesScreen(
                     })
                 }
 
-                button("btn btn-secondary btn-sm") {
+                button("btn btn-secondary btn-sm w-24") {
                     translate(DefaultLangStrings.Import)
                     clicks handledBy {
                         fileInput.domNode.click()
                     }
                 }
-                button("btn btn-secondary btn-sm") {
+                button("btn btn-secondary btn-sm w-24") {
                     translate(DefaultLangStrings.Export)
                     clicks handledBy {
                         val txt = json.encodeToString(savedCodesStore.current)
@@ -184,7 +187,7 @@ fun RenderContext.codesScreen(
                     }
                 }
             }
-            ul("flex flex-col gap-4") {
+            ul("flex flex-col gap-4 w-full") {
                 val listElement = domNode
 
                 listElement.addEventListener("dragover", { event ->
@@ -238,10 +241,10 @@ fun RenderContext.codesScreen(
                     val code = indexed.value
                     val displayName = code.name.ifBlank { code.text }
                     val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
-                    li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer") {
+                    li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer w-full") {
                         attr("draggable", "true")
                         p("mr-2 flex-grow truncate") { +truncated }
-                        button("btn btn-xs btn-warning") {
+                        button("btn btn-xs btn-warning w-24") {
                             translate(DefaultLangStrings.Delete)
                             clicks.map { it.stopPropagation(); Unit } handledBy {
                                 val list = savedCodesStore.current.toMutableList()
