@@ -187,6 +187,10 @@ fun RenderContext.codesScreen(
                                 savedCodesStore.update(list)
                             }
                         }
+                        val element = domNode
+                        fun clearIndicators() {
+                            element.classList.remove("border-t-2", "border-b-2", "border-red-500")
+                        }
                         clicks handledBy { selectedIndexStore.update(index) }
                         domNode.addEventListener("dragstart", { event ->
                             val e = event as DragEvent
@@ -195,15 +199,34 @@ fun RenderContext.codesScreen(
                         domNode.addEventListener("dragover", { event ->
                             val e = event as DragEvent
                             e.preventDefault()
+                            val target = e.currentTarget as HTMLElement
+                            val rect = target.getBoundingClientRect()
+                            val insertBefore = e.clientY < rect.top + rect.height / 2
+                            if (insertBefore) {
+                                target.classList.add("border-t-2", "border-red-500")
+                                target.classList.remove("border-b-2")
+                            } else {
+                                target.classList.add("border-b-2", "border-red-500")
+                                target.classList.remove("border-t-2")
+                            }
+                        })
+                        domNode.addEventListener("dragleave", { event ->
+                            clearIndicators()
                         })
                         domNode.addEventListener("drop", { event ->
                             val e = event as DragEvent
                             e.preventDefault()
+                            val target = e.currentTarget as HTMLElement
+                            val rect = target.getBoundingClientRect()
+                            val insertBefore = e.clientY < rect.top + rect.height / 2
+                            clearIndicators()
                             val fromIndex = e.dataTransfer?.getData("text/plain")?.toInt() ?: return@addEventListener
-                            val toIndex = (e.currentTarget as HTMLElement).getAttribute("data-index")!!.toInt()
+                            val toIndex = target.getAttribute("data-index")!!.toInt()
+                            if (fromIndex == toIndex) return@addEventListener
                             val list = savedCodesStore.current.toMutableList()
                             val item = list.removeAt(fromIndex)
-                            val insertAt = if (fromIndex < toIndex) toIndex - 1 else toIndex
+                            var insertAt = toIndex + if (insertBefore) 0 else 1
+                            if (fromIndex < insertAt) insertAt--
                             list.add(insertAt, item)
                             savedCodesStore.update(list)
                         })
