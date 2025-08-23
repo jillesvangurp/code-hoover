@@ -60,9 +60,9 @@ private val barcodeFormatNames = arrayOf(
 fun barcodeFormatName(ordinal: Int): String =
     if (ordinal in barcodeFormatNames.indices) barcodeFormatNames[ordinal] else "Unknown"
 
-private const val darkMode = "night"
+private const val darkMode = "qr-dark"
 
-private const val lightMode = "emerald"
+private const val lightMode = "qr-light"
 
 enum class Screen { Codes, Scan }
 
@@ -92,11 +92,11 @@ suspend fun main() {
         val screenStore = storeOf(Screen.Codes)
         val translationStore = withKoin { get<TranslationStore>() }
         div("min-h-screen flex flex-col") {
-            article("p-4 max-w-screen-sm mx-auto space-y-4 flex-grow") {
+            article("p-6 max-w-screen-sm mx-auto flex flex-col gap-6 flex-grow") {
                 h1("text-center text-2xl sm:text-3xl font-bold text-primary") {
                     translate(DefaultLangStrings.PageTitle)
                 }
-                div("flex gap-2 justify-center mb-4") {
+                div("flex gap-4 justify-center mb-6") {
                     button("btn btn-sm") {
                         +"Codes"
                         clicks handledBy { screenStore.update(Screen.Codes) }
@@ -220,23 +220,24 @@ suspend fun main() {
                 }
             }
 
-            footer("mt-auto p-4 text-center space-y-2 ") {
-                div("flex flex-row justify-center items-center gap-4") {
-
-
+            footer("mt-auto p-6 text-center") {
+                div("flex flex-row justify-center items-center gap-6") {
                     translationStore.data.render { currentBundle ->
                         val currentLocale = currentBundle.bundles.first().locale.first()
                         Locales.entries.forEach { locale ->
-                            if (currentLocale == locale.title) {
-                                a {
-                                    em { +locale.title }
-                                }
-                            } else {
-                                a {
-                                    +locale.title
-                                    clicks handledBy {
-                                        translationStore.updateLocale(locale.title)
-                                    }
+                            val flag = when (locale) {
+                                Locales.EN_US -> "🇺🇸"
+                                Locales.DE_DE -> "🇩🇪"
+                                Locales.NL_NL -> "🇳🇱"
+                                Locales.FR_FR -> "🇫🇷"
+                                Locales.JA_JP -> "🇯🇵"
+                            }
+                            button("btn btn-ghost btn-sm") {
+                                +flag
+                                attr("aria-label", locale.title)
+                                if (currentLocale == locale.title) className("opacity-50")
+                                clicks handledBy {
+                                    translationStore.updateLocale(locale.title)
                                 }
                             }
                         }

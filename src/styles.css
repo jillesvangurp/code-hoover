@@ -1,11 +1,49 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-  themes: emerald --default, night --prefersdark;
+  themes: qr-light --default, qr-dark --prefersdark;
   root: ":root";
   include: ;
   exclude: ;
   prefix: ;
   logs: true;
+}
+
+@theme qr-light {
+  --color-primary: 0 0 0;
+  --color-primary-content: 255 255 255;
+
+  --color-base-100: 255 255 255;
+  --color-base-200: 245 245 245;
+  --color-base-300: 230 230 230;
+  --color-base-content: 0 0 0;
+
+  --color-secondary: 128 128 128;
+  --color-secondary-content: 255 255 255;
+
+  --color-accent: 64 64 64;
+  --color-accent-content: 255 255 255;
+
+  --color-error: 220 38 38;
+  --color-error-content: 255 255 255;
+}
+
+@theme qr-dark {
+  --color-primary: 255 255 255;
+  --color-primary-content: 0 0 0;
+
+  --color-base-100: 0 0 0;
+  --color-base-200: 30 30 30;
+  --color-base-300: 60 60 60;
+  --color-base-content: 255 255 255;
+
+  --color-secondary: 160 160 160;
+  --color-secondary-content: 0 0 0;
+
+  --color-accent: 96 96 96;
+  --color-accent-content: 0 0 0;
+
+  --color-error: 220 38 38;
+  --color-error-content: 255 255 255;
 }
 
 @layer base {
