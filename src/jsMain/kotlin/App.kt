@@ -58,7 +58,8 @@ private val barcodeFormatNames = arrayOf(
 
 
 fun barcodeFormatName(ordinal: Int): String =
-    if (ordinal in barcodeFormatNames.indices) barcodeFormatNames[ordinal] else "Unknown"
+    if (ordinal in barcodeFormatNames.indices) barcodeFormatNames[ordinal]
+    else getTranslationString(DefaultLangStrings.Unknown)
 
 private const val darkMode = "qr-dark"
 
@@ -70,6 +71,10 @@ suspend fun main() {
 
     // starts up koin and initializes the TranslationStore
     startAppWithKoin {
+        val html = document.documentElement!!
+        val prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+        html.setAttribute("data-theme", if (prefersDark) darkMode else lightMode)
+
         val codeReader = BrowserMultiFormatReader(
             hints = null,
             timeBetweenScansMillis = 300,
@@ -98,11 +103,11 @@ suspend fun main() {
                 }
                 div("flex gap-4 justify-center mb-6") {
                     button("btn btn-sm") {
-                        +"Codes"
+                        translate(DefaultLangStrings.Codes)
                         clicks handledBy { screenStore.update(Screen.Codes) }
                     }
                     button("btn btn-sm") {
-                        +"Scan"
+                        translate(DefaultLangStrings.Scan)
                         clicks handledBy { screenStore.update(Screen.Scan) }
                     }
                 }
@@ -166,7 +171,12 @@ suspend fun main() {
                                 }
                             }
                             scansStore.data.render { scans ->
-                                p("font-semibold mb-2") { +"${'$'}{scans.size} scanned codes" }
+                                p("font-semibold mb-2") {
+                                    translate(
+                                        DefaultLangStrings.ScannedCodes,
+                                        mapOf("count" to scans.size)
+                                    )
+                                }
                             }
                             ul("space-y-2") {
                                 scansStore.data.renderEach { scan ->
@@ -183,12 +193,12 @@ suspend fun main() {
                                             }
                                             if (scan.text.startsWith("http://") || scan.text.startsWith("https://")) {
                                                 button("btn btn-secondary btn-xs hover:opacity-80 active:opacity-60 transition") {
-                                                    +"Open"
+                                                    translate(DefaultLangStrings.Open)
                                                     clicks handledBy { window.open(scan.text, "_blank") }
                                                 }
                                             }
                                             button("btn btn-accent btn-xs hover:opacity-80 active:opacity-60 transition") {
-                                                +"Save"
+                                                translate(DefaultLangStrings.Save)
                                                 clicks handledBy {
                                                     val entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
                                                         try {
@@ -206,7 +216,7 @@ suspend fun main() {
                                                 }
                                             }
                                             button("btn btn-warning btn-xs hover:opacity-80 active:opacity-60 transition") {
-                                                +"Delete"
+                                                translate(DefaultLangStrings.Delete)
                                                 clicks handledBy {
                                                     scansStore.update(scansStore.current.filterNot { it == scan })
                                                 }
@@ -243,6 +253,7 @@ suspend fun main() {
                         }
 
                         label("swap swap-rotate") {
+                            attr("title", getTranslationString(DefaultLangStrings.DarkMode))
                             input {
                                 attr("type", "checkbox")
                                 className("theme-controller")
@@ -250,13 +261,8 @@ suspend fun main() {
                                 clicks handledBy {
                                     val html = document.documentElement!!
                                     val current = html.getAttribute("data-theme")
-                                    val prefersDark =
-                                        window.matchMedia("(prefers-color-scheme: dark)").matches
-                                    val newTheme = when (current) {
-                                        darkMode -> lightMode
-                                        lightMode -> darkMode
-                                        else -> if (prefersDark) lightMode else darkMode
-                                    }
+                                        ?: if (prefersDark) darkMode else lightMode
+                                    val newTheme = if (current == darkMode) lightMode else darkMode
                                     html.setAttribute("data-theme", newTheme)
                                 }
                             }
@@ -301,7 +307,36 @@ enum class DefaultLangStrings : Translatable {
     Stop,
     Clear,
     Copy,
-    DarkMode
+    DarkMode,
+    Codes,
+    Open,
+    Save,
+    Delete,
+    Add,
+    Import,
+    Export,
+    Cancel,
+    Close,
+    ScannedCodes,
+    InvalidJson,
+    Name,
+    Url,
+    Text,
+    VCard,
+    Wifi,
+    FullName,
+    Phone,
+    Email,
+    Ssid,
+    Password,
+    Encryption,
+    Unknown,
+    NameLabel,
+    PhoneLabel,
+    EmailLabel,
+    SsidLabel,
+    PasswordLabel,
+    TypeLabel,
     ;
 
     // fluent files have identifiers with this prefix and the camel

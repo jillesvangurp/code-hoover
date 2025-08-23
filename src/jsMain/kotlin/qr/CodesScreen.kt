@@ -15,6 +15,9 @@ import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
 import QrForm
+import DefaultLangStrings
+import localization.getTranslationString
+import localization.translate
 
 fun RenderContext.codesScreen(
     savedCodesStore: Store<List<SavedQrCode>>,
@@ -32,7 +35,7 @@ fun RenderContext.codesScreen(
         if (editing) {
             div("flex flex-col gap-4") {
                 input("input input-bordered w-full") {
-                    placeholder("Name")
+                    placeholder(getTranslationString(DefaultLangStrings.Name))
                     value(formStore.data.map { it.name })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
                 }
@@ -41,7 +44,14 @@ fun RenderContext.codesScreen(
                     changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
                     QrType.values().forEach {
                         option {
-                            +it.name
+                            translate(
+                                when (it) {
+                                    QrType.URL -> DefaultLangStrings.Url
+                                    QrType.TEXT -> DefaultLangStrings.Text
+                                    QrType.VCARD -> DefaultLangStrings.VCard
+                                    QrType.WIFI -> DefaultLangStrings.Wifi
+                                }
+                            )
                             value(it.name)
                         }
                     }
@@ -49,45 +59,45 @@ fun RenderContext.codesScreen(
                 formStore.data.map { it.type }.render { t: QrType ->
                     when (t) {
                         QrType.URL -> input("input input-bordered w-full") {
-                            placeholder("Url")
+                            placeholder(getTranslationString(DefaultLangStrings.Url))
                             value(formStore.data.map { it.url })
                             changes.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
                         }
                         QrType.TEXT -> textarea("textarea textarea-bordered w-full") {
-                            placeholder("Text")
+                            placeholder(getTranslationString(DefaultLangStrings.Text))
                             value(formStore.data.map { it.text })
                             changes.values() handledBy formStore.handle { f, v -> f.copy(text = v) }
                         }
                         QrType.VCARD -> {
                             input("input input-bordered w-full") {
-                                placeholder("Full Name")
+                                placeholder(getTranslationString(DefaultLangStrings.FullName))
                                 value(formStore.data.map { it.fullName })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(fullName = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Phone")
+                                placeholder(getTranslationString(DefaultLangStrings.Phone))
                                 value(formStore.data.map { it.phone })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(phone = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Email")
+                                placeholder(getTranslationString(DefaultLangStrings.Email))
                                 value(formStore.data.map { it.email })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(email = v) }
                             }
                         }
                         QrType.WIFI -> {
                             input("input input-bordered w-full") {
-                                placeholder("SSID")
+                                placeholder(getTranslationString(DefaultLangStrings.Ssid))
                                 value(formStore.data.map { it.ssid })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(ssid = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Password")
+                                placeholder(getTranslationString(DefaultLangStrings.Password))
                                 value(formStore.data.map { it.password })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(password = v) }
                             }
                             input("input input-bordered w-full") {
-                                placeholder("Encryption")
+                                placeholder(getTranslationString(DefaultLangStrings.Encryption))
                                 value(formStore.data.map { it.encryption })
                                 changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                             }
@@ -96,7 +106,7 @@ fun RenderContext.codesScreen(
                 }
                 div("flex gap-2") {
                     button("btn btn-primary btn-sm") {
-                        +"Save"
+                        translate(DefaultLangStrings.Save)
                         clicks handledBy {
                             val f = formStore.current
                             val data = when (f.type) {
@@ -114,7 +124,7 @@ fun RenderContext.codesScreen(
                         }
                     }
                     button("btn btn-secondary btn-sm") {
-                        +"Cancel"
+                        translate(DefaultLangStrings.Cancel)
                         clicks handledBy { editingStore.update(false) }
                     }
                 }
@@ -122,7 +132,7 @@ fun RenderContext.codesScreen(
         } else {
             div("flex gap-4 mb-6") {
                 button("btn btn-primary btn-sm") {
-                    +"Add"
+                    translate(DefaultLangStrings.Add)
                     clicks handledBy {
                         formStore.update(QrForm())
                         editingStore.update(true)
@@ -145,7 +155,7 @@ fun RenderContext.codesScreen(
                                         .map { if (it.name.isBlank()) it.copy(name = it.text) else it }
                                     savedCodesStore.update(list)
                                 } catch (e: Throwable) {
-                                    window.alert("Invalid JSON")
+                                    window.alert(getTranslationString(DefaultLangStrings.InvalidJson))
                                 }
                                 inputElement.value = ""
                             }
@@ -155,13 +165,13 @@ fun RenderContext.codesScreen(
                 }
 
                 button("btn btn-secondary btn-sm") {
-                    +"Import"
+                    translate(DefaultLangStrings.Import)
                     clicks handledBy {
                         fileInput.domNode.click()
                     }
                 }
                 button("btn btn-secondary btn-sm") {
-                    +"Export"
+                    translate(DefaultLangStrings.Export)
                     clicks handledBy {
                         val txt = json.encodeToString(savedCodesStore.current)
                         val encoded = js("encodeURIComponent")(txt) as String
@@ -232,7 +242,7 @@ fun RenderContext.codesScreen(
                         attr("draggable", "true")
                         p("mr-2 flex-grow truncate") { +truncated }
                         button("btn btn-xs btn-warning") {
-                            +"Delete"
+                            translate(DefaultLangStrings.Delete)
                             clicks.map { it.stopPropagation(); Unit } handledBy {
                                 val list = savedCodesStore.current.toMutableList()
                                 list.removeAt(index)
@@ -271,11 +281,11 @@ fun RenderContext.codesScreen(
                             pre("whitespace-pre-wrap break-words") { +code.data.format() }
                             div("modal-action") {
                                 button("btn") {
-                                    +"Close"
+                                    translate(DefaultLangStrings.Close)
                                     clicks handledBy { selectedIndexStore.update(null) }
                                 }
                                 button("btn btn-primary") {
-                                    +"Save"
+                                    translate(DefaultLangStrings.Save)
                                     clicks handledBy {
                                         val newName = nameStore.current.ifBlank { code.text }
                                         val list = savedCodesStore.current.toMutableList()
