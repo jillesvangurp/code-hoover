@@ -112,12 +112,17 @@ fun RenderContext.codesScreen(
             ul("flex flex-col gap-4 w-full") {
                 val listElement = domNode
 
-                // Handle dragging over empty space at the end of the list
+                // Handle dragging over empty space at the top or bottom of the list
                 listElement.addEventListener("dragover", { event ->
                     val e = event as DragEvent
                     e.preventDefault()
                     if (e.target == listElement) {
-                        listElement.appendChild(placeholder)
+                        val rect = listElement.getBoundingClientRect()
+                        if (e.clientY < rect.top + rect.height / 2) {
+                            listElement.insertBefore(placeholder, listElement.firstChild)
+                        } else {
+                            listElement.appendChild(placeholder)
+                        }
                     }
                 })
 
