@@ -7,11 +7,11 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLLIElement
 import org.w3c.dom.HTMLUListElement
-import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
 import qr.QrData
@@ -108,31 +108,34 @@ fun RenderContext.codesScreen(
                 }
             }
             val placeholder = (document.createElement("li") as HTMLLIElement).apply {
-                className = "card border-2 border-dashed border-primary h-16"
+                className = "card border-2 border-dashed border-primary h-16 my-2"
             }
             var draggedIndex: Int? = null
 
             fun getDragAfterElement(container: HTMLUListElement, y: Double): HTMLElement? {
-                val elements = (0 until container.children.length).map { container.children.item(it) as HTMLElement }
-                    .filter { it != placeholder && !it.classList.contains("dragging") }
-                var closest: Pair<Double, HTMLElement?> = Pair(Double.NEGATIVE_INFINITY, null)
-                elements.forEach { child ->
+                var closestOffset = Double.NEGATIVE_INFINITY
+                var closest: HTMLElement? = null
+                val children = container.children
+                for (i in 0 until children.length) {
+                    val child = children.item(i) as HTMLElement
+                    if (child == placeholder || child.classList.contains("dragging")) continue
                     val box = child.getBoundingClientRect()
                     val offset = y - box.top - box.height / 2
-                    if (offset < 0 && offset > closest.first) {
-                        closest = Pair(offset, child)
+                    if (offset < 0 && offset > closestOffset) {
+                        closestOffset = offset
+                        closest = child
                     }
                 }
-                return closest.second
+                return closest
             }
 
             ul("flex flex-col gap-4 w-full") {
                 val container = domNode as HTMLUListElement
 
-                container.addEventListener("dragover", { e ->
-                    e as DragEvent
-                    e.preventDefault()
-                    val after = getDragAfterElement(container, e.clientY.toDouble())
+                container.addEventListener("dragover", { event ->
+                    event as DragEvent
+                    event.preventDefault()
+                    val after = getDragAfterElement(container, event.clientY.toDouble())
                     if (after == null) {
                         container.appendChild(placeholder)
                     } else {
@@ -140,24 +143,28 @@ fun RenderContext.codesScreen(
                     }
                 })
 
-                container.addEventListener("drop", { e ->
-                    e as DragEvent
-                    e.preventDefault()
+                container.addEventListener("drop", { event ->
+                    event as DragEvent
+                    event.preventDefault()
                     val from = draggedIndex ?: return@addEventListener
                     val children = container.children
-                    val placeholderIndex = (0 until children.length).firstOrNull { children.item(it) == placeholder } ?: return@addEventListener
+                    val placeholderIdx = (0 until children.length).firstOrNull { children.item(it) == placeholder }
+                        ?: return@addEventListener
                     placeholder.remove()
                     val list = savedCodesStore.current.toMutableList()
                     val item = list.removeAt(from)
-                    val to = if (from < placeholderIndex) placeholderIndex - 1 else placeholderIndex
+                    var to = placeholderIdx
+                    if (from < to) to -= 1
                     list.add(to, item)
                     savedCodesStore.update(list)
                     draggedIndex = null
                 })
 
-                container.addEventListener("dragleave", { e ->
-                    e as DragEvent
-                    if (e.target == container) placeholder.remove()
+                container.addEventListener("dragleave", { event ->
+                    event as DragEvent
+                    if (event.target == container) {
+                        placeholder.remove()
+                    }
                 })
 
                 savedCodesStore.data.map { it.withIndex().toList() }.renderEach { indexed ->
@@ -181,6 +188,7 @@ fun RenderContext.codesScreen(
                             e as DragEvent
                             draggedIndex = index
                             (domNode as HTMLElement).classList.add("dragging")
+                            placeholder.style.height = "${domNode.getBoundingClientRect().height}px"
                             e.dataTransfer?.effectAllowed = "move"
                         })
                         domNode.addEventListener("dragend", { _ ->
