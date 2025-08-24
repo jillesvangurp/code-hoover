@@ -20,7 +20,8 @@ fun RenderContext.scanScreen(
         section("flex flex-col items-center gap-4 w-full") {
             div("join flex-wrap justify-center") {
                 if (scanning) {
-                    button("btn btn-error btn-sm w-24") {
+                    button("btn btn-error btn-sm w-24 flex items-center gap-1") {
+                        iconStop()
                         translate(DefaultLangStrings.Stop)
                         clicks handledBy {
                             codeReader.stopContinuousDecode()
@@ -28,7 +29,8 @@ fun RenderContext.scanScreen(
                         }
                     }
                 } else {
-                    button("btn btn-primary btn-sm w-24") {
+                    button("btn btn-primary btn-sm w-24 flex items-center gap-1") {
+                        iconCamera()
                         translate(DefaultLangStrings.Scan)
                         clicks handledBy {
                             codeReader.decodeFromInputVideoDeviceContinuously(
@@ -50,7 +52,8 @@ fun RenderContext.scanScreen(
                         }
                     }
                 }
-                button("btn btn-secondary btn-sm w-24") {
+                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
+                    iconXMark()
                     translate(DefaultLangStrings.Clear)
                     clicks handledBy {
                         scansStore.update(emptyList())
@@ -75,18 +78,21 @@ fun RenderContext.scanScreen(
                 p("break-words font-mono") { +scan.text }
                 p("text-xs opacity-70") { +barcodeFormatName(scan.format) }
                 div("mt-2 join flex-wrap") {
-                    button("btn btn-primary btn-xs w-24") {
+                    button("btn btn-primary btn-xs w-24 flex items-center gap-1") {
                         attr("title", getTranslationString(DefaultLangStrings.Copy))
+                        iconDocumentDuplicate()
                         translate(DefaultLangStrings.Copy)
                         clicks handledBy { window.navigator.clipboard.writeText(scan.text) }
                     }
                     if (scan.text.startsWith("http://") || scan.text.startsWith("https://")) {
-                        button("btn btn-secondary btn-xs w-24") {
+                        button("btn btn-secondary btn-xs w-24 flex items-center gap-1") {
+                            iconArrowTopRightOnSquare()
                             translate(DefaultLangStrings.Open)
                             clicks handledBy { window.open(scan.text, "_blank") }
                         }
                     }
-                    button("btn btn-accent btn-xs w-24") {
+                    button("btn btn-accent btn-xs w-24 flex items-center gap-1") {
+                        iconCheck()
                         translate(DefaultLangStrings.Save)
                         clicks handledBy {
                             val entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
@@ -104,7 +110,8 @@ fun RenderContext.scanScreen(
                             savedCodesStore.update(savedCodesStore.current + entry)
                         }
                     }
-                    button("btn btn-warning btn-xs w-24") {
+                    button("btn btn-warning btn-xs w-24 flex items-center gap-1") {
+                        iconTrash()
                         translate(DefaultLangStrings.Delete)
                         clicks handledBy {
                             scansStore.update(scansStore.current.filterNot { it == scan })
