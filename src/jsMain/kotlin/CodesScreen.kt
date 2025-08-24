@@ -220,7 +220,9 @@ fun RenderContext.codesScreen(
                             pre("whitespace-pre-wrap break-words text-center") {
                                 modalFormStore.data.map { it.toQrData().format() }.renderText()
                             }
-                            qrFormFields(modalFormStore)
+                            div("w-full max-w-sm mx-auto flex flex-col gap-2") {
+                                qrFormFields(modalFormStore)
+                            }
                             formButtons("modal-action justify-center", {
                                 val f = modalFormStore.current
                                 val data = f.toQrData()
