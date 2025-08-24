@@ -31,7 +31,7 @@ fun RenderContext.codesScreen(
     val selectedIndexStore = storeOf<Int?>(null)
     var draggedIndex: Int? = null
     val placeholder = (document.createElement("li") as HTMLElement).apply {
-        className = "h-12 w-full rounded-md border-2 border-dashed border-base-content/40"
+        className = "h-12 rounded-md border-2 border-dashed border-base-content/40"
     }
 
     editingStore.data.render { editing ->
