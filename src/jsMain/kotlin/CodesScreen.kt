@@ -217,11 +217,11 @@ fun RenderContext.codesScreen(
                                     imgElem.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
                                 }
                             }
-                            pre("whitespace-pre-wrap break-words text-center") {
+                            pre("whitespace-pre-wrap break-words max-w-sm mx-auto text-left") {
                                 modalFormStore.data.map { it.toQrData().format() }.renderText()
                             }
                             div("w-full max-w-sm mx-auto flex flex-col gap-2") {
-                                qrFormFields(modalFormStore)
+                                qrFormFields(modalFormStore, showTypeSelect = false)
                             }
                             formButtons("modal-action justify-center", {
                                 val f = modalFormStore.current
@@ -243,28 +243,30 @@ fun RenderContext.codesScreen(
     }
 }
 
-private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
+private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect: Boolean = true) {
     input("input input-bordered w-full") {
         placeholder(getTranslationString(DefaultLangStrings.Name))
         value(formStore.current.name)
         value(formStore.data.map { it.name })
         changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
     }
-    select("select select-bordered w-full") {
-        value(formStore.current.type.name)
-        value(formStore.data.map { it.type.name })
-        changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
-        QrType.values().filter { it != QrType.VCARD }.forEach {
-            option {
-                translate(
-                    when (it) {
-                        QrType.URL -> DefaultLangStrings.Url
-                        QrType.TEXT -> DefaultLangStrings.Text
-                        QrType.WIFI -> DefaultLangStrings.Wifi
-                        else -> DefaultLangStrings.Text
-                    }
-                )
-                value(it.name)
+    if (showTypeSelect) {
+        select("select select-bordered w-full") {
+            value(formStore.current.type.name)
+            value(formStore.data.map { it.type.name })
+            changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
+            QrType.values().filter { it != QrType.VCARD }.forEach {
+                option {
+                    translate(
+                        when (it) {
+                            QrType.URL -> DefaultLangStrings.Url
+                            QrType.TEXT -> DefaultLangStrings.Text
+                            QrType.WIFI -> DefaultLangStrings.Wifi
+                            else -> DefaultLangStrings.Text
+                        }
+                    )
+                    value(it.name)
+                }
             }
         }
     }
