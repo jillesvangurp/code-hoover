@@ -7,10 +7,8 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
-import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
 import qr.QrData
 import qr.QrType
@@ -29,10 +27,6 @@ fun RenderContext.codesScreen(
     val formStore = storeOf(QrForm())
     val editingStore = storeOf(false)
     val selectedIndexStore = storeOf<Int?>(null)
-    var draggedIndex: Int? = null
-    val placeholder = (document.createElement("li") as HTMLElement).apply {
-        className = "h-12 rounded-md border-2 border-dashed border-base-content/40"
-    }
 
     editingStore.data.render { editing ->
         if (editing) {
@@ -110,61 +104,12 @@ fun RenderContext.codesScreen(
                 }
             }
             ul("flex flex-col gap-4 w-full") {
-                val listElement = domNode
-
-                listElement.addEventListener("dragover", { event ->
-                    val e = event as DragEvent
-                    e.preventDefault()
-                    val children = listElement.children
-                    var inserted = false
-                    for (i in 0 until children.length) {
-                        val child = children.item(i) as HTMLElement
-                        if (child == placeholder) continue
-                        val rect = child.getBoundingClientRect()
-                        if (e.clientY < rect.top + rect.height / 2) {
-                            listElement.insertBefore(placeholder, child)
-                            inserted = true
-                            break
-                        }
-                    }
-                    if (!inserted) listElement.appendChild(placeholder)
-                })
-
-                listElement.addEventListener("drop", { event ->
-                    val e = event as DragEvent
-                    e.preventDefault()
-                    val fromIndex = draggedIndex ?: return@addEventListener
-                    val children = listElement.children
-                    var toIndex = children.length
-                    for (i in 0 until children.length) {
-                        if (children.item(i) == placeholder) {
-                            toIndex = i
-                            break
-                        }
-                    }
-                    placeholder.remove()
-                    val list = savedCodesStore.current.toMutableList()
-                    val item = list.removeAt(fromIndex)
-                    val insertAt = if (toIndex <= fromIndex) toIndex else toIndex - 1
-                    list.add(insertAt, item)
-                    savedCodesStore.update(list)
-                    draggedIndex = null
-                })
-
-                listElement.addEventListener("dragleave", { event ->
-                    val e = event as DragEvent
-                    if (e.target == listElement && e.relatedTarget == null) {
-                        placeholder.remove()
-                    }
-                })
-
                 savedCodesStore.data.map { it.withIndex().toList() }.renderEach { indexed ->
                     val index = indexed.index
                     val code = indexed.value
                     val displayName = code.name.ifBlank { code.text }
                     val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
                     li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer w-full") {
-                        attr("draggable", "true")
                         p("mr-2 flex-grow truncate") { +truncated }
                         button("btn btn-xs btn-warning w-24 flex items-center gap-1") {
                             iconTrash()
@@ -176,13 +121,6 @@ fun RenderContext.codesScreen(
                             }
                         }
                         clicks handledBy { selectedIndexStore.update(index) }
-                        domNode.addEventListener("dragstart", { event ->
-                            val e = event as DragEvent
-                            draggedIndex = index
-                            e.dataTransfer?.setData("text/plain", index.toString())
-                            placeholder.remove()
-                        })
-                        domNode.addEventListener("dragend", { _ -> placeholder.remove() })
                     }
                 }
             }
