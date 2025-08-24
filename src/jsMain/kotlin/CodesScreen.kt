@@ -31,7 +31,7 @@ fun RenderContext.codesScreen(
     val selectedIndexStore = storeOf<Int?>(null)
     var draggedIndex: Int? = null
     val placeholder = (document.createElement("li") as HTMLElement).apply {
-        className = "h-0 border-t-2 border-dashed border-base-content/40 my-1"
+        className = "h-0 border-t-2 border-dashed border-base-content/40 my-1 w-full"
         addEventListener("dragover", { (it as DragEvent).preventDefault() })
     }
 
@@ -113,13 +113,21 @@ fun RenderContext.codesScreen(
             ul("flex flex-col gap-4 w-full") {
                 val listElement = domNode
 
-                // Allow dropping at the end of the list
                 listElement.addEventListener("dragover", { event ->
                     val e = event as DragEvent
-                    if (e.target == listElement) {
-                        e.preventDefault()
-                        listElement.appendChild(placeholder)
+                    e.preventDefault()
+                    var inserted = false
+                    for (i in 0 until listElement.children.length) {
+                        val child = listElement.children.item(i) as HTMLElement
+                        if (child == placeholder) continue
+                        val rect = child.getBoundingClientRect()
+                        if (e.clientY < rect.top + rect.height / 2) {
+                            listElement.insertBefore(placeholder, child)
+                            inserted = true
+                            break
+                        }
                     }
+                    if (!inserted) listElement.appendChild(placeholder)
                 })
 
                 listElement.addEventListener("drop", { event ->
@@ -170,16 +178,6 @@ fun RenderContext.codesScreen(
                         domNode.addEventListener("dragend", { _ ->
                             placeholder.remove()
                             draggedIndex = null
-                        })
-                        domNode.addEventListener("dragover", { event ->
-                            val e = event as DragEvent
-                            e.preventDefault()
-                            val rect = domNode.getBoundingClientRect()
-                            if (e.clientY < rect.top + rect.height / 2) {
-                                listElement.insertBefore(placeholder, domNode)
-                            } else {
-                                listElement.insertBefore(placeholder, domNode.nextSibling)
-                            }
                         })
                     }
                 }
