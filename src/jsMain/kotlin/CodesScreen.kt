@@ -217,6 +217,9 @@ fun RenderContext.codesScreen(
                                     imgElem.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
                                 }
                             }
+                            pre("whitespace-pre-wrap break-words text-center") {
+                                modalFormStore.data.map { it.toQrData().format() }.renderText()
+                            }
                             qrFormFields(modalFormStore)
                             formButtons("modal-action justify-center", {
                                 val f = modalFormStore.current
@@ -241,10 +244,12 @@ fun RenderContext.codesScreen(
 private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
     input("input input-bordered w-full") {
         placeholder(getTranslationString(DefaultLangStrings.Name))
+        value(formStore.current.name)
         value(formStore.data.map { it.name })
         changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
     }
     select("select select-bordered w-full") {
+        value(formStore.current.type.name)
         value(formStore.data.map { it.type.name })
         changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
         QrType.values().forEach {
@@ -265,27 +270,32 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
         when (t) {
             QrType.URL -> input("input input-bordered w-full") {
                 placeholder(getTranslationString(DefaultLangStrings.Url))
+                value(formStore.current.url)
                 value(formStore.data.map { it.url })
                 changes.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
             }
             QrType.TEXT -> textarea("textarea textarea-bordered w-full") {
                 placeholder(getTranslationString(DefaultLangStrings.Text))
+                value(formStore.current.text)
                 value(formStore.data.map { it.text })
                 changes.values() handledBy formStore.handle { f, v -> f.copy(text = v) }
             }
             QrType.VCARD -> {
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.FullName))
+                    value(formStore.current.fullName)
                     value(formStore.data.map { it.fullName })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(fullName = v) }
                 }
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Phone))
+                    value(formStore.current.phone)
                     value(formStore.data.map { it.phone })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(phone = v) }
                 }
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Email))
+                    value(formStore.current.email)
                     value(formStore.data.map { it.email })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(email = v) }
                 }
@@ -293,16 +303,19 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
             QrType.WIFI -> {
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Ssid))
+                    value(formStore.current.ssid)
                     value(formStore.data.map { it.ssid })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(ssid = v) }
                 }
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Password))
+                    value(formStore.current.password)
                     value(formStore.data.map { it.password })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(password = v) }
                 }
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Encryption))
+                    value(formStore.current.encryption)
                     value(formStore.data.map { it.encryption })
                     changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                 }
