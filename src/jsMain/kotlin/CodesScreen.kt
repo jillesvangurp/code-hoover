@@ -254,14 +254,14 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
         value(formStore.current.type.name)
         value(formStore.data.map { it.type.name })
         changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
-        QrType.values().forEach {
+        QrType.values().filter { it != QrType.VCARD }.forEach {
             option {
                 translate(
                     when (it) {
                         QrType.URL -> DefaultLangStrings.Url
                         QrType.TEXT -> DefaultLangStrings.Text
-                        QrType.VCARD -> DefaultLangStrings.VCard
                         QrType.WIFI -> DefaultLangStrings.Wifi
+                        else -> DefaultLangStrings.Text
                     }
                 )
                 value(it.name)
@@ -281,26 +281,6 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
                 value(formStore.current.text)
                 value(formStore.data.map { it.text })
                 changes.values() handledBy formStore.handle { f, v -> f.copy(text = v) }
-            }
-            QrType.VCARD -> {
-                input("input input-bordered w-full") {
-                    placeholder(getTranslationString(DefaultLangStrings.FullName))
-                    value(formStore.current.fullName)
-                    value(formStore.data.map { it.fullName })
-                    changes.values() handledBy formStore.handle { f, v -> f.copy(fullName = v) }
-                }
-                input("input input-bordered w-full") {
-                    placeholder(getTranslationString(DefaultLangStrings.Phone))
-                    value(formStore.current.phone)
-                    value(formStore.data.map { it.phone })
-                    changes.values() handledBy formStore.handle { f, v -> f.copy(phone = v) }
-                }
-                input("input input-bordered w-full") {
-                    placeholder(getTranslationString(DefaultLangStrings.Email))
-                    value(formStore.current.email)
-                    value(formStore.data.map { it.email })
-                    changes.values() handledBy formStore.handle { f, v -> f.copy(email = v) }
-                }
             }
             QrType.WIFI -> {
                 input("input input-bordered w-full") {
@@ -322,6 +302,7 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>) {
                     changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                 }
             }
+            else -> {}
         }
     }
 }
