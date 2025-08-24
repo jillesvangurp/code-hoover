@@ -112,22 +112,13 @@ fun RenderContext.codesScreen(
             ul("flex flex-col gap-4 w-full") {
                 val listElement = domNode
 
+                // Handle dragging over empty space at the end of the list
                 listElement.addEventListener("dragover", { event ->
                     val e = event as DragEvent
                     e.preventDefault()
-                    val children = listElement.children
-                    var inserted = false
-                    for (i in 0 until children.length) {
-                        val child = children.item(i) as HTMLElement
-                        if (child == placeholder) continue
-                        val rect = child.getBoundingClientRect()
-                        if (e.clientY < rect.top + rect.height / 2) {
-                            listElement.insertBefore(placeholder, child)
-                            inserted = true
-                            break
-                        }
+                    if (e.target == listElement) {
+                        listElement.appendChild(placeholder)
                     }
-                    if (!inserted) listElement.appendChild(placeholder)
                 })
 
                 listElement.addEventListener("drop", { event ->
@@ -181,6 +172,17 @@ fun RenderContext.codesScreen(
                             draggedIndex = index
                             e.dataTransfer?.setData("text/plain", index.toString())
                             placeholder.remove()
+                        })
+                        domNode.addEventListener("dragover", { event ->
+                            val e = event as DragEvent
+                            e.preventDefault()
+                            val target = e.currentTarget as HTMLElement
+                            val rect = target.getBoundingClientRect()
+                            if (e.clientY < rect.top + rect.height / 2) {
+                                listElement.insertBefore(placeholder, target)
+                            } else {
+                                listElement.insertBefore(placeholder, target.nextSibling)
+                            }
                         })
                         domNode.addEventListener("dragend", { _ -> placeholder.remove() })
                     }
