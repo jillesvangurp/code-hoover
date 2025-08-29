@@ -85,8 +85,9 @@ suspend fun main() {
                             iconBars()
                         }
                         ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52") {
+                            tabIndex(0)
                             li {
-                                a {
+                                button("w-full text-left") {
                                     translate(DefaultLangStrings.About)
                                     clicks handledBy { screenStore.update(Screen.About) }
                                 }
@@ -120,7 +121,9 @@ suspend fun main() {
                             li {
                                 val darkStore = storeOf(prefersDark)
                                 darkStore.data.render { isDark ->
-                                    label("swap swap-rotate") {
+                                    button(
+                                        "swap swap-rotate " + if (isDark) "swap-active" else "",
+                                    ) {
                                         attr("title", getTranslationString(DefaultLangStrings.DarkMode))
                                         clicks handledBy {
                                             val html = document.documentElement!!
@@ -128,14 +131,10 @@ suspend fun main() {
                                             html.setAttribute("data-theme", newTheme)
                                             darkStore.update(!isDark)
                                         }
-                                        input {
-                                            attr("type", "checkbox")
-                                            className("theme-controller")
-                                            if (isDark) attr("checked", "checked")
-                                        }
                                         svg("swap-off h-10 w-10 fill-current") {
                                             attr("xmlns", "http://www.w3.org/2000/svg")
                                             attr("viewBox", "0 0 24 24")
+                        
                                             path {
                                                 attr(
                                                     "d",
