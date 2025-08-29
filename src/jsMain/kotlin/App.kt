@@ -14,6 +14,7 @@ import localization.Locales
 import localization.TranslationStore
 import localization.getTranslationString
 import localization.translate
+import org.w3c.dom.HTMLElement
 
 
 private val barcodeFormatNames = arrayOf(
@@ -89,7 +90,10 @@ suspend fun main() {
                             li {
                                 button("w-full text-left") {
                                     translate(DefaultLangStrings.About)
-                                    clicks handledBy { screenStore.update(Screen.About) }
+                                    clicks handledBy {
+                                        screenStore.update(Screen.About)
+                                        (document.activeElement as? HTMLElement)?.blur()
+                                    }
                                 }
                             }
                             li {

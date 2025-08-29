@@ -8,7 +8,7 @@ import DefaultLangStrings
 
 fun RenderContext.aboutScreen() {
     val repoUrl = "https://github.com/felko/code-hoover"
-    val videoUrl = "https://www.youtube.com/watch?v=dvEe3CwwyKk" // TODO: verify correct Veritasium video link
+    val videoUrl = "https://www.youtube.com/watch?v=w5ebcowAJD8"
 
     div("flex flex-col items-center gap-4 text-center") {
         h2("text-xl font-bold") { translate(DefaultLangStrings.About) }
