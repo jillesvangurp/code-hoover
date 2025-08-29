@@ -95,7 +95,7 @@ fun RenderContext.scanScreen(
                         iconCheck()
                         translate(DefaultLangStrings.Save)
                         clicks handledBy {
-                            val entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
+                            var entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
                                 try {
                                     json.decodeFromString<SavedQrCode>(scan.text)
                                         .let { if (it.name.isBlank()) it.copy(name = it.text) else it }
@@ -107,6 +107,12 @@ fun RenderContext.scanScreen(
                                 val data = QrData.Text(scan.text)
                                 SavedQrCode(scan.text, data.asText(), data)
                             }
+                            val defaultName = entry.name.ifBlank { entry.text }
+                            val name = window.prompt(
+                                getTranslationString(DefaultLangStrings.Name),
+                                defaultName,
+                            ) ?: defaultName
+                            entry = entry.copy(name = if (name.isBlank()) entry.text else name)
                             savedCodesStore.update(savedCodesStore.current + entry)
                         }
                     }
