@@ -35,4 +35,9 @@ default-email-label=メール: { $value }
 default-ssid-label=SSID: { $value }
 default-password-label=パスワード: { $value }
 default-type-label=タイプ: { $value }
+default-about=About
+default-about-intro=Code Hoover lets you scan and generate QR codes directly in the browser.
+default-github-repo=GitHub repository
+default-veritasium-video=Veritasium video on QR codes
+default-open-source-statement=This project is free and open source.
 

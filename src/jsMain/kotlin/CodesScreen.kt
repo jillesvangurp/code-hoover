@@ -41,9 +41,9 @@ fun RenderContext.codesScreen(
                     if (f.index != null) list[f.index] = entry else list.add(entry)
                     savedCodesStore.update(list)
                     editingStore.update(false)
-                }) {
+                }, {
                     editingStore.update(false)
-                }
+                })
             }
         } else {
             div("join flex-wrap mb-6") {
@@ -109,17 +109,8 @@ fun RenderContext.codesScreen(
                     val code = indexed.value
                     val displayName = code.name.ifBlank { code.text }
                     val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
-                    li("card bg-base-200 p-4 flex justify-between items-center cursor-pointer w-full") {
-                        p("mr-2 flex-grow truncate") { +truncated }
-                        button("btn btn-xs btn-warning w-24 flex items-center gap-1") {
-                            iconTrash()
-                            translate(DefaultLangStrings.Delete)
-                            clicks.map { it.stopPropagation(); Unit } handledBy {
-                                val list = savedCodesStore.current.toMutableList()
-                                list.removeAt(index)
-                                savedCodesStore.update(list)
-                            }
-                        }
+                    li("card bg-base-200 p-4 cursor-pointer w-full") {
+                        p("mr-2 truncate") { +truncated }
                         clicks handledBy { selectedIndexStore.update(index) }
                     }
                 }
@@ -161,18 +152,26 @@ fun RenderContext.codesScreen(
                             div("w-full max-w-sm mx-auto flex flex-col gap-2") {
                                 qrFormFields(modalFormStore, showTypeSelect = false)
                             }
-                            formButtons("modal-action justify-center", {
-                                val f = modalFormStore.current
-                                val data = f.toQrData()
-                                val name = if (f.name.isBlank()) data.asText() else f.name
-                                val entry = SavedQrCode(name, data.asText(), data)
-                                val list = savedCodesStore.current.toMutableList()
-                                list[idx] = entry
-                                savedCodesStore.update(list)
-                                close(false)
-                            }) {
-                                close(false)
-                            }
+                            formButtons(
+                                "modal-action justify-center",
+                                {
+                                    val f = modalFormStore.current
+                                    val data = f.toQrData()
+                                    val name = if (f.name.isBlank()) data.asText() else f.name
+                                    val entry = SavedQrCode(name, data.asText(), data)
+                                    val list = savedCodesStore.current.toMutableList()
+                                    list[idx] = entry
+                                    savedCodesStore.update(list)
+                                    close(false)
+                                },
+                                { close(false) },
+                                onDelete = {
+                                    val list = savedCodesStore.current.toMutableList()
+                                    list.removeAt(idx)
+                                    savedCodesStore.update(list)
+                                    close(false)
+                                }
+                            )
                         }
                     }
                 }
@@ -247,7 +246,12 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
     }
 }
 
-private fun RenderContext.formButtons(classes: String, onSave: () -> Unit, onCancel: () -> Unit) {
+private fun RenderContext.formButtons(
+    classes: String,
+    onSave: () -> Unit,
+    onCancel: () -> Unit,
+    onDelete: (() -> Unit)? = null,
+) {
     div(classes) {
         button("btn btn-primary btn-sm flex items-center gap-1") {
             iconCheck()
@@ -258,6 +262,13 @@ private fun RenderContext.formButtons(classes: String, onSave: () -> Unit, onCan
             iconXMark()
             translate(DefaultLangStrings.Cancel)
             clicks handledBy { onCancel() }
+        }
+        onDelete?.let {
+            button("btn btn-warning btn-sm flex items-center gap-1") {
+                iconTrash()
+                translate(DefaultLangStrings.Delete)
+                clicks handledBy { it() }
+            }
         }
     }
 }
