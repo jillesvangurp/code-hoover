@@ -122,16 +122,16 @@ suspend fun main() {
                                 darkStore.data.render { isDark ->
                                     label("swap swap-rotate") {
                                         attr("title", getTranslationString(DefaultLangStrings.DarkMode))
+                                        clicks handledBy {
+                                            val html = document.documentElement!!
+                                            val newTheme = if (isDark) lightMode else darkMode
+                                            html.setAttribute("data-theme", newTheme)
+                                            darkStore.update(!isDark)
+                                        }
                                         input {
                                             attr("type", "checkbox")
-                                            className("theme-controller hidden")
+                                            className("theme-controller")
                                             if (isDark) attr("checked", "checked")
-                                            clicks handledBy {
-                                                val html = document.documentElement!!
-                                                val newTheme = if (isDark) lightMode else darkMode
-                                                html.setAttribute("data-theme", newTheme)
-                                                darkStore.update(!isDark)
-                                            }
                                         }
                                         svg("swap-off h-10 w-10 fill-current") {
                                             attr("xmlns", "http://www.w3.org/2000/svg")
