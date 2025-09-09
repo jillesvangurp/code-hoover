@@ -16,6 +16,7 @@ fun RenderContext.scanScreen(
     savedCodesStore: Store<List<SavedQrCode>>,
     json: Json
 ) {
+    var controls: IScannerControls? = null
     scanningStore.data.render { scanning ->
         section("flex flex-col items-center gap-4 w-full") {
             div("join flex-wrap justify-center") {
@@ -24,7 +25,8 @@ fun RenderContext.scanScreen(
                         iconStop()
                         translate(DefaultLangStrings.Stop)
                         clicks handledBy {
-                            codeReader.stopContinuousDecode()
+                            controls?.stop()
+                            controls = null
                             scanningStore.update(false)
                         }
                     }
@@ -33,10 +35,11 @@ fun RenderContext.scanScreen(
                         iconCamera()
                         translate(DefaultLangStrings.Scan)
                         clicks handledBy {
-                            codeReader.decodeFromInputVideoDeviceContinuously(
+                            codeReader.decodeFromVideoDevice(
                                 null,
                                 "video",
-                            ) { result, _ ->
+                            ) { result, _, c ->
+                                controls = c
                                 if (result != null) {
                                     val text = result.text
                                     val format = result.format

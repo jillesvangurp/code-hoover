@@ -58,7 +58,7 @@ suspend fun main() {
 
         val codeReader = BrowserMultiFormatReader(
             hints = null,
-            timeBetweenScansMillis = 300,
+            options = js("{ delayBetweenScanAttempts: 300 }")
         )
         val scansStore = storeOf(listOf<ScanResult>())
         val scanningStore = storeOf(false)

@@ -1,4 +1,4 @@
-@file:JsModule("@zxing/library")
+@file:JsModule("@zxing/browser")
 @file:JsNonModule
 
 import kotlin.js.Promise
@@ -8,24 +8,25 @@ external interface ZXingResult {
     val text: String
 }
 
+external interface IScannerControls {
+    fun stop()
+}
+
 external class BrowserMultiFormatReader(
-    hints: dynamic,
-    timeBetweenScansMillis: Int
+    hints: dynamic = definedExternally,
+    options: dynamic = definedExternally,
 ) {
     fun decodeOnceFromVideoDevice(
         deviceId: String?,
         videoElementId: String?,
     ): Promise<ZXingResult>
 
-    fun decodeFromInputVideoDeviceContinuously(
+    fun decodeFromVideoDevice(
         deviceId: String?,
         videoSource: String?,
-        callbackFn: (ZXingResult?, Throwable?) -> Unit
-    ): Promise<Unit>
-
-    fun stopContinuousDecode()
-
-    fun stopAsyncDecode()
+        callbackFn: (ZXingResult?, Throwable?, IScannerControls) -> Unit,
+    ): Promise<IScannerControls>
 
     fun reset()
 }
+

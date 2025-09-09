@@ -55,6 +55,7 @@ kotlin {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
                 implementation("io.kotest:kotest-assertions-core:_")
+                implementation(npm("@zxing/browser","_"))
                 implementation(npm("@zxing/library","_"))
             }
         }
@@ -65,6 +66,7 @@ kotlin {
 
                 // fluent-js
                 implementation("com.tryformation:fluent-kotlin:_")
+                implementation(npm("@zxing/browser","_"))
                 implementation(npm("@zxing/library","_"))
                 implementation(npm("qrcode","_"))
             }
