@@ -9,6 +9,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
 import qr.QrData
 import qr.QrType
@@ -19,6 +20,9 @@ import qr.generateQrSvg
 import DefaultLangStrings
 import localization.getTranslationString
 import localization.translate
+import sortable.Sortable
+import sortable.SortableEvent
+import sortable.sortableOptions
 
 fun RenderContext.codesScreen(
     savedCodesStore: Store<List<SavedQrCode>>,
@@ -103,17 +107,30 @@ fun RenderContext.codesScreen(
                     }
                 }
             }
-            ul("flex flex-col gap-4 w-full") {
-                savedCodesStore.data.map { it.withIndex().toList() }.renderEach { indexed ->
-                    val index = indexed.index
-                    val code = indexed.value
-                    val displayName = code.name.ifBlank { code.text }
-                    val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
-                    li("card bg-base-200 p-4 cursor-pointer w-full") {
-                        p("mr-2 truncate") { +truncated }
-                        clicks handledBy { selectedIndexStore.update(index) }
+            savedCodesStore.data.render { list ->
+                val ulElement = ul("flex flex-col gap-4 w-full") {
+                    list.withIndex().forEach { (index, code) ->
+                        val displayName = code.name.ifBlank { code.text }
+                        val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
+                        li("card bg-base-200 p-4 cursor-pointer w-full") {
+                            p("mr-2 truncate") { +truncated }
+                            clicks handledBy { selectedIndexStore.update(index) }
+                        }
                     }
                 }
+                Sortable(ulElement.domNode as HTMLElement, sortableOptions {
+                    animation = 150
+                    onEnd = { evt ->
+                        val from = evt.oldIndex
+                        val to = evt.newIndex
+                        if (from != to) {
+                            val codes = savedCodesStore.current.toMutableList()
+                            val item = codes.removeAt(from)
+                            codes.add(to, item)
+                            savedCodesStore.update(codes)
+                        }
+                    }
+                })
             }
 
             // Modal for displaying and editing selected code
