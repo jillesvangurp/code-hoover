@@ -69,6 +69,7 @@ kotlin {
                 implementation(npm("@zxing/browser","_"))
                 implementation(npm("@zxing/library","_"))
                 implementation(npm("qrcode","_"))
+                implementation(npm("sortablejs","_"))
             }
         }
 
