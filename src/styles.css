@@ -78,6 +78,10 @@
 /* define qr-dark */
 
 @layer base {
+  body {
+    @apply bg-base-200;
+    scrollbar-gutter: stable both-edges;
+  }
   h1 {
     @apply text-3xl mb-6 clear-both;
   }
