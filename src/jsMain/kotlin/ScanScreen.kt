@@ -19,7 +19,7 @@ fun RenderContext.scanScreen(
     var controls: IScannerControls? = null
     scanningStore.data.render { scanning ->
         section("flex flex-col items-center gap-4 w-full") {
-            div("join flex-wrap justify-center") {
+            div("join flex-wrap w-full justify-center md:justify-start") {
                 if (scanning) {
                     button("btn btn-error btn-sm w-24 flex items-center gap-1") {
                         iconStop()
@@ -80,7 +80,7 @@ fun RenderContext.scanScreen(
             li("card bg-base-200 p-3 w-full") {
                 p("break-words font-mono") { +scan.text }
                 p("text-xs opacity-70") { +barcodeFormatName(scan.format) }
-                div("mt-2 join flex-wrap") {
+                div("mt-2 join flex-wrap w-full justify-center sm:justify-start") {
                     button("btn btn-primary btn-xs w-24 flex items-center gap-1") {
                         attr("title", getTranslationString(DefaultLangStrings.Copy))
                         iconDocumentDuplicate()

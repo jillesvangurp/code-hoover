@@ -34,9 +34,9 @@ fun RenderContext.codesScreen(
 
     editingStore.data.render { editing ->
         if (editing) {
-            div("flex flex-col gap-4") {
+            div("flex flex-col gap-4 w-full") {
                 qrFormFields(formStore)
-                formButtons("flex gap-2", {
+                formButtons("flex flex-wrap gap-2 w-full justify-center md:justify-start", {
                     val f = formStore.current
                     val data = f.toQrData()
                     val name = if (f.name.isBlank()) data.asText() else f.name
@@ -50,7 +50,7 @@ fun RenderContext.codesScreen(
                 })
             }
         } else {
-            div("join flex-wrap mb-6") {
+            div("join flex-wrap w-full justify-center md:justify-start mb-6") {
                 button("btn btn-primary btn-sm w-24 flex items-center gap-1") {
                     iconPlus()
                     translate(DefaultLangStrings.Add)
@@ -112,8 +112,19 @@ fun RenderContext.codesScreen(
                     list.withIndex().forEach { (index, code) ->
                         val displayName = code.name.ifBlank { code.text }
                         val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
-                        li("card bg-base-200 p-4 cursor-pointer w-full") {
-                            p("mr-2 truncate") { +truncated }
+                        li(
+                            "card bg-base-200 p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center"
+                        ) {
+                            val preview = img("h-24 w-24 mx-auto pointer-events-none") {
+                                attr("alt", displayName)
+                                attr("loading", "lazy")
+                            }
+                            MainScope().launch {
+                                val svg = generateQrSvg(code.text, 160)
+                                val encoded = window.btoa(svg)
+                                preview.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
+                            }
+                            p("w-full truncate font-medium") { +truncated }
                             clicks handledBy { selectedIndexStore.update(index) }
                         }
                     }
@@ -154,8 +165,16 @@ fun RenderContext.codesScreen(
                     window.addEventListener("popstate", popHandler)
 
                     div("modal modal-open") {
-                        div("modal-box w-full h-full max-w-full space-y-4") {
-                            val imgElem = img("mx-auto") {}
+                        div("modal-box relative w-full h-full max-w-full space-y-4") {
+                            button("btn btn-ghost btn-sm btn-circle absolute right-4 top-4") {
+                                attr("type", "button")
+                                attr("aria-label", getTranslationString(DefaultLangStrings.Close))
+                                iconXMark()
+                                clicks handledBy { close(false) }
+                            }
+                            val imgElem = img("mx-auto") {
+                                attr("alt", initial.name.ifBlank { initial.text })
+                            }
                             modalFormStore.data.map { it.toQrData().asText() }.handledBy { txt ->
                                 MainScope().launch {
                                     val svg = generateQrSvg(txt, 500)
@@ -170,7 +189,7 @@ fun RenderContext.codesScreen(
                                 qrFormFields(modalFormStore, showTypeSelect = false)
                             }
                             formButtons(
-                                "modal-action justify-center",
+                                "modal-action flex flex-wrap gap-2 justify-center md:justify-end",
                                 {
                                     val f = modalFormStore.current
                                     val data = f.toQrData()
@@ -187,7 +206,8 @@ fun RenderContext.codesScreen(
                                     list.removeAt(idx)
                                     savedCodesStore.update(list)
                                     close(false)
-                                }
+                                },
+                                showCancel = false
                             )
                         }
                     }
@@ -266,8 +286,9 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
 private fun RenderContext.formButtons(
     classes: String,
     onSave: () -> Unit,
-    onCancel: () -> Unit,
+    onCancel: (() -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
+    showCancel: Boolean = onCancel != null,
 ) {
     div(classes) {
         button("btn btn-primary btn-sm flex items-center gap-1") {
@@ -275,10 +296,12 @@ private fun RenderContext.formButtons(
             translate(DefaultLangStrings.Save)
             clicks handledBy { onSave() }
         }
-        button("btn btn-secondary btn-sm flex items-center gap-1") {
-            iconXMark()
-            translate(DefaultLangStrings.Cancel)
-            clicks handledBy { onCancel() }
+        if (showCancel && onCancel != null) {
+            button("btn btn-secondary btn-sm flex items-center gap-1") {
+                iconXMark()
+                translate(DefaultLangStrings.Cancel)
+                clicks handledBy { onCancel() }
+            }
         }
         onDelete?.let {
             button("btn btn-warning btn-sm flex items-center gap-1") {

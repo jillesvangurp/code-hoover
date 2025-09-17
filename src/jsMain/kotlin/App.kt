@@ -77,8 +77,10 @@ suspend fun main() {
         }.launchIn(MainScope())
         val screenStore = storeOf(Screen.Codes)
         val translationStore = withKoin { get<TranslationStore>() }
-        div("min-h-screen flex flex-col bg-base-100 text-base-content") {
-            article("p-6 max-w-screen-sm mx-auto flex flex-col gap-6 flex-grow") {
+        div("min-h-screen flex flex-col items-center text-base-content px-4 py-6 sm:py-10") {
+            article(
+                "w-full max-w-xl lg:max-w-3xl bg-base-100 shadow-xl rounded-3xl p-6 sm:p-10 flex flex-col gap-6 flex-grow"
+            ) {
                 div("flex flex-wrap items-center justify-between gap-4") {
                     div("flex items-center gap-3") {
                         img("h-10 w-10 dark:invert") {
