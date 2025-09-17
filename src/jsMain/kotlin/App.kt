@@ -87,7 +87,7 @@ suspend fun main() {
                             attr("src", "/favicon.svg")
                             attr("alt", "Code Hoover logo")
                         }
-                        h1("text-2xl sm:text-3xl font-bold text-primary") {
+                        h1("text-2xl sm:text-3xl font-bold text-primary m-0 p-0") {
                             translate(DefaultLangStrings.PageTitle)
                         }
                     }
