@@ -1,6 +1,6 @@
 ## Build
 
-- Compile kotlin js: `./gradlew jsBrowserDevelopmentWebpack`
+- Compile kotlin js: `./gradlew -Pkotlin.js.yarn.ignore.yarn.lock=true jsBrowserDevelopmentWebpack `
 - Build and minimize with vite: `npm install && npm run build`
 
 ## Dependencies
