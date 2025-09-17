@@ -79,7 +79,16 @@ suspend fun main() {
         val translationStore = withKoin { get<TranslationStore>() }
         div("min-h-screen flex flex-col bg-base-100 text-base-content") {
             article("p-6 max-w-screen-sm mx-auto flex flex-col gap-6 flex-grow") {
-                div("flex justify-end") {
+                div("flex flex-wrap items-center justify-between gap-4") {
+                    div("flex items-center gap-3") {
+                        img("h-10 w-10 dark:invert") {
+                            attr("src", "/favicon.svg")
+                            attr("alt", "Code Hoover logo")
+                        }
+                        h1("text-2xl sm:text-3xl font-bold text-primary") {
+                            translate(DefaultLangStrings.PageTitle)
+                        }
+                    }
                     div("dropdown dropdown-end") {
                         label("btn btn-ghost btn-circle") {
                             tabIndex(0)
@@ -138,7 +147,7 @@ suspend fun main() {
                                         svg("swap-off h-10 w-10 fill-current") {
                                             attr("xmlns", "http://www.w3.org/2000/svg")
                                             attr("viewBox", "0 0 24 24")
-                        
+
                                             path {
                                                 attr(
                                                     "d",
@@ -161,9 +170,6 @@ suspend fun main() {
                             }
                         }
                     }
-                }
-                h1("text-center text-2xl sm:text-3xl font-bold text-primary") {
-                    translate(DefaultLangStrings.PageTitle)
                 }
                 screenStore.data.render { screen ->
                     div("tabs tabs-boxed justify-center mb-6") {
