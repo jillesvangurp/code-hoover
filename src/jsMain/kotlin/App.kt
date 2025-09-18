@@ -20,7 +20,6 @@ import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLElement
 import org.w3c.files.FileReader
-import org.w3c.dom.events.Event
 
 
 private val barcodeFormatNames = arrayOf(
@@ -55,12 +54,6 @@ private const val lightMode = "qr-light"
 enum class Screen { Codes, Scan, About }
 
 suspend fun main() {
-
-    if (js("import.meta.env.PROD") as Boolean) {
-        window.addEventListener("load", { _: Event ->
-            window.navigator.serviceWorker?.register("/service-worker.js")
-        })
-    }
 
     // starts up koin and initializes the TranslationStore
     startAppWithKoin {
