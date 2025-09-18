@@ -83,6 +83,8 @@ kotlin {
             languageSettings.apply {
                 optIn("kotlin.ExperimentalStdlibApi")
                 optIn("kotlin.RequiresOptIn")
+                optIn("kotlin.time.ExperimentalTime")
+                optIn("kotlinx.coroutines.ExperimentalCoroutinesApi")
             }
         }
     }
