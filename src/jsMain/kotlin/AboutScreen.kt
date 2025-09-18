@@ -36,7 +36,7 @@ fun RenderContext.aboutScreen() {
             }
         }
         p { translate(DefaultLangStrings.MigrationInstructions) }
-        hr {  }
+        hr("divider") {}
         p { translate(DefaultLangStrings.OpenSourceStatement) }
     }
 }
