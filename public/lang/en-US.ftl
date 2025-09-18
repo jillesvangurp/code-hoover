@@ -63,7 +63,15 @@ default-type-label=Type: { $value }
 default-address-label=Address: { $value }
 default-note-label=Note: { $value }
 default-about=About
-default-about-intro=Code Hoover lets you scan and generate QR codes directly in the browser.
+default-about-intro=
+    Code Hoover lets you scan and generate QR codes directly in the browser. Suck up all the codes! And then add
+    them to your list of saved codes so you can show them to others. Great for wifi credentials, vcards, linkedin profile links, and many
+    other things.
 default-github-repo=GitHub repository
 default-veritasium-video=Veritasium video on QR codes
 default-open-source-statement=This project is free and open source.
+default-open-on-different-device=Open on a different device
+default-migration-instructions=
+    Migration instructions: Simply open Code Hoover on another device with this QR code.
+    Then go to the scan page to hoover up any codes you have from the codes screen here.
+    And then save the ones you want to keep.

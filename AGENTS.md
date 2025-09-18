@@ -1,14 +1,14 @@
 ## Build
 
-- Compile kotlin js: `./gradlew -Pkotlin.js.yarn.ignore.yarn.lock=true jsBrowserDevelopmentWebpack `
-- Build and minimize with vite: `npm install && npm run build`
+- First compile kotlin js: `./gradlew -Pkotlin.js.yarn.ignore.yarn.lock=true jsBrowserDevelopmentWebpack `
+- Then build and minimize with vite after the gradle build: `npm install && npm run build`
 
 ## Dependencies
 
 - we use the refreshVersions plugin with gradle for kotlin and npm runtime dependencies
-- it uses yarn under the hood but there's no need to run that directly
+- gradle uses yarn under the hood but there's no need to run that directly
 - after changing runtime dependencies, run './gradlew kotlinUpgradeYarnLock' to update the lock file
-- the exception here is  vite which we run via npm: `npm run build`. However, aside from development dependencies for vite,tailwind,etc., everything else is managed via gradle
+- the exception here is vite which we run via npm: `npm run build`. However, aside from development dependencies for vite,tailwind,etc., all runtime dependencies are managed via gradle
 
 ## Styling
 

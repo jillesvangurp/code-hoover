@@ -1,14 +1,7 @@
 import dev.fritz2.core.*
-import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.map
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import org.w3c.dom.HTMLAnchorElement
-import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLElement
-import org.w3c.files.FileReader
 import qr.QrData
 import qr.QrType
 import qr.SavedQrCode
@@ -16,15 +9,19 @@ import qr.asText
 import qr.defaultDisplayName
 import qr.format
 import DefaultLangStrings
+import com.jillesvangurp.serializationext.DEFAULT_JSON
+import kotlinx.browser.document
 import localization.getTranslationString
 import localization.translate
+import org.w3c.dom.HTMLAnchorElement
+import org.w3c.dom.HTMLInputElement
+import org.w3c.files.FileReader
 import sortable.Sortable
 import sortable.SortableEvent
 import sortable.sortableOptions
 
 fun RenderContext.codesScreen(
-    savedCodesStore: Store<List<SavedQrCode>>,
-    json: Json
+    savedCodesStore: Store<List<SavedQrCode>>
 ) {
     val formStore = storeOf(QrForm())
     val editingStore = storeOf(false)
@@ -71,7 +68,7 @@ fun RenderContext.codesScreen(
                             reader.onload = { loadEvent ->
                                 val text = (loadEvent.target as FileReader).result as String
                                 try {
-                                    val list = json.decodeFromString<List<SavedQrCode>>(text)
+                                    val list = DEFAULT_JSON.decodeFromString<List<SavedQrCode>>(text)
                                         .map { saved ->
                                             if (saved.name.isBlank()) {
                                                 val fallback = saved.data.defaultDisplayName().ifBlank { saved.text }
@@ -100,7 +97,7 @@ fun RenderContext.codesScreen(
                     iconArrowDownTray()
                     translate(DefaultLangStrings.Export)
                     clicks handledBy {
-                        val txt = json.encodeToString(savedCodesStore.current)
+                        val txt = DEFAULT_JSON.encodeToString(savedCodesStore.current)
                         val encoded = js("encodeURIComponent")(txt) as String
                         val link = document.createElement("a") as HTMLAnchorElement
                         link.href = "data:application/json;charset=utf-8,$encoded"
@@ -110,6 +107,7 @@ fun RenderContext.codesScreen(
                         document.body?.removeChild(link)
                     }
                 }
+
             }
             savedCodesStore.data.render { list ->
                 val ulElement = ul("flex flex-col gap-4 w-full") {
