@@ -10,6 +10,7 @@ fun RenderContext.aboutScreen() {
     div("flex flex-col gap-4 text-left items-start") {
         h2("text-xl font-bold") { translate(DefaultLangStrings.About) }
         p { translate(DefaultLangStrings.AboutIntro) }
+        hr {  }
         div("flex flex-col items-center gap-2 self-center") {
             qrCodeImage(repoUrl, size = 200, classes = "w-32 h-32") {}
             a("link link-primary") {
@@ -34,7 +35,8 @@ fun RenderContext.aboutScreen() {
                 translate(DefaultLangStrings.OpenOnDifferentDevice)
             }
         }
-        p { translate(DefaultLangStrings.OpenSourceStatement) }
         p { translate(DefaultLangStrings.MigrationInstructions) }
+        hr {  }
+        p { translate(DefaultLangStrings.OpenSourceStatement) }
     }
 }
