@@ -1,5 +1,7 @@
 import com.tryformation.localization.Translatable
 import dev.fritz2.core.*
+import iconArrowDownTray
+import iconArrowUpTray
 import kotlinx.browser.document
 import kotlinx.browser.localStorage
 import kotlinx.browser.window
@@ -14,7 +16,10 @@ import localization.Locales
 import localization.TranslationStore
 import localization.getTranslationString
 import localization.translate
+import org.w3c.dom.HTMLAnchorElement
+import org.w3c.dom.HTMLInputElement
 import org.w3c.dom.HTMLElement
+import org.w3c.files.FileReader
 
 
 private val barcodeFormatNames = arrayOf(
@@ -82,6 +87,30 @@ suspend fun main() {
                 "w-full max-w-xl lg:max-w-3xl bg-base-100 shadow-xl rounded-3xl p-6 sm:p-10 flex flex-col gap-6 flex-grow"
             ) {
                 div("flex flex-wrap items-center justify-between gap-4") {
+                    val fileInput = input("hidden") {
+                        type("file")
+                        accept(".json")
+                    }.apply {
+                        domNode.addEventListener("change", { event ->
+                            val inputElement = event.target as HTMLInputElement
+                            val file = inputElement.files?.item(0)
+                            if (file != null) {
+                                val reader = FileReader()
+                                reader.onload = { loadEvent ->
+                                    val text = (loadEvent.target as FileReader).result as String
+                                    try {
+                                        val list = json.decodeFromString<List<SavedQrCode>>(text)
+                                            .map { c -> if (c.name.isBlank()) c.copy(name = c.text) else c }
+                                        savedCodesStore.update(list)
+                                    } catch (_: Throwable) {
+                                        window.alert(getTranslationString(DefaultLangStrings.InvalidJson))
+                                    }
+                                    inputElement.value = ""
+                                }
+                                reader.readAsText(file)
+                            }
+                        })
+                    }
                     div("flex items-center gap-3") {
                         img("h-10 w-10 dark:invert") {
                             attr("src", "/favicon.svg")
@@ -103,6 +132,33 @@ suspend fun main() {
                                     translate(DefaultLangStrings.About)
                                     clicks handledBy {
                                         screenStore.update(Screen.About)
+                                        (document.activeElement as? HTMLElement)?.blur()
+                                    }
+                                }
+                            }
+                            li {
+                                button("w-full flex items-center gap-2") {
+                                    iconArrowUpTray()
+                                    translate(DefaultLangStrings.Import)
+                                    clicks handledBy {
+                                        fileInput.domNode.click()
+                                        (document.activeElement as? HTMLElement)?.blur()
+                                    }
+                                }
+                            }
+                            li {
+                                button("w-full flex items-center gap-2") {
+                                    iconArrowDownTray()
+                                    translate(DefaultLangStrings.Export)
+                                    clicks handledBy {
+                                        val txt = json.encodeToString(savedCodesStore.current)
+                                        val encoded = js("encodeURIComponent")(txt) as String
+                                        val link = document.createElement("a") as HTMLAnchorElement
+                                        link.href = "data:application/json;charset=utf-8,$encoded"
+                                        link.download = "codes.json"
+                                        document.body?.appendChild(link)
+                                        link.click()
+                                        document.body?.removeChild(link)
                                         (document.activeElement as? HTMLElement)?.blur()
                                     }
                                 }
@@ -195,7 +251,7 @@ suspend fun main() {
                     }
                     when (screen) {
                         Screen.Codes -> {
-                            codesScreen(savedCodesStore, json)
+                            codesScreen(savedCodesStore)
                         }
                         Screen.Scan -> {
                             scanScreen(
