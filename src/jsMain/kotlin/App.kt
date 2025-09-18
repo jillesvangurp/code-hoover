@@ -96,7 +96,7 @@ suspend fun main() {
                             tabIndex(0)
                             iconBars()
                         }
-                        ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52") {
+                        ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl w-52") {
                             tabIndex(0)
                             li {
                                 button("w-full text-left") {
@@ -119,14 +119,17 @@ suspend fun main() {
                                                 Locales.FR_FR -> "🇫🇷"
                                                 Locales.JA_JP -> "🇯🇵"
                                             }
-                                            button(
-                                                "btn btn-ghost btn-sm w-8 text-2xl filter grayscale hover:grayscale-0 " +
-                                                    if (currentLocale == locale.title) "grayscale-0" else "",
-                                            ) {
-                                                +flag
-                                                attr("aria-label", locale.title)
-                                                clicks handledBy {
-                                                    translationStore.updateLocale(locale.title)
+                                            div("tooltip tooltip-bottom") {
+                                                attr("data-tip", locale.title)
+                                                button(
+                                                    "btn btn-ghost btn-sm w-8 text-2xl filter grayscale hover:grayscale-0 " +
+                                                        if (currentLocale == locale.title) "grayscale-0" else "",
+                                                ) {
+                                                    +flag
+                                                    attr("aria-label", locale.title)
+                                                    clicks handledBy {
+                                                        translationStore.updateLocale(locale.title)
+                                                    }
                                                 }
                                             }
                                         }
