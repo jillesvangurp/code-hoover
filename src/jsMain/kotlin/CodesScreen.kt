@@ -1,9 +1,7 @@
 import dev.fritz2.core.*
 import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -16,7 +14,6 @@ import qr.QrType
 import qr.SavedQrCode
 import qr.asText
 import qr.format
-import qr.generateQrSvg
 import DefaultLangStrings
 import localization.getTranslationString
 import localization.translate
@@ -115,14 +112,13 @@ fun RenderContext.codesScreen(
                         li(
                             "card bg-base-200 p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center"
                         ) {
-                            val preview = img("h-24 w-24 mx-auto pointer-events-none") {
+                            qrCodeImage(
+                                text = code.text,
+                                size = 160,
+                                classes = "h-24 w-24 mx-auto pointer-events-none",
+                            ) {
                                 attr("alt", displayName)
                                 attr("loading", "lazy")
-                            }
-                            MainScope().launch {
-                                val svg = generateQrSvg(code.text, 160)
-                                val encoded = window.btoa(svg)
-                                preview.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
                             }
                             p("w-full truncate font-medium") { +truncated }
                             clicks handledBy { selectedIndexStore.update(index) }
@@ -172,15 +168,12 @@ fun RenderContext.codesScreen(
                                 iconXMark()
                                 clicks handledBy { close(false) }
                             }
-                            val imgElem = img("mx-auto") {
+                            qrCodeImage(
+                                text = modalFormStore.data.map { it.toQrData().asText() },
+                                size = 500,
+                                classes = "mx-auto",
+                            ) {
                                 attr("alt", initial.name.ifBlank { initial.text })
-                            }
-                            modalFormStore.data.map { it.toQrData().asText() }.handledBy { txt ->
-                                MainScope().launch {
-                                    val svg = generateQrSvg(txt, 500)
-                                    val encoded = window.btoa(svg)
-                                    imgElem.domNode.setAttribute("src", "data:image/svg+xml;base64,$encoded")
-                                }
                             }
                             pre("whitespace-pre-wrap break-words max-w-sm mx-auto text-left") {
                                 modalFormStore.data.map { it.toQrData().format() }.renderText()
