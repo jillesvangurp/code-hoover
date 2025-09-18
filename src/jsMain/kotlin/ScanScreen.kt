@@ -5,6 +5,8 @@ import kotlinx.serialization.json.Json
 import qr.QrData
 import qr.SavedQrCode
 import qr.asText
+import qr.defaultDisplayName
+import qr.parseVCard
 import localization.getTranslationString
 import localization.translate
 import DefaultLangStrings
@@ -98,24 +100,36 @@ fun RenderContext.scanScreen(
                         iconCheck()
                         translate(DefaultLangStrings.Save)
                         clicks handledBy {
+                            val rawText = scan.text.trim()
+                            fun fromText(text: String): SavedQrCode {
+                                val card = parseVCard(text)
+                                val data: QrData = card ?: QrData.Text(text)
+                                val normalized = data.asText()
+                                val defaultName = data.defaultDisplayName().ifBlank { normalized }
+                                return SavedQrCode(defaultName, normalized, data)
+                            }
                             var entry = if (barcodeFormatName(scan.format) == "QR_CODE") {
                                 try {
-                                    json.decodeFromString<SavedQrCode>(scan.text)
-                                        .let { if (it.name.isBlank()) it.copy(name = it.text) else it }
+                                    json.decodeFromString<SavedQrCode>(scan.text).let { saved ->
+                                        if (saved.name.isBlank()) {
+                                            val fallback = saved.data.defaultDisplayName().ifBlank { saved.text }
+                                            saved.copy(name = fallback)
+                                        } else saved
+                                    }
                                 } catch (_: Throwable) {
-                                    val data = QrData.Text(scan.text)
-                                    SavedQrCode(scan.text, data.asText(), data)
+                                    fromText(rawText)
                                 }
                             } else {
-                                val data = QrData.Text(scan.text)
-                                SavedQrCode(scan.text, data.asText(), data)
+                                fromText(rawText)
                             }
-                            val defaultName = entry.name.ifBlank { entry.text }
+                            val fallbackName = entry.data.defaultDisplayName().ifBlank { entry.text }
+                            val defaultName = entry.name.ifBlank { fallbackName }
                             val name = window.prompt(
                                 getTranslationString(DefaultLangStrings.Name),
                                 defaultName,
                             ) ?: defaultName
-                            entry = entry.copy(name = if (name.isBlank()) entry.text else name)
+                            val finalName = if (name.isBlank()) fallbackName else name
+                            entry = entry.copy(name = finalName)
                             savedCodesStore.update(savedCodesStore.current + entry)
                         }
                     }

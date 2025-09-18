@@ -6,10 +6,16 @@ import qr.QrData
 import qr.QrType
 import qr.SavedQrCode
 import qr.asText
+import qr.defaultDisplayName
 import qr.format
 import DefaultLangStrings
+import com.jillesvangurp.serializationext.DEFAULT_JSON
+import kotlinx.browser.document
 import localization.getTranslationString
 import localization.translate
+import org.w3c.dom.HTMLAnchorElement
+import org.w3c.dom.HTMLInputElement
+import org.w3c.files.FileReader
 import sortable.Sortable
 import sortable.SortableEvent
 import sortable.sortableOptions
@@ -28,7 +34,8 @@ fun RenderContext.codesScreen(
                 formButtons("flex flex-wrap gap-2 w-full justify-center md:justify-start", {
                     val f = formStore.current
                     val data = f.toQrData()
-                    val name = if (f.name.isBlank()) data.asText() else f.name
+                    val defaultName = data.defaultDisplayName()
+                    val name = if (f.name.isBlank()) defaultName else f.name
                     val entry = SavedQrCode(name, data.asText(), data)
                     val list = savedCodesStore.current.toMutableList()
                     if (f.index != null) list[f.index] = entry else list.add(entry)
@@ -48,6 +55,59 @@ fun RenderContext.codesScreen(
                         editingStore.update(true)
                     }
                 }
+
+                val fileInput = input("hidden") {
+                    type("file")
+                    accept(".json")
+                }.apply {
+                    domNode.addEventListener("change", { event ->
+                        val inputElement = event.target as HTMLInputElement
+                        val file = inputElement.files?.item(0)
+                        if (file != null) {
+                            val reader = FileReader()
+                            reader.onload = { loadEvent ->
+                                val text = (loadEvent.target as FileReader).result as String
+                                try {
+                                    val list = DEFAULT_JSON.decodeFromString<List<SavedQrCode>>(text)
+                                        .map { saved ->
+                                            if (saved.name.isBlank()) {
+                                                val fallback = saved.data.defaultDisplayName().ifBlank { saved.text }
+                                                saved.copy(name = fallback)
+                                            } else saved
+                                        }
+                                    savedCodesStore.update(list)
+                                } catch (e: Throwable) {
+                                    window.alert(getTranslationString(DefaultLangStrings.InvalidJson))
+                                }
+                                inputElement.value = ""
+                            }
+                            reader.readAsText(file)
+                        }
+                    })
+                }
+
+                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
+                    iconArrowUpTray()
+                    translate(DefaultLangStrings.Import)
+                    clicks handledBy {
+                        fileInput.domNode.click()
+                    }
+                }
+                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
+                    iconArrowDownTray()
+                    translate(DefaultLangStrings.Export)
+                    clicks handledBy {
+                        val txt = DEFAULT_JSON.encodeToString(savedCodesStore.current)
+                        val encoded = js("encodeURIComponent")(txt) as String
+                        val link = document.createElement("a") as HTMLAnchorElement
+                        link.href = "data:application/json;charset=utf-8,$encoded"
+                        link.download = "codes.json"
+                        document.body?.appendChild(link)
+                        link.click()
+                        document.body?.removeChild(link)
+                    }
+                }
+
             }
             savedCodesStore.data.render { list ->
                 val ulElement = ul("flex flex-col gap-4 w-full") {
@@ -131,7 +191,8 @@ fun RenderContext.codesScreen(
                                 {
                                     val f = modalFormStore.current
                                     val data = f.toQrData()
-                                    val name = if (f.name.isBlank()) data.asText() else f.name
+                                    val defaultName = data.defaultDisplayName()
+                                    val name = if (f.name.isBlank()) defaultName else f.name
                                     val entry = SavedQrCode(name, data.asText(), data)
                                     val list = savedCodesStore.current.toMutableList()
                                     list[idx] = entry
@@ -155,26 +216,36 @@ fun RenderContext.codesScreen(
     }
 }
 
+
 private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect: Boolean = true) {
-    input("input input-bordered w-full") {
-        placeholder(getTranslationString(DefaultLangStrings.Name))
+    val defaultPlaceholder = getTranslationString(DefaultLangStrings.Name)
+    val nameInput = input("input input-bordered w-full") {
+        placeholder(defaultPlaceholder)
         value(formStore.current.name)
         value(formStore.data.map { it.name })
         changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
+    }
+    formStore.data.map { form ->
+        if (form.type == QrType.VCARD) {
+            form.vcardFullName.takeIf { it.isNotBlank() }?.let { "$it vcard" }
+        } else null
+    } handledBy { placeholderValue ->
+        val value = placeholderValue ?: defaultPlaceholder
+        nameInput.domNode.setAttribute("placeholder", value)
     }
     if (showTypeSelect) {
         select("select select-bordered w-full") {
             value(formStore.current.type.name)
             value(formStore.data.map { it.type.name })
             changes.values().map { QrType.valueOf(it) } handledBy formStore.handle { f, v -> f.copy(type = v) }
-            QrType.values().filter { it != QrType.VCARD }.forEach {
+            QrType.values().forEach {
                 option {
                     translate(
                         when (it) {
                             QrType.URL -> DefaultLangStrings.Url
                             QrType.TEXT -> DefaultLangStrings.Text
+                            QrType.VCARD -> DefaultLangStrings.VCard
                             QrType.WIFI -> DefaultLangStrings.Wifi
-                            else -> DefaultLangStrings.Text
                         }
                     )
                     value(it.name)
@@ -190,12 +261,14 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
                 value(formStore.data.map { it.url })
                 changes.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
             }
-            QrType.TEXT -> textarea("textarea textarea-bordered w-full") {
-                placeholder(getTranslationString(DefaultLangStrings.Text))
-                value(formStore.current.text)
-                value(formStore.data.map { it.text })
-                changes.values() handledBy formStore.handle { f, v -> f.copy(text = v) }
-            }
+            QrType.TEXT -> textFormComponent(
+                formStore,
+                getTranslationString(DefaultLangStrings.Text),
+                { it.text },
+                { f, v -> f.copy(text = v) },
+                rows = 4,
+            )
+            QrType.VCARD -> renderVCardFields(formStore)
             QrType.WIFI -> {
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Ssid))
@@ -216,8 +289,161 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
                     changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                 }
             }
-            else -> {}
         }
+    }
+}
+
+private fun RenderContext.renderVCardFields(formStore: Store<QrForm>) {
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.FullName),
+        selector = { it.vcardFullName },
+        updater = { form, value ->
+            val updated = form.copy(vcardFullName = value)
+            if (form.type == QrType.VCARD) {
+                val previousDefault = form.vcardFullName.takeIf { it.isNotBlank() }?.let { "$it vcard" } ?: ""
+                val shouldUpdateName = form.name.isBlank() || form.name == previousDefault
+                if (shouldUpdateName) {
+                    val newDefault = value.takeIf { it.isNotBlank() }?.let { "$it vcard" } ?: ""
+                    updated.copy(name = newDefault)
+                } else {
+                    updated
+                }
+            } else {
+                updated
+            }
+        },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.FirstName),
+        selector = { it.vcardFirstName },
+        updater = { form, value -> form.copy(vcardFirstName = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.LastName),
+        selector = { it.vcardLastName },
+        updater = { form, value -> form.copy(vcardLastName = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.AdditionalNames),
+        selector = { it.vcardAdditionalNames },
+        updater = { form, value -> form.copy(vcardAdditionalNames = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.NamePrefix),
+        selector = { it.vcardPrefix },
+        updater = { form, value -> form.copy(vcardPrefix = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.NameSuffix),
+        selector = { it.vcardSuffix },
+        updater = { form, value -> form.copy(vcardSuffix = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Nickname),
+        selector = { it.vcardNickname },
+        updater = { form, value -> form.copy(vcardNickname = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Title),
+        selector = { it.vcardTitle },
+        updater = { form, value -> form.copy(vcardTitle = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Organization),
+        selector = { it.vcardOrganization },
+        updater = { form, value -> form.copy(vcardOrganization = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Email),
+        selector = { it.vcardEmail },
+        updater = { form, value -> form.copy(vcardEmail = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.EmailType),
+        selector = { it.vcardEmailType },
+        updater = { form, value -> form.copy(vcardEmailType = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Phone),
+        selector = { it.vcardPhone },
+        updater = { form, value -> form.copy(vcardPhone = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.PhoneType),
+        selector = { it.vcardPhoneType },
+        updater = { form, value -> form.copy(vcardPhoneType = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Url),
+        selector = { it.vcardUrl },
+        updater = { form, value -> form.copy(vcardUrl = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Street),
+        selector = { it.vcardStreet },
+        updater = { form, value -> form.copy(vcardStreet = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.City),
+        selector = { it.vcardCity },
+        updater = { form, value -> form.copy(vcardCity = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Region),
+        selector = { it.vcardRegion },
+        updater = { form, value -> form.copy(vcardRegion = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.PostalCode),
+        selector = { it.vcardPostalCode },
+        updater = { form, value -> form.copy(vcardPostalCode = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Country),
+        selector = { it.vcardCountry },
+        updater = { form, value -> form.copy(vcardCountry = value) },
+    )
+    textFormComponent(
+        formStore = formStore,
+        placeholder = getTranslationString(DefaultLangStrings.Note),
+        selector = { it.vcardNote },
+        updater = { form, value -> form.copy(vcardNote = value) },
+        rows = 3,
+    )
+}
+
+private fun RenderContext.textFormComponent(
+    formStore: Store<QrForm>,
+    placeholder: String,
+    selector: (QrForm) -> String,
+    updater: (QrForm, String) -> QrForm,
+    rows: Int = 1,
+) {
+    textarea("textarea textarea-bordered w-full") {
+        placeholder(placeholder)
+        attr("rows", rows.coerceAtLeast(1).toString())
+        value(selector(formStore.current))
+        value(formStore.data.map(selector))
+        changes.values() handledBy formStore.handle { form, value -> updater(form, value) }
     }
 }
 
