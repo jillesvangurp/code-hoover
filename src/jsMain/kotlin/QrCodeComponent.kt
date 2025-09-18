@@ -1,7 +1,5 @@
 import dev.fritz2.core.RenderContext
 import dev.fritz2.core.Tag
-import dev.fritz2.core.handledBy
-import dev.fritz2.core.img
 import kotlinx.browser.window
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
