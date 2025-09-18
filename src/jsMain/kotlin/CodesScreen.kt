@@ -113,7 +113,7 @@ fun RenderContext.codesScreen(
                         val displayName = code.name.ifBlank { code.text }
                         val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
                         li(
-                            "card bg-base-200 p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center"
+                            "card bg-base-200 rounded-2xl p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center"
                         ) {
                             val preview = img("h-24 w-24 mx-auto pointer-events-none") {
                                 attr("alt", displayName)
