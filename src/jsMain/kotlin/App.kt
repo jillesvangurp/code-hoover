@@ -316,6 +316,8 @@ enum class DefaultLangStrings : Translatable {
     GithubRepo,
     VeritasiumVideo,
     OpenSourceStatement,
+    OpenOnDifferentDevice,
+    MigrationInstructions,
     ;
 
     // fluent files have identifiers with this prefix and the camel
