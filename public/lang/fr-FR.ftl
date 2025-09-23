@@ -15,6 +15,7 @@ default-import=Importer
 default-export=Exporter
 default-cancel=Annuler
 default-close=Fermer
+default-drag-to-reorder=Faites glisser pour réorganiser
 default-scanned-codes={ $count } codes scannés
 default-invalid-json=JSON invalide
 default-name=Nom

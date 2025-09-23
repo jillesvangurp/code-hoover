@@ -291,6 +291,7 @@ enum class DefaultLangStrings : Translatable {
     Export,
     Cancel,
     Close,
+    DragToReorder,
     ScannedCodes,
     InvalidJson,
     Name,
