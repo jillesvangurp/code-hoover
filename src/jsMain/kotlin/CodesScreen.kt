@@ -57,58 +57,57 @@ fun RenderContext.codesScreen(
                     }
                 }
 
-                val fileInput = input("hidden") {
-                    type("file")
-                    accept(".json")
-                }.apply {
-                    domNode.addEventListener("change", { event ->
-                        val inputElement = event.target as HTMLInputElement
-                        val file = inputElement.files?.item(0)
-                        if (file != null) {
-                            val reader = FileReader()
-                            reader.onload = { loadEvent ->
-                                val text = (loadEvent.target as FileReader).result as String
-                                try {
-                                    val list = DEFAULT_JSON.decodeFromString<List<SavedQrCode>>(text)
-                                        .map { saved ->
-                                            if (saved.name.isBlank()) {
-                                                val fallback = saved.data.defaultDisplayName().ifBlank { saved.text }
-                                                saved.copy(name = fallback)
-                                            } else saved
-                                        }
-                                    savedCodesStore.update(list)
-                                } catch (e: Throwable) {
-                                    window.alert(getTranslationString(DefaultLangStrings.InvalidJson))
-                                }
-                                inputElement.value = ""
-                            }
-                            reader.readAsText(file)
-                        }
-                    })
-                }
-
-                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
-                    iconArrowUpTray()
-                    translate(DefaultLangStrings.Import)
-                    clicks handledBy {
-                        fileInput.domNode.click()
-                    }
-                }
-                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
-                    iconArrowDownTray()
-                    translate(DefaultLangStrings.Export)
-                    clicks handledBy {
-                        val txt = DEFAULT_JSON.encodeToString(savedCodesStore.current)
-                        val encoded = js("encodeURIComponent")(txt) as String
-                        val link = document.createElement("a") as HTMLAnchorElement
-                        link.href = "data:application/json;charset=utf-8,$encoded"
-                        link.download = "codes.json"
-                        document.body?.appendChild(link)
-                        link.click()
-                        document.body?.removeChild(link)
-                    }
-                }
-
+//                val fileInput = input("hidden") {
+//                    type("file")
+//                    accept(".json")
+//                }.apply {
+//                    domNode.addEventListener("change", { event ->
+//                        val inputElement = event.target as HTMLInputElement
+//                        val file = inputElement.files?.item(0)
+//                        if (file != null) {
+//                            val reader = FileReader()
+//                            reader.onload = { loadEvent ->
+//                                val text = (loadEvent.target as FileReader).result as String
+//                                try {
+//                                    val list = DEFAULT_JSON.decodeFromString<List<SavedQrCode>>(text)
+//                                        .map { saved ->
+//                                            if (saved.name.isBlank()) {
+//                                                val fallback = saved.data.defaultDisplayName().ifBlank { saved.text }
+//                                                saved.copy(name = fallback)
+//                                            } else saved
+//                                        }
+//                                    savedCodesStore.update(list)
+//                                } catch (e: Throwable) {
+//                                    window.alert(getTranslationString(DefaultLangStrings.InvalidJson))
+//                                }
+//                                inputElement.value = ""
+//                            }
+//                            reader.readAsText(file)
+//                        }
+//                    })
+//                }
+//
+//                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
+//                    iconArrowUpTray()
+//                    translate(DefaultLangStrings.Import)
+//                    clicks handledBy {
+//                        fileInput.domNode.click()
+//                    }
+//                }
+//                button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
+//                    iconArrowDownTray()
+//                    translate(DefaultLangStrings.Export)
+//                    clicks handledBy {
+//                        val txt = DEFAULT_JSON.encodeToString(savedCodesStore.current)
+//                        val encoded = js("encodeURIComponent")(txt) as String
+//                        val link = document.createElement("a") as HTMLAnchorElement
+//                        link.href = "data:application/json;charset=utf-8,$encoded"
+//                        link.download = "codes.json"
+//                        document.body?.appendChild(link)
+//                        link.click()
+//                        document.body?.removeChild(link)
+//                    }
+//                }
             }
             savedCodesStore.data.render { list ->
                 val ulElement = ul("flex flex-col gap-4 w-full") {
