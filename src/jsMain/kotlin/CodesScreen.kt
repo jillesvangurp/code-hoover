@@ -16,6 +16,7 @@ import localization.translate
 import org.w3c.dom.HTMLAnchorElement
 import org.w3c.dom.HTMLInputElement
 import org.w3c.files.FileReader
+import iconBars
 import sortable.Sortable
 import sortable.SortableEvent
 import sortable.sortableOptions
@@ -115,8 +116,19 @@ fun RenderContext.codesScreen(
                         val displayName = code.name.ifBlank { code.text }
                         val truncated = if (displayName.length > 60) displayName.take(60) + "..." else displayName
                         li(
-                            "card bg-base-200 rounded-2xl p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center"
+                            "card bg-base-200 rounded-2xl p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center relative"
                         ) {
+                            button(
+                                "btn btn-ghost btn-xs btn-circle absolute right-3 top-3 drag-handle cursor-grab touch-none"
+                            ) {
+                                attr("type", "button")
+                                attr("aria-label", getTranslationString(DefaultLangStrings.DragToReorder))
+                                iconBars()
+                                domNode.addEventListener("click", { event ->
+                                    event.stopPropagation()
+                                    event.preventDefault()
+                                })
+                            }
                             qrCodeImage(
                                 text = code.text,
                                 size = 160,
@@ -132,6 +144,10 @@ fun RenderContext.codesScreen(
                 }
                 Sortable(ulElement.domNode as HTMLElement, sortableOptions {
                     animation = 150
+                    handle = ".drag-handle"
+                    delay = 150
+                    delayOnTouchOnly = true
+                    touchStartThreshold = 8
                     onEnd = { evt ->
                         val from = evt.oldIndex
                         val to = evt.newIndex

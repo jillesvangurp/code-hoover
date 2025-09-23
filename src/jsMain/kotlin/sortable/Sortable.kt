@@ -18,4 +18,8 @@ external interface SortableEvent {
 external interface SortableOptions {
     var animation: Int?
     var onEnd: ((SortableEvent) -> Unit)?
+    var handle: String?
+    var delay: Int?
+    var delayOnTouchOnly: Boolean?
+    var touchStartThreshold: Int?
 }
