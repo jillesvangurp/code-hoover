@@ -18,41 +18,42 @@ Is this useful? Maybe not for everyone. But I often want to know what the raw co
 
 Did I spend a lot of time on this app? It's all vibe coded using codex and some manual work.
 
-## Building with Gradle
+## Running code-hoover
 
-The Kotlin/JS build still produces a Webpack bundle. For a fast development loop run:
+This project uses a slightly unusual way of using kotlin-js. Instead of using the built in webpack, we are using vite. Vite is just easier to configure with modern js tooling and it comes with decent tailwind + daisyui support.
 
-```bash
-./gradlew jsBrowserDevelopmentWebpack --continuous
-```
-
-The `.run/webpack.run.xml` file contains an IntelliJ run configuration with this command so you can start it straight from the IDE.
-
-For a production bundle use:
-
-```bash
-./gradlew jsBrowserProductionWebpack
-```
-
-## Running with Vite
-
-Vite serves the output that Gradle produces. Install the node dependencies once:
+### Vite dependencies
 
 ```bash
 npm install
 ```
+These are devDependencies only; needed for building and running vite.
 
-Then start the dev server:
+### Development Server
+
+Running a development server is slightly more complex than usual because we need to run both gradle and vite in two
+separate processes. The easiest is to use two separate terminals and then in the first one run this
 
 ```bash
-npm run dev
+# rebuilds jsBrowserDevelopmentWebpack on source changes, kotlinjs --continues is very flaky, this works
+npm run watch
 ```
+This adds a watch on your source folder and triggers `gradle jsBrowserDevelopmentWebpack` which is needed to bundle up the javascript. If there are any compile errors, that might break things of course, keep an eye on the errors.
 
-For a production build run:
+In the second terminal window, run
 
 ```bash
+bun run dev
+```
+This runs vite. Vite monitors the output of the gradle build and reloads your app whenever that changes and the process in the other terminal causes the gradle build to trigger.
+
+### Production build
+
+```bash
+# build the kotlin code base
+./gradlew jsBrowserProductionWebpack
+# vite build
 npm run build
 ```
 
-Unlike the normal Vite setup where it performs the bundling with esbuild, here Gradle already creates an `app.js` file. The Vite configuration in `vite.config.mjs` simply uses that file and adds Tailwind processing.
-
+You will find the site under dist ready for deployment to your favorite hosting provider.

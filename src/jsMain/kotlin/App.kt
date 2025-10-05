@@ -115,6 +115,7 @@ suspend fun main() {
                         img("h-10 w-10 dark:invert") {
                             attr("src", "/favicon.svg")
                             attr("alt", "Code Hoover logo")
+                            attr("title", "Code Hoover logo")
                         }
                         h1("text-2xl sm:text-3xl font-bold text-primary m-0 p-0") {
                             translate(DefaultLangStrings.PageTitle)

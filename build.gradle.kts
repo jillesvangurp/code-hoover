@@ -1,3 +1,8 @@
+import java.nio.file.FileSystems
+import java.nio.file.StandardWatchEventKinds
+import java.nio.file.StandardWatchEventKinds.ENTRY_CREATE
+import java.nio.file.StandardWatchEventKinds.ENTRY_DELETE
+import java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY
 import org.jetbrains.kotlin.gradle.targets.js.testing.KotlinJsTest
 
 plugins {
@@ -20,18 +25,19 @@ repositories {
 kotlin {
     js(IR) {
         browser {
-            webpackTask {
-                // settingt this to false disables anything to do with webpack so we can use vite
-                enabled = true
-                // sadly we need webpack to bundle things up for vite for now
-                mainOutputFileName = "app.js"
-                // vite processes and adds tailwind styling; so there's no need for
-                // any webpack hackery for that.
-            }
-            testTask {
-                // karma is a PITA, do proper unit tests without a browser
-                useMocha()
-            }
+//            webpackTask {
+//                // setting this to false disables anything to do with webpack so we can use vite
+//                enabled = true
+//                // sadly we need webpack to bundle things up for vite for now
+//                mainOutputFileName = "app.js"
+//                // vite processes and adds tailwind styling; so there's no need for
+//                // any webpack hackery for that.
+//            }
+//            testTask {
+//                // karma is a PITA, do proper unit tests without a browser
+//                useMocha()
+//            }
+            binaries.executable()
         }
     }.binaries.executable()
 
@@ -96,6 +102,9 @@ tasks.withType<KotlinJsTest>().configureEach {
     failOnNoDiscoveredTests = false
 }
 
+tasks.named("jsBrowserDevelopmentWebpack") {
+    dependsOn("compileDevelopmentExecutableKotlinJs")
+    outputs.upToDateWhen { false }}
 
 
 
