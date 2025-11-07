@@ -126,7 +126,10 @@ suspend fun main() {
                             tabIndex(0)
                             iconBars()
                         }
-                        ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl w-52") {
+                        ul(
+                            "menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl " +
+                                "w-fit min-w-[12rem] max-w-[90vw] sm:min-w-[13rem] sm:max-w-xs right-0 left-auto",
+                        ) {
                             tabIndex(0)
                             li {
                                 button("w-full text-left") {
@@ -167,7 +170,7 @@ suspend fun main() {
                             li {
                                 translationStore.data.render { currentBundle ->
                                     val currentLocale = currentBundle.bundles.first().locale.first()
-                                    div("flex gap-2") {
+                                    div("flex flex-wrap gap-2 justify-center") {
                                         Locales.entries.forEach { locale ->
                                             val flag = when (locale) {
                                                 Locales.EN_US -> "🇺🇸"
