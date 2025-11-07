@@ -127,8 +127,12 @@ suspend fun main() {
                             iconBars()
                         }
                         ul(
-                            "menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl " +
-                                "w-fit min-w-[12rem] max-w-[90vw] sm:min-w-[13rem] sm:max-w-xs right-0 left-auto",
+                            listOf(
+                                "menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl",
+                                "max-h-[min(70vh,24rem)] overflow-y-auto",
+                                "w-full max-w-[calc(100vw-1.5rem)] left-1/2 -translate-x-1/2",
+                                "sm:w-fit sm:min-w-[13rem] sm:max-w-xs sm:left-auto sm:right-0 sm:translate-x-0",
+                            ).joinToString(" "),
                         ) {
                             tabIndex(0)
                             li {
