@@ -86,7 +86,7 @@ suspend fun main() {
             article(
                 "w-full max-w-xl lg:max-w-3xl bg-base-100 shadow-xl rounded-3xl p-6 sm:p-10 flex flex-col gap-6 flex-grow"
             ) {
-                div("flex flex-wrap items-center justify-between gap-4") {
+                div("flex flex-wrap items-center gap-4 w-full") {
                     val fileInput = input("hidden") {
                         type("file")
                         accept(".json")
@@ -111,7 +111,7 @@ suspend fun main() {
                             }
                         })
                     }
-                    div("flex items-center gap-3") {
+                    div("flex items-center gap-3 min-w-0") {
                         img("h-10 w-10 dark:invert") {
                             attr("src", "/favicon.svg")
                             attr("alt", "Code Hoover logo")
@@ -121,19 +121,12 @@ suspend fun main() {
                             translate(DefaultLangStrings.PageTitle)
                         }
                     }
-                    div("dropdown dropdown-end") {
+                    div("dropdown dropdown-end ms-auto flex-shrink-0") {
                         label("btn btn-ghost btn-circle") {
                             tabIndex(0)
                             iconBars()
                         }
-                        ul(
-                            listOf(
-                                "menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl",
-                                "max-h-[min(70vh,24rem)] overflow-y-auto",
-                                "w-full max-w-[calc(100vw-1.5rem)] left-1/2 -translate-x-1/2",
-                                "sm:w-fit sm:min-w-[13rem] sm:max-w-xs sm:left-auto sm:right-0 sm:translate-x-0",
-                            ).joinToString(" "),
-                        ) {
+                        ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl w-52") {
                             tabIndex(0)
                             li {
                                 button("w-full text-left") {
