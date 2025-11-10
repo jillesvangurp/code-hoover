@@ -126,32 +126,34 @@ suspend fun main() {
                             translate(DefaultLangStrings.PageTitle)
                         }
                     }
-                    div("dropdown dropdown-end ms-auto flex-shrink-0") {
-                        label("btn btn-ghost btn-circle") {
-                            tabIndex(0)
+                    div("ms-auto flex items-center gap-2") {
+                        button("btn btn-ghost btn-circle lg:hidden") {
                             attr("aria-label", getTranslationString(DefaultLangStrings.Open))
                             iconBars()
-                            clicks handledBy {
-                                if (window.innerWidth < 1024) {
-                                    mobileMenuStore.update(true)
-                                }
-                            }
+                            clicks handledBy { mobileMenuStore.update(true) }
                         }
-                        ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl w-52 hidden lg:flex lg:flex-col") {
-                            tabIndex(0)
-                            headerMenuItems(
-                                screenStore,
-                                fileInput,
-                                savedCodesStore,
-                                json,
-                                translationStore,
-                                darkStore,
-                            ) {}
+                        div("dropdown dropdown-end hidden lg:block") {
+                            label("btn btn-ghost btn-circle") {
+                                tabIndex(0)
+                                attr("aria-label", getTranslationString(DefaultLangStrings.Open))
+                                iconBars()
+                            }
+                            ul("menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-200 rounded-2xl w-52 hidden lg:flex lg:flex-col") {
+                                tabIndex(0)
+                                headerMenuItems(
+                                    screenStore,
+                                    fileInput,
+                                    savedCodesStore,
+                                    json,
+                                    translationStore,
+                                    darkStore,
+                                ) {}
+                            }
                         }
                     }
                     mobileMenuStore.data.render { isOpen ->
                         if (isOpen) {
-                            div("lg:hidden fixed inset-0 z-50 bg-base-100 text-base-content flex flex-col") {
+                            div("lg:hidden fixed inset-0 z-[100] bg-base-100 text-base-content flex flex-col") {
                                 attr("role", "dialog")
                                 attr("aria-modal", "true")
                                 div("flex items-center justify-between px-4 py-3 border-b border-base-300") {
