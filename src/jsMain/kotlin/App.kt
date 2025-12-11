@@ -50,6 +50,8 @@ fun barcodeFormatName(ordinal: Int): String =
     if (ordinal in barcodeFormatNames.indices) barcodeFormatNames[ordinal]
     else getTranslationString(DefaultLangStrings.Unknown)
 
+fun barcodeFormatOrdinal(name: String): Int = barcodeFormatNames.indexOf(name)
+
 private const val darkMode = "qr-dark"
 
 private const val lightMode = "qr-light"
@@ -352,6 +354,7 @@ enum class DefaultLangStrings : Translatable {
     Scan,
     Stop,
     Clear,
+    ScannerLibrary,
     Copy,
     DarkMode,
     Codes,

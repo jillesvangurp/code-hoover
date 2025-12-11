@@ -4,6 +4,7 @@ default-welcome-text=
 default-scan=Scannen
 default-stop=Stop
 default-clear=Wissen
+default-scanner-library=Scanner: { $value }
 default-copy=Kopiëren
 default-dark-mode=Donkere modus
 default-codes=Codes
