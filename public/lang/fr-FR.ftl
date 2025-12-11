@@ -4,6 +4,7 @@ default-welcome-text=
 default-scan=Scanner
 default-stop=Arrêter
 default-clear=Effacer
+default-scanner-library=Scanner : { $value }
 default-copy=Copier
 default-dark-mode=Mode sombre
 default-codes=Codes

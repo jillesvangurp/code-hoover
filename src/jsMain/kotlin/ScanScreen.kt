@@ -1,15 +1,24 @@
-import dev.fritz2.core.*
+import dev.fritz2.core.RenderContext
+import dev.fritz2.core.Store
+import dev.fritz2.core.storeOf
+import kotlinx.browser.document
 import kotlinx.browser.window
-import kotlinx.serialization.decodeFromString
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.await
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import localization.getTranslationString
+import localization.translate
+import org.w3c.dom.HTMLVideoElement
+import org.w3c.dom.mediacapture.MediaStream
+import org.w3c.dom.mediacapture.MediaStreamTrack
 import qr.QrData
 import qr.SavedQrCode
 import qr.asText
 import qr.defaultDisplayName
 import qr.parseVCard
-import localization.getTranslationString
-import localization.translate
-import DefaultLangStrings
 
 fun RenderContext.scanScreen(
     scanningStore: Store<Boolean>,
@@ -18,7 +27,94 @@ fun RenderContext.scanScreen(
     savedCodesStore: Store<List<SavedQrCode>>,
     json: Json
 ) {
+    val scope = MainScope()
     var controls: IScannerControls? = null
+    var mediaStream: MediaStream? = null
+    var detectionJob: Job? = null
+    val barcodeDetectorAvailable = isBarcodeDetectorAvailable()
+    val scannerLabelStore = storeOf(
+        if (barcodeDetectorAvailable) "Barcode Detector API" else "@zxing/browser",
+    )
+
+    fun stopBarcodeDetector() {
+        mediaStream?.getTracks()?.forEach(MediaStreamTrack::stop)
+        mediaStream = null
+        (document.getElementById("video") as? HTMLVideoElement)?.apply {
+            pause()
+            srcObject = null
+        }
+    }
+
+    fun stopScanning() {
+        controls?.stop()
+        controls = null
+        detectionJob?.cancel()
+        detectionJob = null
+        stopBarcodeDetector()
+        scanningStore.update(false)
+    }
+
+    suspend fun startBarcodeDetector(videoElement: HTMLVideoElement): Boolean {
+        return try {
+            val detector = BarcodeDetector()
+            val stream = window.navigator.mediaDevices.getUserMedia(
+                js("{ video: { facingMode: 'environment' } }"),
+            ).await()
+            mediaStream = stream
+            videoElement.srcObject = stream
+            videoElement.play().await()
+            scannerLabelStore.update("Barcode Detector API")
+            detectionJob = scope.launch {
+                while (scanningStore.current) {
+                    try {
+                        val results = detector.detect(videoElement).await()
+                        if (results.isNotEmpty()) {
+                            results.forEach { barcode ->
+                                val text = barcode.rawValue
+                                val formatOrdinal =
+                                    barcodeFormatOrdinal(
+                                        barcode.format.replace("-", "_").uppercase(),
+                                    )
+                                val existing = scansStore.current
+                                if (existing.none { it.text == text }) {
+                                    scansStore.update(
+                                        listOf(ScanResult(text, formatOrdinal)) + existing,
+                                    )
+                                }
+                            }
+                        }
+                        delay(300)
+                    } catch (_: Throwable) {
+                        delay(300)
+                    }
+                }
+            }
+            true
+        } catch (_: Throwable) {
+            stopBarcodeDetector()
+            false
+        }
+    }
+
+    fun startZxingScanner() {
+        scannerLabelStore.update("@zxing/browser")
+        codeReader.decodeFromVideoDevice(
+            null,
+            "video",
+        ) { result, _, c ->
+            controls = c
+            if (result != null) {
+                val text = result.text
+                val format = result.format
+                val existing = scansStore.current
+                if (existing.none { it.text == text }) {
+                    scansStore.update(
+                        listOf(ScanResult(text, format)) + existing,
+                    )
+                }
+            }
+        }
+    }
     scanningStore.data.render { scanning ->
         section("flex flex-col items-center gap-4 w-full") {
             div("join flex-wrap w-full justify-center md:justify-start") {
@@ -27,9 +123,7 @@ fun RenderContext.scanScreen(
                         iconStop()
                         translate(DefaultLangStrings.Stop)
                         clicks handledBy {
-                            controls?.stop()
-                            controls = null
-                            scanningStore.update(false)
+                            stopScanning()
                         }
                     }
                 } else {
@@ -37,23 +131,26 @@ fun RenderContext.scanScreen(
                         iconCamera()
                         translate(DefaultLangStrings.Scan)
                         clicks handledBy {
-                            codeReader.decodeFromVideoDevice(
-                                null,
-                                "video",
-                            ) { result, _, c ->
-                                controls = c
-                                if (result != null) {
-                                    val text = result.text
-                                    val format = result.format
-                                    val existing = scansStore.current
-                                    if (existing.none { it.text == text }) {
-                                        scansStore.update(
-                                            listOf(ScanResult(text, format)) + existing,
-                                        )
+                            scanningStore.update(true)
+                            scope.launch {
+                                var videoElement: HTMLVideoElement? = null
+                                for (attempt in 0 until 5) {
+                                    videoElement =
+                                        document.getElementById("video") as? HTMLVideoElement
+                                    if (videoElement != null) break
+                                    delay(50)
+                                }
+                                val targetVideo = videoElement
+                                if (targetVideo == null) {
+                                    stopScanning()
+                                } else {
+                                    val startedWithNative =
+                                        barcodeDetectorAvailable && startBarcodeDetector(targetVideo)
+                                    if (!startedWithNative) {
+                                        startZxingScanner()
                                     }
                                 }
                             }
-                            scanningStore.update(true)
                         }
                     }
                 }
@@ -63,6 +160,11 @@ fun RenderContext.scanScreen(
                     clicks handledBy {
                         scansStore.update(emptyList())
                     }
+                }
+            }
+            scannerLabelStore.data.render { label ->
+                p("text-sm opacity-70") {
+                    translate(DefaultLangStrings.ScannerLibrary, mapOf("value" to label))
                 }
             }
             if (!scanning) {
@@ -145,3 +247,6 @@ fun RenderContext.scanScreen(
         }
     }
 }
+
+private fun isBarcodeDetectorAvailable(): Boolean =
+    js("typeof BarcodeDetector !== 'undefined'") as Boolean
