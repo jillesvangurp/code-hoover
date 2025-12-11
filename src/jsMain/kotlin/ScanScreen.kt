@@ -1,7 +1,6 @@
-import DefaultLangStrings
-import barcodeFormatName
-import barcodeFormatOrdinal
-import dev.fritz2.core.*
+import dev.fritz2.core.RenderContext
+import dev.fritz2.core.Store
+import dev.fritz2.core.storeOf
 import kotlinx.browser.document
 import kotlinx.browser.window
 import kotlinx.coroutines.Job
@@ -9,12 +8,11 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.await
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import localization.getTranslationString
 import localization.translate
 import org.w3c.dom.HTMLVideoElement
-import org.w3c.dom.MediaStream
+import org.w3c.dom.mediacapture.MediaStream
 import org.w3c.dom.mediacapture.MediaStreamTrack
 import qr.QrData
 import qr.SavedQrCode
