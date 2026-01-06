@@ -5,6 +5,7 @@ import dev.fritz2.core.Tag
 import iconArrowDownTray
 import iconArrowUpTray
 import iconXMark
+import SoundEffects
 import kotlinx.browser.document
 import kotlinx.browser.localStorage
 import kotlinx.browser.window
@@ -74,6 +75,7 @@ suspend fun main() {
         val scanningStore = storeOf(false)
         val json = Json { prettyPrint = true }
         val savedCodesStore = storeOf(listOf<SavedQrCode>())
+        val mainScope = MainScope()
         localStorage.getItem("codes")?.let {
             try {
                 val stored = json.decodeFromString<List<SavedQrCode>>(it)
@@ -84,7 +86,13 @@ suspend fun main() {
         }
         savedCodesStore.data.onEach { codes ->
             localStorage.setItem("codes", json.encodeToString(codes))
-        }.launchIn(MainScope())
+        }.launchIn(mainScope)
+        val soundEnabledDefault = localStorage.getItem("sound-enabled")?.toBoolean() ?: true
+        val soundEnabledStore = storeOf(soundEnabledDefault)
+        soundEnabledStore.data.onEach { enabled ->
+            localStorage.setItem("sound-enabled", enabled.toString())
+        }.launchIn(mainScope)
+        val soundEffects = SoundEffects(soundEnabledStore)
         val screenStore = storeOf(Screen.Codes)
         val translationStore = withKoin { get<TranslationStore>() }
         val darkStore = storeOf(prefersDark)
@@ -149,6 +157,7 @@ suspend fun main() {
                                     json,
                                     translationStore,
                                     darkStore,
+                                    soundEnabledStore,
                                 ) {}
                             }
                         }
@@ -182,6 +191,7 @@ suspend fun main() {
                                         json,
                                         translationStore,
                                         darkStore,
+                                        soundEnabledStore,
                                     ) { mobileMenuStore.update(false) }
                                 }
                             }
@@ -207,7 +217,7 @@ suspend fun main() {
                     }
                     when (screen) {
                         Screen.Codes -> {
-                            codesScreen(savedCodesStore)
+                            codesScreen(savedCodesStore, soundEffects)
                         }
                         Screen.Scan -> {
                             scanScreen(
@@ -216,6 +226,7 @@ suspend fun main() {
                                 codeReader,
                                 savedCodesStore,
                                 json,
+                                soundEffects,
                             )
                         }
                         Screen.About -> {
@@ -235,6 +246,7 @@ private fun RenderContext.headerMenuItems(
     json: Json,
     translationStore: TranslationStore,
     darkStore: Store<Boolean>,
+    soundEnabledStore: Store<Boolean>,
     closeMenu: () -> Unit,
 ) {
     val closeAndBlur = {
@@ -344,6 +356,17 @@ private fun RenderContext.headerMenuItems(
             }
         }
     }
+    li {
+        label("flex items-center justify-between gap-2 px-2 cursor-pointer") {
+            span("text-sm font-medium") { translate(DefaultLangStrings.SoundEffects) }
+            input("toggle toggle-primary") {
+                type("checkbox")
+                checked(soundEnabledStore.current)
+                checked(soundEnabledStore.data)
+                changes.states() handledBy { enabled -> soundEnabledStore.update(enabled) }
+            }
+        }
+    }
 }
 
 
@@ -357,6 +380,7 @@ enum class DefaultLangStrings : Translatable {
     ScannerLibrary,
     Copy,
     DarkMode,
+    SoundEffects,
     Codes,
     Open,
     Save,

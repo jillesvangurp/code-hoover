@@ -7,6 +7,7 @@ default-clear=Wissen
 default-scanner-library=Scanner: { $value }
 default-copy=Kopiëren
 default-dark-mode=Donkere modus
+default-sound-effects=Geluidseffecten
 default-codes=Codes
 default-open=Openen
 default-save=Opslaan
@@ -71,4 +72,3 @@ default-veritasium-video=Veritasium video on QR codes
 default-open-source-statement=This project is free and open source.
 default-open-on-different-device=Open on a different device
 default-migration-instructions=Migration instructions: Simply open Code Hoover on another device with this QR code and then go to the scan page to hoover up any codes you have on this device and save them.
-

@@ -20,9 +20,11 @@ import iconBars
 import sortable.Sortable
 import sortable.SortableEvent
 import sortable.sortableOptions
+import SoundEffects
 
 fun RenderContext.codesScreen(
-    savedCodesStore: Store<List<SavedQrCode>>
+    savedCodesStore: Store<List<SavedQrCode>>,
+    soundEffects: SoundEffects,
 ) {
     val formStore = storeOf(QrForm())
     val editingStore = storeOf(false)
@@ -219,6 +221,7 @@ fun RenderContext.codesScreen(
                                     val list = savedCodesStore.current.toMutableList()
                                     list.removeAt(idx)
                                     savedCodesStore.update(list)
+                                    soundEffects.playDelete()
                                     close(false)
                                 },
                                 showCancel = false
@@ -491,4 +494,3 @@ private fun RenderContext.formButtons(
         }
     }
 }
-

@@ -7,6 +7,7 @@ default-clear=Leeren
 default-scanner-library=Scanner: { $value }
 default-copy=Kopieren
 default-dark-mode=Dunkelmodus
+default-sound-effects=Soundeffekte
 default-codes=Codes
 default-open=Öffnen
 default-save=Speichern

@@ -19,13 +19,15 @@ import qr.SavedQrCode
 import qr.asText
 import qr.defaultDisplayName
 import qr.parseVCard
+import SoundEffects
 
 fun RenderContext.scanScreen(
     scanningStore: Store<Boolean>,
     scansStore: Store<List<ScanResult>>,
     codeReader: BrowserMultiFormatReader,
     savedCodesStore: Store<List<SavedQrCode>>,
-    json: Json
+    json: Json,
+    soundEffects: SoundEffects,
 ) {
     val scope = MainScope()
     var controls: IScannerControls? = null
@@ -80,6 +82,7 @@ fun RenderContext.scanScreen(
                                     scansStore.update(
                                         listOf(ScanResult(text, formatOrdinal)) + existing,
                                     )
+                                    soundEffects.playScanSuccess()
                                 }
                             }
                         }
@@ -111,6 +114,7 @@ fun RenderContext.scanScreen(
                     scansStore.update(
                         listOf(ScanResult(text, format)) + existing,
                     )
+                    soundEffects.playScanSuccess()
                 }
             }
         }
@@ -240,6 +244,7 @@ fun RenderContext.scanScreen(
                         translate(DefaultLangStrings.Delete)
                         clicks handledBy {
                             scansStore.update(scansStore.current.filterNot { it == scan })
+                            soundEffects.playDelete()
                         }
                     }
                 }
