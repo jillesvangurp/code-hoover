@@ -1,19 +1,9 @@
-.classpath
-.project
-.settings
-*~
-target
-test-output
-.idea
-*iml
-.gradle
-build
-out
-.kotlintest
-localRepo
-.kotlin
-.DS_Store
 node_modules
 dist
-#overwritten by npm
-index.html
+coverage
+*.local
+*.tsbuildinfo
+.DS_Store
+.idea
+*.iml
+*~
