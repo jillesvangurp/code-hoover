@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { QR_DATA_TYPES, defaultDisplayName, parseSavedCodes, parseVCard, qrDataAsText, type VCardData } from './qr'
 
 describe('saved code compatibility', () => {
-  it('reads the Kotlin serialization wire format and restores blank names', () => {
+  it('reads the legacy serialization format and restores blank names', () => {
     const codes = parseSavedCodes(JSON.stringify([
       {
         name: '',
@@ -59,7 +59,7 @@ describe('vCard support', () => {
     expect(encoded).toContain('NOTE:First line\\nSecond\\, line')
   })
 
-  it('uses the same vCard display-name convention as the Kotlin app', () => {
+  it('preserves the legacy vCard display-name convention', () => {
     expect(defaultDisplayName(card)).toBe('Ada Lovelace vcard')
     expect(defaultDisplayName({ ...card, name: 'Ada vcard' })).toBe('Ada vcard')
   })

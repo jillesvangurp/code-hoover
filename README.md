@@ -37,4 +37,4 @@ All application dependencies are managed through `package.json` and `package-loc
 
 ## Persisted data compatibility
 
-The React implementation preserves the existing `localStorage` keys and the Kotlin serialization discriminator used by previous `codes.json` exports. Existing saved codes and exported files can therefore be used without migration.
+The React implementation preserves the existing `localStorage` keys and legacy `codes.json` format. Existing saved codes and exported files can therefore be used without migration.
