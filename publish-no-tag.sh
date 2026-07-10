@@ -14,10 +14,10 @@ export TAG=$1
 gradle jsBrowserDistribution
 npm run build
 
-if [ -f "$HOME/.cloudflare" ]; then
-  source "$HOME/.cloudflare"
+if [ -f "$HOME/.cloudflare.jillesvangurp-com" ]; then
+  source "$HOME/.cloudflare.jillesvangurp-com"
 else
-  die "Missing $HOME/.cloudflare with CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN"
+  die "Missing $HOME/.cloudflare.jillesvangurp-com with CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN"
 fi
 
 docker run --rm -it \

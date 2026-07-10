@@ -1,5 +1,7 @@
 # Code Hoover
 
+[codehoover.jillesvangurp.com](https://codehoover.jillesvangurp.com/)
+
 Code Hoover is a small web application that lets you scan QR codes and barcodes directly in the browser. It is written in Kotlin/JS using the fritz2 framework, prefers the native [Barcode Detection API](https://developer.mozilla.org/en-US/docs/Web/API/Barcode_Detection_API) when available, and falls back to the excellent [@zxing/browser](https://github.com/zxing-js/browser) package for decoding.
 
 [![Screenshot](screenshot.webp)](URL)
