@@ -221,6 +221,7 @@ suspend fun main() {
                         }
                         Screen.Scan -> {
                             scanScreen(
+                                screenStore,
                                 scanningStore,
                                 scansStore,
                                 codeReader,

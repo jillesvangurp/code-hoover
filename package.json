@@ -3,15 +3,15 @@
   "scripts": {
     "watch": "chokidar 'src/jsMain/**/*' -c './gradlew jsBrowserDevelopmentWebpack'",
     "dev": "cp index-dev.html index.html && vite",
-    "build": "cp index-prod.html index.html && vite build",
+    "build": "./gradlew jsBrowserProductionWebpack && cp index-prod.html index.html && vite build",
     "preview": "vite preview"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.1.13",
+    "@tailwindcss/vite": "^4.3.2",
     "chokidar-cli": "^3.0.0",
-    "daisyui": "^5.1.12",
+    "daisyui": "^5.6.16",
     "qrcode": "^1.5.4",
-    "tailwindcss": "^4.1.13",
-    "vite": "^7.1.5"
+    "tailwindcss": "^4.3.2",
+    "vite": "^8.1.4"
   }
 }

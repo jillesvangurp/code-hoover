@@ -22,6 +22,7 @@ import qr.parseVCard
 import SoundEffects
 
 fun RenderContext.scanScreen(
+    screenStore: Store<Screen>,
     scanningStore: Store<Boolean>,
     scansStore: Store<List<ScanResult>>,
     codeReader: BrowserMultiFormatReader,
@@ -33,6 +34,7 @@ fun RenderContext.scanScreen(
     var controls: IScannerControls? = null
     var mediaStream: MediaStream? = null
     var detectionJob: Job? = null
+    var startupJob: Job? = null
     val barcodeDetectorAvailable = isBarcodeDetectorAvailable()
     val scannerLabelStore = storeOf(
         if (barcodeDetectorAvailable) "Barcode Detector API" else "@zxing/browser",
@@ -48,6 +50,8 @@ fun RenderContext.scanScreen(
     }
 
     fun stopScanning() {
+        startupJob?.cancel()
+        startupJob = null
         controls?.stop()
         controls = null
         detectionJob?.cancel()
@@ -75,6 +79,7 @@ fun RenderContext.scanScreen(
                                 val text = barcode.rawValue
                                 val formatOrdinal =
                                     barcodeFormatOrdinal(
+                                        // bla
                                         barcode.format.replace("-", "_").uppercase(),
                                     )
                                 val existing = scansStore.current
@@ -119,45 +124,38 @@ fun RenderContext.scanScreen(
             }
         }
     }
+
+    fun startScanning() {
+        if (scanningStore.current) return
+        scanningStore.update(true)
+        startupJob = scope.launch {
+            var videoElement: HTMLVideoElement? = null
+            for (attempt in 0 until 5) {
+                videoElement = document.getElementById("video") as? HTMLVideoElement
+                if (videoElement != null) break
+                delay(50)
+            }
+            val targetVideo = videoElement
+            if (targetVideo == null) {
+                stopScanning()
+            } else {
+                val startedWithNative =
+                    barcodeDetectorAvailable && startBarcodeDetector(targetVideo)
+                if (!startedWithNative && scanningStore.current) {
+                    startZxingScanner()
+                }
+                startupJob = null
+            }
+        }
+    }
+
+    screenStore.data handledBy { screen ->
+        if (screen != Screen.Scan) stopScanning()
+    }
+
     scanningStore.data.render { scanning ->
         section("flex flex-col items-center gap-4 w-full") {
-            div("join flex-wrap w-full justify-center md:justify-start") {
-                if (scanning) {
-                    button("btn btn-error btn-sm w-24 flex items-center gap-1") {
-                        iconStop()
-                        translate(DefaultLangStrings.Stop)
-                        clicks handledBy {
-                            stopScanning()
-                        }
-                    }
-                } else {
-                    button("btn btn-primary btn-sm w-24 flex items-center gap-1") {
-                        iconCamera()
-                        translate(DefaultLangStrings.Scan)
-                        clicks handledBy {
-                            scanningStore.update(true)
-                            scope.launch {
-                                var videoElement: HTMLVideoElement? = null
-                                for (attempt in 0 until 5) {
-                                    videoElement =
-                                        document.getElementById("video") as? HTMLVideoElement
-                                    if (videoElement != null) break
-                                    delay(50)
-                                }
-                                val targetVideo = videoElement
-                                if (targetVideo == null) {
-                                    stopScanning()
-                                } else {
-                                    val startedWithNative =
-                                        barcodeDetectorAvailable && startBarcodeDetector(targetVideo)
-                                    if (!startedWithNative) {
-                                        startZxingScanner()
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+            div("flex w-full justify-center md:justify-start") {
                 button("btn btn-secondary btn-sm w-24 flex items-center gap-1") {
                     iconXMark()
                     translate(DefaultLangStrings.Clear)
@@ -178,6 +176,7 @@ fun RenderContext.scanScreen(
             }
         }
     }
+    startScanning()
     scansStore.data.render { scans ->
         p("font-semibold mb-2") {
             translate(DefaultLangStrings.ScannedCodes, mapOf("count" to scans.size))

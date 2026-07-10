@@ -29,6 +29,7 @@ fun RenderContext.codesScreen(
     val formStore = storeOf(QrForm())
     val editingStore = storeOf(false)
     val selectedIndexStore = storeOf<Int?>(null)
+    val selectedFixedCodeStore = storeOf<String?>(null)
 
     editingStore.data.render { editing ->
         if (editing) {
@@ -161,6 +162,87 @@ fun RenderContext.codesScreen(
                     }
                 })
             }
+            hr("w-24 border-base-300 self-center mt-4") {}
+            ul("flex flex-col gap-4 w-full") {
+                fun fixedCodeCard(url: String, label: DefaultLangStrings) {
+                    li(
+                        "card bg-base-200 rounded-2xl p-4 cursor-pointer w-full flex flex-col items-center gap-3 text-center relative"
+                    ) {
+                        qrCodeImage(
+                            text = url,
+                            size = 160,
+                            classes = "h-24 w-24 mx-auto pointer-events-none",
+                        ) {
+                            attr("alt", getTranslationString(label))
+                        }
+                        hr("w-24 border-base-300") {}
+                        a("link link-primary") {
+                            href(url)
+                            attr("target", "_blank")
+                            attr("rel", "noopener noreferrer")
+                            translate(label)
+                            domNode.addEventListener("click", { event ->
+                                event.stopPropagation()
+                            })
+                        }
+                        clicks handledBy { selectedFixedCodeStore.update(url) }
+                    }
+                }
+
+                fixedCodeCard(CODE_HOOVER_REPOSITORY_URL, DefaultLangStrings.GithubRepo)
+                fixedCodeCard(CODE_HOOVER_APP_URL, DefaultLangStrings.OpenOnDifferentDevice)
+            }
+
+            selectedFixedCodeStore.data.render { url ->
+                if (url != null) {
+                    val label = if (url == CODE_HOOVER_REPOSITORY_URL) {
+                        DefaultLangStrings.GithubRepo
+                    } else {
+                        DefaultLangStrings.OpenOnDifferentDevice
+                    }
+                    window.history.pushState(null, "", window.location.href)
+                    lateinit var close: (Boolean) -> Unit
+                    val keyHandler: (dynamic) -> Unit = { e ->
+                        if (e.key == "Escape") close(false)
+                    }
+                    val popHandler: (dynamic) -> Unit = { close(true) }
+                    close = { fromPop: Boolean ->
+                        window.removeEventListener("keydown", keyHandler)
+                        window.removeEventListener("popstate", popHandler)
+                        selectedFixedCodeStore.update(null)
+                        if (!fromPop) window.history.back()
+                    }
+                    window.addEventListener("keydown", keyHandler)
+                    window.addEventListener("popstate", popHandler)
+
+                    div("modal modal-open") {
+                        div(
+                            "modal-box relative w-full h-full max-w-full flex flex-col items-center justify-center gap-6"
+                        ) {
+                            button("btn btn-ghost btn-sm btn-circle absolute right-4 top-4") {
+                                attr("type", "button")
+                                attr("aria-label", getTranslationString(DefaultLangStrings.Close))
+                                iconXMark()
+                                clicks handledBy { close(false) }
+                            }
+                            qrCodeImage(
+                                text = url,
+                                size = 700,
+                                classes = "w-full max-w-lg mx-auto",
+                            ) {
+                                attr("alt", getTranslationString(label))
+                            }
+                            hr("w-24 border-base-300") {}
+                            a("link link-primary text-lg") {
+                                href(url)
+                                attr("target", "_blank")
+                                attr("rel", "noopener noreferrer")
+                                translate(label)
+                            }
+                        }
+                    }
+                }
+            }
 
             // Modal for displaying and editing selected code
             selectedIndexStore.data.render { idx ->
@@ -241,7 +323,7 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
         placeholder(defaultPlaceholder)
         value(formStore.current.name)
         value(formStore.data.map { it.name })
-        changes.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
+        inputs.values() handledBy formStore.handle { f, v -> f.copy(name = v) }
     }
     formStore.data.map { form ->
         if (form.type == QrType.VCARD) {
@@ -277,7 +359,7 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
                 placeholder(getTranslationString(DefaultLangStrings.Url))
                 value(formStore.current.url)
                 value(formStore.data.map { it.url })
-                changes.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
+                inputs.values() handledBy formStore.handle { f, v -> f.copy(url = v) }
             }
             QrType.TEXT -> textFormComponent(
                 formStore,
@@ -292,19 +374,19 @@ private fun RenderContext.qrFormFields(formStore: Store<QrForm>, showTypeSelect:
                     placeholder(getTranslationString(DefaultLangStrings.Ssid))
                     value(formStore.current.ssid)
                     value(formStore.data.map { it.ssid })
-                    changes.values() handledBy formStore.handle { f, v -> f.copy(ssid = v) }
+                    inputs.values() handledBy formStore.handle { f, v -> f.copy(ssid = v) }
                 }
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Password))
                     value(formStore.current.password)
                     value(formStore.data.map { it.password })
-                    changes.values() handledBy formStore.handle { f, v -> f.copy(password = v) }
+                    inputs.values() handledBy formStore.handle { f, v -> f.copy(password = v) }
                 }
                 input("input input-bordered w-full") {
                     placeholder(getTranslationString(DefaultLangStrings.Encryption))
                     value(formStore.current.encryption)
                     value(formStore.data.map { it.encryption })
-                    changes.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
+                    inputs.values() handledBy formStore.handle { f, v -> f.copy(encryption = v) }
                 }
             }
         }
@@ -461,7 +543,7 @@ private fun RenderContext.textFormComponent(
         attr("rows", rows.coerceAtLeast(1).toString())
         value(selector(formStore.current))
         value(formStore.data.map(selector))
-        changes.values() handledBy formStore.handle { form, value -> updater(form, value) }
+        inputs.values() handledBy formStore.handle { form, value -> updater(form, value) }
     }
 }
 
