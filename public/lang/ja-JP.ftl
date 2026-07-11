@@ -65,10 +65,16 @@ default-password-label=パスワード: { $value }
 default-type-label=タイプ: { $value }
 default-address-label=住所: { $value }
 default-note-label=メモ: { $value }
-default-about=About
-default-about-intro=Code Hoover lets you scan and generate QR codes directly in the browser.
-default-github-repo=GitHub repository
-default-veritasium-video=Veritasium video on QR codes
-default-open-source-statement=This project is free and open source.
-default-open-on-different-device=Open on a different device
-default-migration-instructions=Migration instructions: Simply open Code Hoover on another device with this QR code and then go to the scan page to hoover up any codes you have on this device and save them.
+default-about=Code Hooverについて
+default-about-intro=
+    Code Hooverを使うと、ブラウザで直接QRコードをスキャンしたり作成したりできます。コードをすべて吸い込み、
+    保存済みコードのリストに追加して、ほかの人に見せることができます。Wi-Fi認証情報、vCard、
+    LinkedInプロフィールへのリンクなど、さまざまな用途に便利です。
+default-github-repo=GitHubリポジトリ
+default-veritasium-video=QRコードについてのVeritasium動画
+default-open-source-statement=このプロジェクトは無料のオープンソースです。
+default-open-on-different-device=別の端末で開く
+default-migration-instructions=
+    コードを移行するには、このQRコードを使って別の端末でCode Hooverを開きます。
+    次にスキャン画面を開き、この端末のコード画面に表示されているコードを吸い込みます。
+    最後に、残しておきたいコードを保存してください。

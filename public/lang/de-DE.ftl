@@ -65,10 +65,16 @@ default-password-label=Passwort: { $value }
 default-type-label=Typ: { $value }
 default-address-label=Adresse: { $value }
 default-note-label=Notiz: { $value }
-default-about=About
-default-about-intro=Code Hoover lets you scan and generate QR codes directly in the browser.
-default-github-repo=GitHub repository
-default-veritasium-video=Veritasium video on QR codes
-default-open-source-statement=This project is free and open source.
-default-open-on-different-device=Open on a different device
-default-migration-instructions=Migration instructions: Simply open Code Hoover on another device with this QR code and then go to the scan page to hoover up any codes you have on this device and save them.
+default-about=Über Code Hoover
+default-about-intro=
+    Mit Code Hoover kannst du QR-Codes direkt im Browser scannen und erstellen. Sauge alle Codes auf und füge
+    sie deiner Liste gespeicherter Codes hinzu, damit du sie anderen zeigen kannst. Ideal für WLAN-Zugangsdaten,
+    vCards, Links zu LinkedIn-Profilen und vieles mehr.
+default-github-repo=GitHub-Repository
+default-veritasium-video=Veritasium-Video über QR-Codes
+default-open-source-statement=Dieses Projekt ist kostenlos und Open Source.
+default-open-on-different-device=Auf einem anderen Gerät öffnen
+default-migration-instructions=
+    So ziehst du um: Öffne Code Hoover mit diesem QR-Code auf einem anderen Gerät.
+    Gehe dort zur Scan-Seite und sauge die Codes von der Code-Übersicht dieses Geräts auf.
+    Speichere anschließend die Codes, die du behalten möchtest.

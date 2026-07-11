@@ -11,7 +11,7 @@ function findBrowserLocale(): Locale {
 
 async function loadBundle(locale: Locale): Promise<FluentBundle> {
   const bundle = new FluentBundle(locale)
-  const response = await fetch(`/lang/${locale}.ftl`)
+  const response = await fetch(`${import.meta.env.BASE_URL}lang/${locale}.ftl`)
   if (!response.ok) throw new Error(`Could not load ${locale}`)
   bundle.addResource(new FluentResource(await response.text()))
   return bundle
@@ -23,6 +23,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [fallbackBundle, setFallbackBundle] = useState<FluentBundle | null>(null)
 
   useEffect(() => {
+    document.documentElement.lang = locale
     let active = true
     void Promise.all([
       loadBundle(locale),
