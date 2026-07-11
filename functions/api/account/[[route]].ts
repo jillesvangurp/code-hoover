@@ -159,6 +159,26 @@ function parseCodes(value: unknown): unknown[] | null {
   return value
 }
 
+function savedCodeIdentity(value: unknown): string {
+  if (!value || typeof value !== 'object') return JSON.stringify(value)
+  const candidate = value as Record<string, unknown>
+  const data = candidate.data && typeof candidate.data === 'object' ? candidate.data as Record<string, unknown> : null
+  if (data?.type === 'qr.QrData.Barcode') return `${data.type}\n${String(data.format ?? '')}\n${String(data.text ?? candidate.text ?? '')}`
+  return `${String(data?.type ?? '')}\n${String(candidate.text ?? '')}`
+}
+
+function mergeCodes(primary: unknown[], secondary: unknown[]): unknown[] {
+  const seen = new Set<string>()
+  const merged: unknown[] = []
+  for (const code of [...primary, ...secondary]) {
+    const identity = savedCodeIdentity(code)
+    if (seen.has(identity)) continue
+    seen.add(identity)
+    merged.push(code)
+  }
+  return merged
+}
+
 async function createSession(context: PagesContext, userId: string): Promise<string> {
   const token = randomId(32)
   const now = Date.now()
@@ -258,8 +278,12 @@ async function putWallet(context: PagesContext): Promise<Response> {
   const body = await readJsonBody(context.request) as Record<string, unknown>
   const codes = parseCodes(body.codes)
   if (!codes) return jsonResponse({ error: 'invalid_codes' }, 400)
-  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify({ version: 1, updatedAt: Date.now(), codes } satisfies WalletRecord))
-  return jsonResponse({ ok: true })
+  const wallet = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(auth.account.userId), 'json')
+  const mergedCodes = mergeCodes(wallet?.codes ?? [], codes)
+  if (JSON.stringify(mergedCodes).length > MAX_BODY_BYTES) return jsonResponse({ error: 'payload_too_large' }, 413)
+  const updatedAt = Date.now()
+  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify({ version: 1, updatedAt, codes: mergedCodes } satisfies WalletRecord))
+  return jsonResponse({ ok: true, codes: mergedCodes, updatedAt })
 }
 
 async function logout(context: PagesContext): Promise<Response> {

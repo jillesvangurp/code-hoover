@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QR_DATA_TYPES, defaultDisplayName, parseSavedCodes, parseVCard, qrDataAsText, type VCardData } from './qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseSavedCodes, parseVCard, qrDataAsText, type SavedQrCode, type VCardData } from './qr'
 
 describe('saved code compatibility', () => {
   it('reads the legacy serialization format and restores blank names', () => {
@@ -23,6 +23,23 @@ describe('saved code compatibility', () => {
   it('rejects malformed imports instead of partially replacing the stash', () => {
     expect(() => parseSavedCodes('{"not":"an array"}')).toThrow('Expected an array')
     expect(() => parseSavedCodes('[{"name":"broken"}]')).toThrow('Invalid saved code')
+  })
+
+  it('merges account sync lists by payload without dropping either device', () => {
+    const laptop: SavedQrCode[] = [
+      { name: 'Laptop', text: 'https://laptop.example', data: { type: QR_DATA_TYPES.url, url: 'https://laptop.example' } },
+      { name: 'Renamed shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } },
+    ]
+    const mobile: SavedQrCode[] = [
+      { name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } },
+      { name: 'Mobile', text: '5901234123457', data: { type: QR_DATA_TYPES.barcode, format: 'EAN_13', text: '5901234123457' } },
+    ]
+
+    expect(mergeSavedCodes(laptop, mobile)).toEqual([
+      laptop[0],
+      laptop[1],
+      mobile[1],
+    ])
   })
 })
 

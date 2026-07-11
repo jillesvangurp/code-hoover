@@ -65,6 +65,23 @@ export interface SavedQrCode {
 
 const stringValue = (value: unknown): string => (typeof value === 'string' ? value : '')
 
+export function savedCodeIdentity(code: SavedQrCode): string {
+  if (code.data.type === QR_DATA_TYPES.barcode) return `${code.data.type}\n${code.data.format}\n${code.data.text}`
+  return `${code.data.type}\n${qrDataAsText(code.data)}`
+}
+
+export function mergeSavedCodes(primary: SavedQrCode[], secondary: SavedQrCode[]): SavedQrCode[] {
+  const seen = new Set<string>()
+  const merged: SavedQrCode[] = []
+  for (const code of [...primary, ...secondary]) {
+    const identity = savedCodeIdentity(code)
+    if (seen.has(identity)) continue
+    seen.add(identity)
+    merged.push(code)
+  }
+  return merged
+}
+
 export function normalizeQrData(value: unknown): QrData | null {
   if (!value || typeof value !== 'object') return null
   const candidate = value as Record<string, unknown>

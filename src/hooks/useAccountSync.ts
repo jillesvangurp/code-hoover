@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { SavedQrCode } from '../domain/qr'
+import { mergeSavedCodes, type SavedQrCode } from '../domain/qr'
 import { createAccount, deleteAccount, downloadAccountCodes, parseStoredAccountSession, signInAccount, signOutAccount, uploadAccountCodes, type AccountSession } from '../lib/accountSync'
 import { useLocalStorage } from './useLocalStorage'
 
@@ -30,20 +30,25 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
       : { state: 'idle', messageId: 'default-account-sync-off' }
   ))
   const lastUploadedJson = useRef(JSON.stringify(codes))
+  const lastSyncedSessionToken = useRef<string | null>(null)
   const sessionRef = useRef(session)
   sessionRef.current = session
 
   const upload = useCallback(async (nextSession: AccountSession, nextCodes: SavedQrCode[], messageId = 'default-account-sync-saved') => {
     setStatus({ state: 'syncing', messageId: 'default-account-sync-saving' })
     try {
-      await uploadAccountCodes(nextSession, nextCodes)
-      lastUploadedJson.current = JSON.stringify(nextCodes)
+      const accountCodes = await downloadAccountCodes(nextSession)
+      const mergedCodes = mergeSavedCodes(nextCodes, accountCodes)
+      const savedCodes = await uploadAccountCodes(nextSession, mergedCodes)
+      lastUploadedJson.current = JSON.stringify(savedCodes)
+      lastSyncedSessionToken.current = nextSession.token
+      setCodes(savedCodes)
       setStatus({ state: 'synced', messageId })
     } catch {
       setStatus({ state: 'error', messageId: 'default-account-sync-error' })
       throw new Error('Account sync failed')
     }
-  }, [])
+  }, [setCodes])
 
   const register = useCallback(async (email: string, password: string) => {
     setStatus({ state: 'syncing', messageId: 'default-account-sync-creating' })
@@ -51,6 +56,7 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
       const result = await createAccount(email, password, codes)
       setSession(result.session)
       lastUploadedJson.current = JSON.stringify(codes)
+      lastSyncedSessionToken.current = result.session.token
       setStatus({ state: 'synced', messageId: 'default-account-sync-enabled' })
     } catch {
       setStatus({ state: 'error', messageId: 'default-account-sync-sign-in-error' })
@@ -62,15 +68,18 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
     setStatus({ state: 'syncing', messageId: 'default-account-sync-signing-in' })
     try {
       const result = await signInAccount(email, password)
+      const mergedCodes = mergeSavedCodes(codes, result.codes)
+      const savedCodes = await uploadAccountCodes(result.session, mergedCodes)
       setSession(result.session)
-      setCodes(result.codes)
-      lastUploadedJson.current = JSON.stringify(result.codes)
+      setCodes(savedCodes)
+      lastUploadedJson.current = JSON.stringify(savedCodes)
+      lastSyncedSessionToken.current = result.session.token
       setStatus({ state: 'synced', messageId: 'default-account-sync-restored' })
     } catch {
       setStatus({ state: 'error', messageId: 'default-account-sync-sign-in-error' })
       throw new Error('Sign in failed')
     }
-  }, [setCodes, setSession])
+  }, [codes, setCodes, setSession])
 
   const uploadNow = useCallback(async () => {
     if (!sessionRef.current) return
@@ -82,14 +91,17 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
     setStatus({ state: 'syncing', messageId: 'default-account-sync-restoring' })
     try {
       const restoredCodes = await downloadAccountCodes(sessionRef.current)
-      setCodes(restoredCodes)
-      lastUploadedJson.current = JSON.stringify(restoredCodes)
+      const mergedCodes = mergeSavedCodes(codes, restoredCodes)
+      const savedCodes = await uploadAccountCodes(sessionRef.current, mergedCodes)
+      setCodes(savedCodes)
+      lastUploadedJson.current = JSON.stringify(savedCodes)
+      lastSyncedSessionToken.current = sessionRef.current.token
       setStatus({ state: 'synced', messageId: 'default-account-sync-restored' })
     } catch {
       setStatus({ state: 'error', messageId: 'default-account-sync-error' })
       throw new Error('Account restore failed')
     }
-  }, [setCodes])
+  }, [codes, setCodes])
 
   const signOut = useCallback(async () => {
     const currentSession = sessionRef.current
@@ -115,6 +127,7 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
   useEffect(() => {
     if (!session) {
       lastUploadedJson.current = JSON.stringify(codes)
+      lastSyncedSessionToken.current = null
       setStatus((current) => (
         current.messageId === 'default-account-sync-off'
           ? current
@@ -128,7 +141,8 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
         : current
     ))
     const nextJson = JSON.stringify(codes)
-    if (nextJson === lastUploadedJson.current) return
+    const shouldRefreshSession = lastSyncedSessionToken.current !== session.token
+    if (!shouldRefreshSession && nextJson === lastUploadedJson.current) return
     const timeout = window.setTimeout(() => {
       void upload(session, codes).catch(() => undefined)
     }, 1200)

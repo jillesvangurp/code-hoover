@@ -84,10 +84,12 @@ export async function downloadAccountCodes(session: AccountSession): Promise<Sav
   return parseSavedCodes(JSON.stringify(body.codes ?? []))
 }
 
-export async function uploadAccountCodes(session: AccountSession, codes: SavedQrCode[]): Promise<void> {
+export async function uploadAccountCodes(session: AccountSession, codes: SavedQrCode[]): Promise<SavedQrCode[]> {
   const response = await accountRequest('wallet', {
     method: 'PUT',
     body: JSON.stringify({ codes }),
   }, session)
   if (!response.ok) throw new Error(`Account sync failed: ${response.status}`)
+  const body = await response.json() as { codes?: unknown }
+  return parseSavedCodes(JSON.stringify(body.codes ?? codes))
 }
