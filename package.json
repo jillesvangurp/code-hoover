@@ -13,7 +13,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --max-warnings=0",
-    "check": "npm run lint && npm run test && npm run build"
+    "check": "npm run lint && npm run test && npm run build",
+    "deploy:cloudflare": "npm run check && npx --yes wrangler@latest pages deploy dist --project-name=qr-wallet --branch=main"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

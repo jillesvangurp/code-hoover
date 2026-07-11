@@ -20,3 +20,10 @@
 
 - Use Vitest and Testing Library.
 - Add domain tests for serialization and QR payload changes, and interaction tests for user-visible flows.
+
+## Codex Skills
+
+- For visual/frontend verification, use the installed `playwright` and `screenshot` skills.
+- For security-sensitive changes, use `security-best-practices`.
+- For GitHub PR review or CI follow-up, use `gh-address-comments`, `gh-fix-ci`, and `yeet` when relevant.
+- Formation company skills are installed from `/Users/ianhannigan/GIT/formation/company-skills` into `~/.codex/skills`; useful local references for this repo include `copy-tone`, `website-asset-workflow`, `asset-management`, and `formation-workstation-update`.

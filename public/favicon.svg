@@ -1,31 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Code Hoover robot vacuum">
-  <g fill="#000">
-    <!-- Code fragments being pulled into the vacuum. -->
-    <rect x="7" y="48" width="6" height="6" rx="1" transform="rotate(-12 10 51)"/>
-    <rect x="18" y="54" width="5" height="5" rx="1" transform="rotate(14 20.5 56.5)"/>
-    <rect x="27" y="49" width="4" height="4" rx="0.75" transform="rotate(-9 29 51)"/>
-    <rect x="42" y="52" width="5" height="5" rx="1" transform="rotate(12 44.5 54.5)"/>
-    <rect x="52" y="47" width="6" height="6" rx="1" transform="rotate(-14 55 50)"/>
-
-    <!-- Suction trails. -->
-    <path d="M18 43c1.5 3 4 4.7 7.5 5" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-    <path d="M28 44c.7 2 2 3.4 4 4.4" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-    <path d="M46 43c-1.5 3-4 4.7-7.5 5" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
-
-    <!-- Side brushes. -->
-    <path d="M13 37 7 39m7 1-6 4m43-7 6 2m-7 1 6 4" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
-
-    <!-- Robot vacuum body. -->
-    <rect x="10" y="9" width="44" height="35" rx="17.5"/>
-  </g>
-
-  <!-- Top lid and control button. -->
-  <ellipse cx="32" cy="18" rx="14.5" ry="6.5" fill="none" stroke="#fff" stroke-width="3"/>
-  <ellipse cx="32" cy="18" rx="5" ry="2.5" fill="#fff"/>
-
-  <!-- Friendly face panel. -->
-  <path d="M14 28h36v8.5c0 3.2-2.6 5.8-5.8 5.8H19.8A5.8 5.8 0 0 1 14 36.5Z" fill="#fff"/>
-  <circle cx="24" cy="34" r="2.25" fill="#000"/>
-  <circle cx="40" cy="34" r="2.25" fill="#000"/>
-  <path d="M27.5 37.5c1.2 1.5 2.7 2.2 4.5 2.2s3.3-.7 4.5-2.2" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Code Hoover">
+  <path fill="#000" d="M8 10h18v18H8V10Zm5 5v8h8v-8h-8Zm25-5h18v18H38V10Zm5 5v8h8v-8h-8ZM8 38h18v18H8V38Zm5 5v8h8v-8h-8Zm27-7h6v6h-6v-6Zm10 0h6v6h-6v-6Zm-20 10h6v6h-6v-6Zm10 6h6v6h-6v-6Zm10-8h6v14h-6V44Zm-22-12h8v6h-8v-6Zm10-2h18v4H38v-4Z"/>
+  <path fill="#000" d="M33 31c9 0 17 3 23 9l-4 4c-5-5-12-7-19-7h-3v-6h3Z"/>
+  <path fill="#000" d="M30 23h6v16h-6V23Zm-4 0h14l-3-7h-8l-3 7Z"/>
 </svg>

@@ -1,0 +1,13 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "qr-wallet",
+  "compatibility_date": "2026-07-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "pages_build_output_dir": "dist",
+  "kv_namespaces": [
+    {
+      "binding": "QR_WALLET_KV",
+      "id": "d613d261ab0f4beda47e7c31c88a0f85"
+    }
+  ]
+}

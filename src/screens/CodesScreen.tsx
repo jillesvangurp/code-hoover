@@ -1,66 +1,128 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable'
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Grip, Plus, ScanLine } from 'lucide-react'
+import { Contact, FileText, Grip, Link, Plus, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
-import type { SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { CodeModal } from '../components/CodeModal'
-import { FixedCodeModal } from '../components/FixedCodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
 import { QrCodeImage } from '../components/QrCodeImage'
-
-export const CODE_HOOVER_REPOSITORY_URL = 'https://github.com/jillesvangurp/code-hoover'
-export const CODE_HOOVER_APP_URL = 'https://codehoover.jillesvangurp.com'
 
 interface CodesScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
-  onScan: () => void
   playDelete: () => void
+}
+
+function codeTypeLabel(code: SavedQrCode): string {
+  switch (code.data.type) {
+    case QR_DATA_TYPES.url:
+      return 'URL'
+    case QR_DATA_TYPES.text:
+      return 'Text'
+    case QR_DATA_TYPES.wifi:
+      return 'Wi-Fi'
+    case QR_DATA_TYPES.vcard:
+      return 'vCard'
+  }
+}
+
+function codeTypeIcon(code: SavedQrCode) {
+  switch (code.data.type) {
+    case QR_DATA_TYPES.url:
+      return Link
+    case QR_DATA_TYPES.text:
+      return FileText
+    case QR_DATA_TYPES.wifi:
+      return Wifi
+    case QR_DATA_TYPES.vcard:
+      return Contact
+  }
+}
+
+function codePreviewLines(code: SavedQrCode): string[] {
+  switch (code.data.type) {
+    case QR_DATA_TYPES.url:
+      return [code.data.url]
+    case QR_DATA_TYPES.text:
+      return [code.data.text]
+    case QR_DATA_TYPES.wifi:
+      return [
+        code.data.ssid || 'Unnamed network',
+        code.data.encryption ? `${code.data.encryption} security` : '',
+      ].filter(Boolean)
+    case QR_DATA_TYPES.vcard:
+      return [
+        [code.data.title, code.data.organization].filter(Boolean).join(' · '),
+        code.data.email,
+        code.data.phone,
+      ].filter(Boolean)
+  }
+}
+
+function QrThumbnail({ text, label }: { text: string; label: string }) {
+  return (
+    <span className="qr-intro-code-frame" style={{ width: '5rem', height: '5rem' }}>
+      <span className="qr-intro-finder qr-intro-finder-top-left" aria-hidden="true" />
+      <span className="qr-intro-finder qr-intro-finder-top-right" aria-hidden="true" />
+      <span className="qr-intro-finder qr-intro-finder-bottom-left" aria-hidden="true" />
+      <QrCodeImage text={text} size={160} className="qr-intro-code pointer-events-none h-full w-full" alt={label} loading="lazy" />
+    </span>
+  )
 }
 
 function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
   const { t } = useI18n()
   const displayName = code.name || code.text
+  const previewLines = codePreviewLines(code)
+  const TypeIcon = codeTypeIcon(code)
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    '--qr-card-index': id,
+  } as CSSProperties
+
   return (
     <li
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className="card relative flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl bg-base-200 p-4 text-center"
+      style={style}
+      className="qr-intro-card card grid w-full cursor-pointer grid-cols-[1.75rem_minmax(0,1fr)_5rem] items-center gap-3 overflow-hidden rounded-2xl bg-base-200 p-4 text-left transition-colors hover:bg-base-300"
       onClick={onClick}
     >
       <button
         type="button"
-        className="btn btn-ghost btn-xs btn-circle absolute right-3 top-3 cursor-grab touch-none"
+        className="btn btn-ghost btn-xs btn-circle cursor-grab touch-none self-start"
         aria-label={t('default-drag-to-reorder')}
         onClick={(event) => event.stopPropagation()}
         {...attributes}
         {...listeners}
       ><Grip size={16} /></button>
-      <QrCodeImage text={code.text} size={160} className="pointer-events-none mx-auto h-24 w-24" alt={displayName} loading="lazy" />
-      <p className="m-0 line-clamp-2 min-h-12 w-full break-all font-medium">{displayName}</p>
+      <div className="min-w-0">
+        <div className="mb-2 flex min-w-0 items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-60">
+          <TypeIcon size={14} className="shrink-0" aria-hidden="true" />
+          <span>{codeTypeLabel(code)}</span>
+        </div>
+        <p className="m-0 truncate text-lg font-semibold leading-tight">{displayName}</p>
+        {previewLines.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {previewLines.slice(0, 3).map((line) => (
+              <p key={line} className="m-0 truncate text-sm opacity-75">{line}</p>
+            ))}
+          </div>
+        )}
+      </div>
+      <QrThumbnail text={code.text} label={displayName} />
     </li>
   )
 }
 
-function FixedCodeCard({ url, label, onClick }: { url: string; label: string; onClick: () => void }) {
-  return (
-    <li className="card flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl bg-base-200 p-4 text-center" onClick={onClick}>
-      <QrCodeImage text={url} size={160} className="pointer-events-none mx-auto h-24 w-24" alt={label} />
-      <hr className="w-24 border-base-300" />
-      <a className="link link-primary" href={url} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()}>{label}</a>
-    </li>
-  )
-}
-
-export function CodesScreen({ codes, setCodes, onScan, playDelete }: CodesScreenProps) {
+export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<QrFormState>(emptyQrForm)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [fixedCode, setFixedCode] = useState<string | null>(null)
   const { t } = useI18n()
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -68,7 +130,6 @@ export function CodesScreen({ codes, setCodes, onScan, playDelete }: CodesScreen
   )
 
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
-  const closeFixedModal = useCallback(() => setFixedCode(null), [])
   const onDragEnd = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return
     setCodes(arrayMove(codes, Number(active.id), Number(over.id)))
@@ -87,26 +148,18 @@ export function CodesScreen({ codes, setCodes, onScan, playDelete }: CodesScreen
     )
   }
 
-  const fixedLabel = fixedCode === CODE_HOOVER_REPOSITORY_URL ? t('default-github-repo') : t('default-open-on-different-device')
   return (
     <>
-      <div className="flex w-full flex-wrap justify-center gap-2 md:justify-start">
-        <button type="button" className="btn btn-primary" onClick={() => { setForm(emptyQrForm()); setEditing(true) }}><Plus size={18} />{t('default-add')}</button>
-        <button type="button" className="btn btn-secondary" onClick={onScan}><ScanLine size={18} />{t('default-scan')}</button>
+      <div className="join mb-6 flex w-full flex-wrap justify-center md:justify-start">
+        <button type="button" className="btn btn-primary btn-sm w-24" onClick={() => { setForm(emptyQrForm()); setEditing(true) }}><Plus size={16} />{t('default-add')}</button>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={codes.map((_, index) => String(index))} strategy={rectSortingStrategy}>
-          <ul className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
+        <SortableContext items={codes.map((_, index) => String(index))} strategy={verticalListSortingStrategy}>
+          <ul className="flex w-full flex-col gap-4">
             {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} onClick={() => setSelectedIndex(index)} />)}
           </ul>
         </SortableContext>
       </DndContext>
-      <hr className="mt-4 w-24 self-center border-base-300" />
-      <ul className="flex w-full flex-col gap-4">
-        <FixedCodeCard url={CODE_HOOVER_REPOSITORY_URL} label={t('default-github-repo')} onClick={() => setFixedCode(CODE_HOOVER_REPOSITORY_URL)} />
-        <FixedCodeCard url={CODE_HOOVER_APP_URL} label={t('default-open-on-different-device')} onClick={() => setFixedCode(CODE_HOOVER_APP_URL)} />
-      </ul>
-      {fixedCode && <FixedCodeModal url={fixedCode} label={fixedLabel} onClose={closeFixedModal} />}
       {selectedIndex !== null && codes[selectedIndex] && (
         <CodeModal
           code={codes[selectedIndex]}

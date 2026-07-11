@@ -22,5 +22,6 @@ export class SoundEffects {
   }
 
   playScanSuccess = () => this.play(this.scan)
+  playPreview = () => this.play(this.scan)
   playDelete = () => this.play(this.remove)
 }

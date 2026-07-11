@@ -98,3 +98,219 @@
     @apply text-blue-600 hover:text-blue-400 underline cursor-pointer;
   }
 }
+
+@layer components {
+  .qr-intro-card {
+    animation: qr-card-enter 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--qr-card-index, 0) * 80ms);
+  }
+
+  .qr-intro-code-frame {
+    position: relative;
+    display: block;
+    width: 6rem;
+    height: 6rem;
+    margin-inline: auto;
+    overflow: hidden;
+    background: white;
+    color: black;
+    isolation: isolate;
+  }
+
+  .qr-intro-code-frame::before,
+  .qr-intro-code-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .qr-intro-code-frame::before {
+    background:
+      linear-gradient(90deg, currentColor 0 33%, transparent 33% 66%, currentColor 66%) 0 0 / 18px 18px,
+      linear-gradient(0deg, transparent 0 33%, currentColor 33% 66%, transparent 66%) 0 0 / 18px 18px,
+      repeating-conic-gradient(from 90deg, currentColor 0 25%, transparent 0 50%) 0 0 / 12px 12px;
+    opacity: 0;
+    animation: qr-module-field 720ms steps(7, end) both;
+    animation-delay: calc((var(--qr-card-index, 0) * 80ms) + 120ms);
+  }
+
+  .qr-intro-code-frame::after {
+    background:
+      repeating-linear-gradient(90deg, rgb(0 0 0 / 0.16) 0 1px, transparent 1px 6px),
+      repeating-linear-gradient(0deg, rgb(0 0 0 / 0.16) 0 1px, transparent 1px 6px);
+    opacity: 0;
+    animation: qr-grid-fade 680ms steps(6, end) both;
+    animation-delay: calc((var(--qr-card-index, 0) * 80ms) + 160ms);
+  }
+
+  .qr-intro-finder {
+    position: absolute;
+    z-index: 2;
+    width: 1.85rem;
+    height: 1.85rem;
+    border: 0.36rem solid currentColor;
+    background:
+      linear-gradient(currentColor 0 0) 50% 50% / 0.58rem 0.58rem no-repeat,
+      white;
+    opacity: 0;
+    scale: 0.35;
+    animation: qr-finder-lock 520ms steps(4, end) both;
+    animation-delay: calc((var(--qr-card-index, 0) * 80ms) + var(--qr-finder-delay, 0ms));
+    pointer-events: none;
+  }
+
+  .qr-intro-finder-top-left {
+    top: 0;
+    left: 0;
+    --qr-finder-delay: 20ms;
+  }
+
+  .qr-intro-finder-top-right {
+    top: 0;
+    right: 0;
+    --qr-finder-delay: 90ms;
+  }
+
+  .qr-intro-finder-bottom-left {
+    bottom: 0;
+    left: 0;
+    --qr-finder-delay: 160ms;
+  }
+
+  .qr-intro-code {
+    display: block;
+    image-rendering: pixelated;
+    animation: qr-code-enter 760ms steps(9, end) both;
+    animation-delay: calc((var(--qr-card-index, 0) * 80ms) + 190ms);
+  }
+
+  .qr-detail-code-frame {
+    width: min(100%, 28rem);
+    height: min(72vw, 28rem);
+    max-height: 50vh;
+  }
+
+  .qr-detail-code-frame-vcard {
+    width: min(100%, 16rem);
+    height: min(48vw, 16rem);
+    max-height: 34vh;
+  }
+
+  .qr-detail-code-frame-large {
+    width: min(100%, 32rem);
+    height: min(78vw, 32rem);
+    max-height: 72vh;
+  }
+
+  .qr-detail-code-frame .qr-intro-finder {
+    width: clamp(1.85rem, 18%, 5.5rem);
+    height: clamp(1.85rem, 18%, 5.5rem);
+    border-width: clamp(0.36rem, 3.4%, 1rem);
+    background:
+      linear-gradient(currentColor 0 0) 50% 50% / clamp(0.58rem, 6%, 1.7rem) clamp(0.58rem, 6%, 1.7rem) no-repeat,
+      white;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qr-intro-card,
+    .qr-intro-finder,
+    .qr-intro-code-frame::before,
+    .qr-intro-code-frame::after,
+    .qr-intro-code {
+      animation: none;
+    }
+  }
+}
+
+@keyframes qr-card-enter {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+    scale: 0.985;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+  }
+}
+
+@keyframes qr-code-enter {
+  0% {
+    opacity: 0;
+    clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+    scale: 0.98;
+  }
+  28% {
+    opacity: 0.55;
+    clip-path: polygon(0 0, 46% 0, 0 46%, 0 0);
+  }
+  50% {
+    opacity: 0.72;
+    clip-path: polygon(0 0, 100% 0, 100% 44%, 56% 44%, 56% 100%, 0 100%, 0 0);
+  }
+  78% {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  100% {
+    opacity: 1;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    scale: 1;
+  }
+}
+
+@keyframes qr-module-field {
+  0% {
+    opacity: 0;
+    clip-path: polygon(0 0, 0 0, 0 0, 0 0);
+  }
+  20% {
+    opacity: 0.42;
+  }
+  45% {
+    opacity: 0.36;
+    clip-path: polygon(0 0, 68% 0, 100% 32%, 100% 100%, 68% 100%, 0 32%);
+  }
+  72% {
+    opacity: 0.24;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+  100% {
+    opacity: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+@keyframes qr-grid-fade {
+  0% {
+    opacity: 0;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes qr-finder-lock {
+  0% {
+    opacity: 0;
+    scale: 0.35;
+  }
+  45% {
+    opacity: 1;
+    scale: 1.12;
+  }
+  70% {
+    opacity: 1;
+    scale: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+  }
+}
