@@ -75,6 +75,7 @@ describe('CodesScreen', () => {
 
     expect(screen.queryByRole('button', { name: /share/i })).not.toBeInTheDocument()
     await user.click(screen.getByRole('img', { name: 'Example' }))
+    expect(screen.getByRole('link', { name: 'https://example.com' })).toHaveAttribute('href', 'https://example.com')
     await user.click(screen.getByRole('button', { name: /share/i }))
 
     expect(share).toHaveBeenCalledWith({ title: 'Example', url: 'https://example.com' })

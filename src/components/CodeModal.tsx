@@ -15,6 +15,12 @@ interface CodeModalProps {
   onClose: () => void
 }
 
+function linkify(text: string) {
+  return text.split(/(https?:\/\/[^\s]+)/g).map((part, index) => part.startsWith('http://') || part.startsWith('https://') ? (
+    <a key={index} className="link link-primary" href={part} target="_blank" rel="noopener noreferrer">{part}</a>
+  ) : part)
+}
+
 export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const [form, setForm] = useState<QrFormState>(() => dataToForm(code.name, code.data))
   const { t } = useI18n()
@@ -28,7 +34,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
       <div className="modal-box relative h-full w-full max-w-full space-y-4 rounded-none p-3 pt-12 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:rounded-box sm:p-6">
         <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-2 top-2 z-10 sm:right-4 sm:top-4" aria-label={t('default-close')} onClick={() => { onClose(); history.back() }}><X /></button>
         <QrCodeImage text={text} size={800} className="mx-auto aspect-square max-h-[calc(100dvh-12rem)] w-full max-w-lg object-contain" alt={code.name || code.text} />
-        <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
+        <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{linkify(formatQrData(data, t))}</pre>
         <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
         <FormButtons
           className="modal-action justify-center md:justify-end"
