@@ -57,4 +57,29 @@ describe('CodesScreen', () => {
     expect(screen.getByText('EAN_13')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Product' })).toHaveAttribute('data-format', 'EAN_13')
   })
+
+  it('confirms before deleting a saved code', async () => {
+    const user = userEvent.setup()
+    const setCodes = vi.fn()
+    const playDelete = vi.fn()
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    render(<CodesScreen codes={[{
+      name: 'Example',
+      text: 'https://example.com',
+      data: { type: 'qr.QrData.Url', url: 'https://example.com' },
+    }]} setCodes={setCodes} playDelete={playDelete} />)
+
+    await user.click(screen.getByText('Example'))
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    expect(confirmSpy).toHaveBeenCalledOnce()
+    expect(setCodes).not.toHaveBeenCalled()
+    expect(playDelete).not.toHaveBeenCalled()
+
+    confirmSpy.mockReturnValue(true)
+    await user.click(screen.getByRole('button', { name: /delete/i }))
+
+    expect(setCodes).toHaveBeenCalledWith([])
+    expect(playDelete).toHaveBeenCalledOnce()
+  })
 })

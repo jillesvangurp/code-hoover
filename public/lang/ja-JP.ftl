@@ -34,6 +34,7 @@ default-codes=CODES
 default-open=開く
 default-save=保存
 default-delete=削除
+default-delete-confirm=このコードを削除しますか？
 default-add=ADD
 default-import=インポート
 default-import-json=JSONファイルをインポート

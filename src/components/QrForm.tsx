@@ -93,7 +93,7 @@ export function FormButtons({ onSave, onCopy, onCancel, onDelete, className = ''
       <button type="button" className="btn btn-primary btn-sm" onClick={onSave}><Check size={16} />{t('default-save')}</button>
       {onCopy && <button type="button" className="btn btn-secondary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>}
       {onCancel && <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}><X size={16} />{t('default-cancel')}</button>}
-      {onDelete && <button type="button" className="btn btn-warning btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>}
+      {onDelete && <button type="button" className="btn btn-error btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>}
     </div>
   )
 }

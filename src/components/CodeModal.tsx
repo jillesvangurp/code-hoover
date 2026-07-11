@@ -92,6 +92,12 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const barcodeData = code.data.type === QR_DATA_TYPES.barcode ? code.data : null
   const isVCard = data.type === QR_DATA_TYPES.vcard
   const copyText = barcodeData ? barcodeData.text : qrDataAsText(data)
+  const deleteCode = () => {
+    if (!window.confirm(t('default-delete-confirm'))) return
+    onDelete()
+    onClose()
+    history.back()
+  }
 
   return (
     <div className="modal modal-open bg-base-200 px-4 py-6 text-base-content sm:py-10" role="dialog" aria-modal="true" aria-label={code.name}>
@@ -105,7 +111,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
             <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(barcodeData, t)}</pre>
             <div className="modal-action justify-center md:justify-end">
               <button type="button" className="btn btn-primary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
-              <button type="button" className="btn btn-warning btn-sm" onClick={() => { onDelete(); onClose(); history.back() }}><Trash2 size={16} />{t('default-delete')}</button>
+              <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
             </div>
           </>
         ) : (
@@ -118,7 +124,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
               className="modal-action justify-center md:justify-end"
               onCopy={() => void navigator.clipboard.writeText(copyText)}
               onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
-              onDelete={() => { onDelete(); onClose(); history.back() }}
+              onDelete={deleteCode}
             />
           </>
         )}

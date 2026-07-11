@@ -34,6 +34,7 @@ default-codes=CODES
 default-open=Openen
 default-save=Opslaan
 default-delete=Verwijderen
+default-delete-confirm=Deze code verwijderen?
 default-add=ADD
 default-import=Importeren
 default-import-json=JSON-bestand importeren

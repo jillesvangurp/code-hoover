@@ -58,6 +58,7 @@ default-codes=CODES
 default-open=Open
 default-save=Save
 default-delete=Delete
+default-delete-confirm=Delete this code?
 default-add=ADD
 default-import=Import
 default-import-json=Import JSON file
