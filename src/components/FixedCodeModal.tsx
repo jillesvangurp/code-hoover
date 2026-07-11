@@ -3,6 +3,7 @@ import { X } from 'lucide-react'
 import { useI18n } from '../i18n/context'
 import { useModalHistory } from '../hooks/useModalHistory'
 import { QrCodeImage } from './QrCodeImage'
+import { ShareButton } from './ShareButton'
 
 export function FixedCodeModal({ url, label, onClose }: { url: string; label: string; onClose: () => void }) {
   const { t } = useI18n()
@@ -13,6 +14,7 @@ export function FixedCodeModal({ url, label, onClose }: { url: string; label: st
       <div className="modal-box relative flex h-full w-full max-w-full flex-col items-center justify-center gap-6">
         <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-4 top-4" aria-label={t('default-close')} onClick={() => { onClose(); history.back() }}><X /></button>
         <QrCodeImage text={url} size={700} className="mx-auto w-full max-w-lg" alt={label} />
+        <ShareButton className="btn-secondary btn-sm" showLabel title={label} url={url} />
         <hr className="w-24 border-base-300" />
         <a className="link link-primary text-lg" href={url} target="_blank" rel="noopener noreferrer">{label}</a>
       </div>

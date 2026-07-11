@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react'
+import type { ChangeEvent, ReactNode } from 'react'
 import { Check, Trash2, X } from 'lucide-react'
 import type { QrFormState } from '../domain/form'
 import type { QrType } from '../domain/qr'
@@ -97,12 +97,14 @@ interface FormButtonsProps {
   onCancel?: () => void
   onDelete?: () => void
   className?: string
+  children?: ReactNode
 }
 
-export function FormButtons({ onSave, onCancel, onDelete, className = '' }: FormButtonsProps) {
+export function FormButtons({ onSave, onCancel, onDelete, className = '', children }: FormButtonsProps) {
   const { t } = useI18n()
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
+      {children}
       <button type="button" className="btn btn-primary btn-sm" onClick={onSave}><Check size={16} />{t('default-save')}</button>
       {onCancel && <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}><X size={16} />{t('default-cancel')}</button>}
       {onDelete && <button type="button" className="btn btn-warning btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>}

@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Grip, Plus, ScanLine, Share2 } from 'lucide-react'
+import { Grip, Plus, ScanLine } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
-import { QR_DATA_TYPES, type SavedQrCode } from '../domain/qr'
+import type { SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { CodeModal } from '../components/CodeModal'
 import { FixedCodeModal } from '../components/FixedCodeModal'
@@ -21,30 +21,6 @@ interface CodesScreenProps {
   playDelete: () => void
 }
 
-function ShareButton({ title, text, url }: { title: string; text?: string; url?: string }) {
-  const { t } = useI18n()
-
-  return (
-    <button
-      type="button"
-      className="btn btn-ghost btn-xs btn-circle absolute left-3 top-3"
-      aria-label={t('default-share')}
-      title={typeof navigator.share === 'function' ? t('default-share') : t('default-copy')}
-      onClick={(event) => {
-        event.stopPropagation()
-        const data = url ? { title, url } : { title, text }
-        if (typeof navigator.share === 'function') {
-          void navigator.share(data).catch(() => undefined)
-        } else {
-          const payload = url ?? text ?? title
-          if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(payload)
-          else window.prompt(t('default-copy'), payload)
-        }
-      }}
-    ><Share2 size={16} /></button>
-  )
-}
-
 function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
   const { t } = useI18n()
@@ -56,10 +32,6 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
       className="card relative flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl bg-base-200 p-4 text-center"
       onClick={onClick}
     >
-      <ShareButton
-        title={displayName}
-        {...(code.data.type === QR_DATA_TYPES.url ? { url: code.data.url } : { text: code.text })}
-      />
       <button
         type="button"
         className="btn btn-ghost btn-xs btn-circle absolute right-3 top-3 cursor-grab touch-none"
@@ -77,7 +49,6 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
 function FixedCodeCard({ url, label, onClick }: { url: string; label: string; onClick: () => void }) {
   return (
     <li className="card relative flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl bg-base-200 p-4 text-center" onClick={onClick}>
-      <ShareButton title={label} url={url} />
       <QrCodeImage text={url} size={160} className="pointer-events-none mx-auto h-24 w-24" alt={label} />
       <hr className="w-24 border-base-300" />
       <a className="link link-primary" href={url} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()}>{label}</a>

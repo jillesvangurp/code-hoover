@@ -62,7 +62,7 @@ describe('CodesScreen', () => {
     expect(onScan).toHaveBeenCalledOnce()
   })
 
-  it('shares a URL code without opening it when native sharing is available', async () => {
+  it('shares a URL code from its detail view when native sharing is available', async () => {
     const user = userEvent.setup()
     const share = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'share', { configurable: true, value: share })
@@ -73,10 +73,12 @@ describe('CodesScreen', () => {
       playDelete={vi.fn()}
     />)
 
-    await user.click(screen.getAllByRole('button', { name: /share/i })[0])
+    expect(screen.queryByRole('button', { name: /share/i })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('img', { name: 'Example' }))
+    await user.click(screen.getByRole('button', { name: /share/i }))
 
     expect(share).toHaveBeenCalledWith({ title: 'Example', url: 'https://example.com' })
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
     Reflect.deleteProperty(navigator, 'share')
   })
 
@@ -91,10 +93,11 @@ describe('CodesScreen', () => {
       playDelete={vi.fn()}
     />)
 
-    await user.click(screen.getAllByRole('button', { name: /share/i })[0])
+    await user.click(screen.getByRole('img', { name: 'Message' }))
+    await user.click(screen.getByRole('button', { name: /share/i }))
 
     expect(writeText).toHaveBeenCalledWith('Hello world')
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
     Reflect.deleteProperty(navigator, 'clipboard')
   })
 })
