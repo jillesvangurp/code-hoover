@@ -91,6 +91,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
 
   const deleteAccount = () => {
     if (!window.confirm(t('default-account-sync-delete-confirm'))) return
+    if (window.prompt(t('default-account-sync-delete-type-confirm')) !== 'DELETE') return
     runCloudAction(accountSync.deleteAccount)
   }
 

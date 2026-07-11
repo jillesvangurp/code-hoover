@@ -49,6 +49,7 @@ default-account-sync-sign-out=Sign out
 default-account-sync-delete=Delete
 default-account-sync-restore-confirm=Replace local codes with the account copy?
 default-account-sync-delete-confirm=Delete this account and its cloud codes?
+default-account-sync-delete-type-confirm=This permanently deletes the account and its cloud codes. Type DELETE to confirm.
 default-account-email=Email
 default-account-password=Password
 default-account-sign-in=Sign in
