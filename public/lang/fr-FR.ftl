@@ -40,6 +40,7 @@ default-import-json=Importer fichier JSON
 default-export=Exporter
 default-cancel=Annuler
 default-close=Fermer
+default-back=Retour
 default-drag-to-reorder=Faites glisser pour réorganiser
 default-scanned-codes={ $count } codes scannés
 default-invalid-json=JSON invalide

@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Building2, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound, X } from 'lucide-react'
+import { ArrowLeft, Building2, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, formatQrData, qrDataAsText, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -94,9 +94,9 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const copyText = barcodeData ? barcodeData.text : qrDataAsText(data)
 
   return (
-    <div className="modal modal-open" role="dialog" aria-modal="true" aria-label={code.name}>
-      <div className="modal-box relative h-full w-full max-w-full space-y-5 overflow-y-auto">
-        <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-4 top-4 z-10" aria-label={t('default-close')} onClick={() => { onClose(); history.back() }}><X /></button>
+    <div className="modal modal-open bg-base-200 px-4 py-6 text-base-content sm:py-10" role="dialog" aria-modal="true" aria-label={code.name}>
+      <div className="relative flex max-h-[calc(100dvh-3rem)] w-full max-w-xl flex-col gap-5 overflow-y-auto rounded-3xl bg-base-100 p-6 pt-16 shadow-xl sm:max-h-[calc(100dvh-5rem)] sm:p-10 sm:pt-16 lg:max-w-3xl">
+        <button type="button" className="btn btn-ghost btn-sm btn-circle absolute left-4 top-4 z-10" aria-label={t('default-back')} onClick={() => { onClose(); history.back() }}><ArrowLeft /></button>
         {barcodeData ? (
           <>
             <div className="mx-auto flex w-full max-w-2xl items-center justify-center bg-white p-5">
