@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { Plus, QrCode, ScanBarcode } from 'lucide-react'
 import { Header } from './components/Header'
 import { parseSavedCodes } from './domain/qr'
 import { useAccountSync } from './hooks/useAccountSync'
@@ -11,6 +12,12 @@ const AboutScreen = lazy(() => import('./screens/AboutScreen').then((module) => 
 const ScanScreen = lazy(() => import('./screens/ScanScreen').then((module) => ({ default: module.ScanScreen })))
 
 export type Screen = 'codes' | 'scan' | 'add' | 'about'
+
+const NAV_TABS = [
+  { id: 'codes', Icon: QrCode },
+  { id: 'scan', Icon: ScanBarcode },
+  { id: 'add', Icon: Plus },
+] as const
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('codes')
@@ -42,15 +49,17 @@ export default function App() {
           accountSync={accountSync}
         />
         <div className="tabs tabs-box mb-6 grid w-full grid-cols-3" role="tablist" aria-label={t('default-page-title')}>
-          {(['codes', 'scan', 'add'] as const).map((tab) => (
+          {NAV_TABS.map(({ id: tab, Icon }) => (
             <button
               key={tab}
               type="button"
               role="tab"
+              aria-label={t(`default-${tab}`)}
               aria-selected={screen === tab}
+              title={t(`default-${tab}`)}
               className={`tab w-full ${screen === tab ? 'tab-active bg-neutral text-neutral-content' : 'bg-base-100 text-base-content hover:bg-neutral hover:text-neutral-content'}`}
               onClick={() => setScreen(tab)}
-            >{t(`default-${tab}`)}</button>
+            ><Icon size={22} aria-hidden="true" /></button>
           ))}
         </div>
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
