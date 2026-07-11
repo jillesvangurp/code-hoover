@@ -40,7 +40,7 @@ export default function App() {
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
           {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} onScan={() => setScreen('scan')} playDelete={sounds.playDelete} />}
           {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} onStop={() => setScreen('codes')} playScanSuccess={sounds.playScanSuccess} playDelete={sounds.playDelete} />}
-          {screen === 'about' && <AboutScreen />}
+          {screen === 'about' && <AboutScreen onClose={() => setScreen('codes')} />}
         </Suspense>
       </article>
     </main>

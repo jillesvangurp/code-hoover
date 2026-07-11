@@ -1,8 +1,9 @@
+import { X } from 'lucide-react'
 import { QrCodeImage } from '../components/QrCodeImage'
 import { useI18n } from '../i18n/context'
 import { CODE_HOOVER_APP_URL, CODE_HOOVER_REPOSITORY_URL } from './CodesScreen'
 
-export function AboutScreen() {
+export function AboutScreen({ onClose }: { onClose: () => void }) {
   const { t } = useI18n()
   const codeLink = (url: string, label: string) => (
     <div className="flex flex-col items-center gap-2 self-center">
@@ -12,7 +13,8 @@ export function AboutScreen() {
     </div>
   )
   return (
-    <div className="flex flex-col items-start gap-4 text-left">
+    <div className="relative flex flex-col items-start gap-4 text-left">
+      <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-0 top-0" aria-label={t('default-close')} onClick={onClose}><X /></button>
       <h2 className="text-xl font-bold">{t('default-about')}</h2>
       <p>{t('default-about-intro')}</p>
       <hr />
