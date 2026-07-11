@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
-import { Check, Copy, ExternalLink, Trash2, X } from 'lucide-react'
+import { Check, Copy, ExternalLink, Square, Trash2, X } from 'lucide-react'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName } from '../domain/barcode'
 import { QR_DATA_TYPES, defaultDisplayName, parseSavedCode, parseVCard, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -13,6 +13,7 @@ interface ScanResult {
 interface ScanScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
+  onStop: () => void
   playScanSuccess: () => void
   playDelete: () => void
 }
@@ -23,9 +24,8 @@ function savedCodeFromText(text: string): SavedQrCode {
   return { name: defaultDisplayName(data) || normalized, text: normalized, data }
 }
 
-export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: ScanScreenProps) {
+export function ScanScreen({ codes, setCodes, onStop, playScanSuccess, playDelete }: ScanScreenProps) {
   const [scans, setScans] = useState<ScanResult[]>([])
-  const [scannerLabel, setScannerLabel] = useState('BarcodeDetector' in window ? 'Barcode Detector API' : '@zxing/browser')
   const [scanning, setScanning] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const { t } = useI18n()
@@ -51,7 +51,6 @@ export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: Sca
 
     const startZxing = async () => {
       if (stopped) return
-      setScannerLabel('@zxing/browser')
       try {
         controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
           if (result) addScan(result.getText(), result.getBarcodeFormat())
@@ -73,7 +72,6 @@ export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: Sca
         }
         video.srcObject = stream
         await video.play()
-        setScannerLabel('Barcode Detector API')
         const detect = async () => {
           if (stopped) return
           try {
@@ -130,13 +128,15 @@ export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: Sca
     <>
       <section className="flex w-full flex-col items-center gap-4">
         <div className="flex w-full justify-center md:justify-start">
-          <button type="button" className="btn btn-secondary btn-sm w-24" onClick={() => setScans([])}><X size={16} />{t('default-clear')}</button>
+          <button type="button" className="btn btn-primary" onClick={onStop}><Square size={18} />{t('default-stop')}</button>
         </div>
-        <p className="text-sm opacity-70">{t('default-scanner-library', { value: scannerLabel })}</p>
         {!scanning && <p>{t('default-welcome-text')}</p>}
         <video ref={videoRef} className="mx-auto h-[33vh] w-full rounded-md border" muted playsInline />
       </section>
-      <p className="mb-2 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="m-0 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
+        {scans.length > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setScans([])}><X size={16} />{t('default-clear')}</button>}
+      </div>
       <ul className="w-full space-y-2">
         {scans.map((scan) => (
           <li key={scan.text} className="card w-full bg-base-200 p-3">

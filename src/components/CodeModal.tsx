@@ -23,9 +23,9 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
 
   return (
     <div className="modal modal-open" role="dialog" aria-modal="true" aria-label={code.name}>
-      <div className="modal-box relative h-full w-full max-w-full space-y-4">
-        <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-4 top-4 z-10" aria-label={t('default-close')} onClick={() => { onClose(); history.back() }}><X /></button>
-        <QrCodeImage text={qrDataAsText(data)} size={500} className="mx-auto max-h-[50vh] max-w-full" alt={code.name || code.text} />
+      <div className="modal-box relative h-full w-full max-w-full space-y-4 rounded-none p-3 pt-12 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:max-w-2xl sm:rounded-box sm:p-6">
+        <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-2 top-2 z-10 sm:right-4 sm:top-4" aria-label={t('default-close')} onClick={() => { onClose(); history.back() }}><X /></button>
+        <QrCodeImage text={qrDataAsText(data)} size={800} className="mx-auto aspect-square max-h-[calc(100dvh-12rem)] w-full max-w-lg object-contain" alt={code.name || code.text} />
         <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
         <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
         <FormButtons

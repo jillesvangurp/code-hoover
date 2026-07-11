@@ -84,10 +84,10 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
   return (
     <header className="flex w-full flex-wrap items-center gap-4">
       <input ref={fileInput} className="hidden" type="file" accept=".json,application/json" onChange={importCodes} />
-      <div className="flex min-w-0 items-center gap-3">
-        <img className="h-10 w-10 dark:invert" src="/favicon.svg" alt="Code Hoover logo" />
+      <button type="button" className="flex min-w-0 items-center gap-3 text-left" onClick={() => setScreen('codes')}>
+        <img className="h-10 w-10 dark:invert" src="/favicon.svg" alt="" />
         <h1 className="m-0 p-0 text-2xl font-bold text-primary sm:text-3xl">{t('default-page-title')}</h1>
-      </div>
+      </button>
       <div className="ms-auto flex items-center gap-2">
         <button type="button" className="btn btn-ghost btn-circle lg:hidden" aria-label={t('default-open')} onClick={() => setMobileMenuOpen(true)}><Menu /></button>
         <details ref={desktopMenu} className="dropdown dropdown-end hidden lg:block">

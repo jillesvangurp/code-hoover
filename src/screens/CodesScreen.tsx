@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Grip, Plus } from 'lucide-react'
+import { Grip, Plus, ScanLine } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import type { SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -17,6 +17,7 @@ export const CODE_HOOVER_APP_URL = 'https://codehoover.jillesvangurp.com'
 interface CodesScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
+  onScan: () => void
   playDelete: () => void
 }
 
@@ -24,7 +25,6 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
   const { t } = useI18n()
   const displayName = code.name || code.text
-  const truncated = displayName.length > 60 ? `${displayName.slice(0, 60)}...` : displayName
   return (
     <li
       ref={setNodeRef}
@@ -41,7 +41,7 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
         {...listeners}
       ><Grip size={16} /></button>
       <QrCodeImage text={code.text} size={160} className="pointer-events-none mx-auto h-24 w-24" alt={displayName} loading="lazy" />
-      <p className="m-0 w-full truncate font-medium">{truncated}</p>
+      <p className="m-0 line-clamp-2 min-h-12 w-full break-all font-medium">{displayName}</p>
     </li>
   )
 }
@@ -56,7 +56,7 @@ function FixedCodeCard({ url, label, onClick }: { url: string; label: string; on
   )
 }
 
-export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
+export function CodesScreen({ codes, setCodes, onScan, playDelete }: CodesScreenProps) {
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState<QrFormState>(emptyQrForm)
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
@@ -90,12 +90,13 @@ export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
   const fixedLabel = fixedCode === CODE_HOOVER_REPOSITORY_URL ? t('default-github-repo') : t('default-open-on-different-device')
   return (
     <>
-      <div className="join mb-6 flex w-full flex-wrap justify-center md:justify-start">
-        <button type="button" className="btn btn-primary btn-sm w-24" onClick={() => { setForm(emptyQrForm()); setEditing(true) }}><Plus size={16} />{t('default-add')}</button>
+      <div className="flex w-full flex-wrap justify-center gap-2 md:justify-start">
+        <button type="button" className="btn btn-primary" onClick={() => { setForm(emptyQrForm()); setEditing(true) }}><Plus size={18} />{t('default-add')}</button>
+        <button type="button" className="btn btn-secondary" onClick={onScan}><ScanLine size={18} />{t('default-scan')}</button>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={codes.map((_, index) => String(index))} strategy={verticalListSortingStrategy}>
-          <ul className="flex w-full flex-col gap-4">
+        <SortableContext items={codes.map((_, index) => String(index))} strategy={rectSortingStrategy}>
+          <ul className="grid w-full grid-cols-1 gap-4 lg:grid-cols-2">
             {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} onClick={() => setSelectedIndex(index)} />)}
           </ul>
         </SortableContext>

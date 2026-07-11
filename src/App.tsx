@@ -2,7 +2,6 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Header } from './components/Header'
 import { parseSavedCodes } from './domain/qr'
 import { useLocalStorage } from './hooks/useLocalStorage'
-import { useI18n } from './i18n/context'
 import { SoundEffects } from './lib/sounds'
 import { CodesScreen } from './screens/CodesScreen'
 
@@ -17,7 +16,6 @@ export default function App() {
   const [soundEnabled, setSoundEnabled] = useLocalStorage('sound-enabled', true, (value) => value === 'true' || value === '"true"')
   const [dark, setDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches)
   const soundEnabledRef = useRef(soundEnabled)
-  const { t } = useI18n()
   soundEnabledRef.current = soundEnabled
   const sounds = useMemo(() => new SoundEffects(() => soundEnabledRef.current), [])
 
@@ -37,21 +35,9 @@ export default function App() {
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
         />
-        <div className="tabs tabs-box justify-center mb-6" role="tablist" aria-label={t('default-page-title')}>
-          {(['codes', 'scan'] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="tab"
-              aria-selected={screen === tab}
-              className={`tab ${screen === tab ? 'tab-active bg-neutral text-neutral-content' : 'bg-base-100 text-base-content hover:bg-neutral hover:text-neutral-content'}`}
-              onClick={() => setScreen(tab)}
-            >{t(`default-${tab}`)}</button>
-          ))}
-        </div>
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
-          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} />}
-          {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} playScanSuccess={sounds.playScanSuccess} playDelete={sounds.playDelete} />}
+          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} onScan={() => setScreen('scan')} playDelete={sounds.playDelete} />}
+          {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} onStop={() => setScreen('codes')} playScanSuccess={sounds.playScanSuccess} playDelete={sounds.playDelete} />}
           {screen === 'about' && <AboutScreen />}
         </Suspense>
       </article>
