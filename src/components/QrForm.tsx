@@ -24,26 +24,40 @@ export function QrForm({ form, onChange, showTypeSelect = true }: QrFormProps) {
     onChange(next)
   }
 
-  const input = (field: FieldName, translationId: string, rows = 1) => rows > 1 ? (
-    <textarea className="textarea textarea-bordered w-full" rows={rows} placeholder={t(translationId)} value={String(form[field])} onChange={update(field)} />
-  ) : (
-    <input className="input input-bordered w-full" placeholder={t(translationId)} value={String(form[field])} onChange={update(field)} />
-  )
+  const input = (field: FieldName, translationId: string, rows = 1) => {
+    const label = t(translationId)
+    return (
+      <label className="floating-label w-full">
+        <span>{label}</span>
+        {rows > 1 ? (
+          <textarea className="textarea textarea-bordered w-full" rows={rows} placeholder={label} value={String(form[field])} onChange={update(field)} />
+        ) : (
+          <input className="input input-bordered w-full" placeholder={label} value={String(form[field])} onChange={update(field)} />
+        )}
+      </label>
+    )
+  }
 
   return (
     <div className="flex w-full flex-col gap-2">
-      <input
-        className="input input-bordered w-full"
-        placeholder={form.type === 'VCARD' && form.vcardFullName ? `${form.vcardFullName} vcard` : t('default-name')}
-        value={form.name}
-        onChange={update('name')}
-      />
+      <label className="floating-label w-full">
+        <span>{t('default-name')}</span>
+        <input
+          className="input input-bordered w-full"
+          placeholder={form.type === 'VCARD' && form.vcardFullName ? `${form.vcardFullName} vcard` : t('default-name')}
+          value={form.name}
+          onChange={update('name')}
+        />
+      </label>
       {showTypeSelect && (
-        <select className="select select-bordered w-full" value={form.type} onChange={update('type')}>
-          {(['URL', 'TEXT', 'VCARD', 'WIFI'] as QrType[]).map((type) => (
-            <option key={type} value={type}>{t(`default-${type === 'VCARD' ? 'v-card' : type.toLowerCase()}`)}</option>
-          ))}
-        </select>
+        <label className="floating-label w-full">
+          <span>{t('default-type')}</span>
+          <select className="select select-bordered w-full" value={form.type} onChange={update('type')}>
+            {(['URL', 'TEXT', 'VCARD', 'WIFI'] as QrType[]).map((type) => (
+              <option key={type} value={type}>{t(`default-${type === 'VCARD' ? 'v-card' : type.toLowerCase()}`)}</option>
+            ))}
+          </select>
+        </label>
       )}
       {form.type === 'URL' && input('url', 'default-url')}
       {form.type === 'TEXT' && input('text', 'default-text', 4)}
