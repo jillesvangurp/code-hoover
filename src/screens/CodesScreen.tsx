@@ -143,7 +143,7 @@ function EmptyCodesState() {
   const { t } = useI18n()
   return (
     <section className="flex min-h-80 w-full flex-col items-center justify-center gap-5 rounded-2xl bg-base-200 px-5 py-8 text-center">
-      <QrIntroFrame text={EMPTY_STATE_SAMPLE_URL} size={260} className="qr-detail-code-frame-vcard" label={EMPTY_STATE_SAMPLE_URL} />
+      <QrIntroFrame text={EMPTY_STATE_SAMPLE_URL} size={260} className="qr-detail-code-frame max-w-56" label={EMPTY_STATE_SAMPLE_URL} />
       <div className="max-w-sm">
         <h2 className="m-0 text-xl font-semibold">{t('default-empty-codes-title')}</h2>
         <p className="m-0 mt-2 text-sm opacity-75">{t('default-empty-codes-body')}</p>
