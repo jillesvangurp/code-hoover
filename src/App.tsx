@@ -16,7 +16,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('codes')
   const [codes, setCodes] = useLocalStorage('codes', [], parseSavedCodes)
   const [soundEnabled, setSoundEnabled] = useLocalStorage('sound-enabled', true, (value) => value === 'true' || value === '"true"')
-  const [dark, setDark] = useState(() => window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const [dark, setDark] = useState(false)
   const accountSync = useAccountSync(codes, setCodes)
   const soundEnabledRef = useRef(soundEnabled)
   const { t } = useI18n()
