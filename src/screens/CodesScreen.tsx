@@ -10,6 +10,9 @@ import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
 import { QrCodeImage } from '../components/QrCodeImage'
+import { QrIntroFrame } from '../components/QrIntroFrame'
+
+const EMPTY_STATE_SAMPLE_URL = 'https://tryformation.com'
 
 interface CodesScreenProps {
   codes: SavedQrCode[]
@@ -136,6 +139,20 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
   )
 }
 
+function EmptyCodesState() {
+  const { t } = useI18n()
+  return (
+    <section className="flex min-h-80 w-full flex-col items-center justify-center gap-5 rounded-2xl bg-base-200 px-5 py-8 text-center">
+      <QrIntroFrame text={EMPTY_STATE_SAMPLE_URL} size={260} className="qr-detail-code-frame-vcard" label={EMPTY_STATE_SAMPLE_URL} />
+      <div className="max-w-sm">
+        <h2 className="m-0 text-xl font-semibold">{t('default-empty-codes-title')}</h2>
+        <p className="m-0 mt-2 text-sm opacity-75">{t('default-empty-codes-body')}</p>
+      </div>
+      <a className="link link-primary text-sm" href={EMPTY_STATE_SAMPLE_URL} target="_blank" rel="noopener noreferrer">{EMPTY_STATE_SAMPLE_URL}</a>
+    </section>
+  )
+}
+
 export function AddCodeScreen({ codes, setCodes, onDone }: AddCodeScreenProps) {
   const [form, setForm] = useState<QrFormState>(emptyQrForm)
 
@@ -166,13 +183,17 @@ export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
 
   return (
     <>
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={codes.map((_, index) => String(index))} strategy={verticalListSortingStrategy}>
-          <ul className="flex w-full flex-col gap-4">
-            {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} onClick={() => setSelectedIndex(index)} />)}
-          </ul>
-        </SortableContext>
-      </DndContext>
+      {codes.length === 0 ? (
+        <EmptyCodesState />
+      ) : (
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={codes.map((_, index) => String(index))} strategy={verticalListSortingStrategy}>
+            <ul className="flex w-full flex-col gap-4">
+              {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} onClick={() => setSelectedIndex(index)} />)}
+            </ul>
+          </SortableContext>
+        </DndContext>
+      )}
       {selectedIndex !== null && codes[selectedIndex] && (
         <CodeModal
           code={codes[selectedIndex]}
