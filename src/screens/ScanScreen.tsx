@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { Check, Copy, ExternalLink, Trash2, X } from 'lucide-react'
-import { BARCODE_FORMAT_NAMES, barcodeFormatName } from '../domain/barcode'
+import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
 import { QR_DATA_TYPES, defaultDisplayName, parseSavedCode, parseVCard, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 
@@ -21,6 +21,11 @@ function savedCodeFromText(text: string): SavedQrCode {
   const data: QrData = parseVCard(text) ?? { type: QR_DATA_TYPES.text, text }
   const normalized = qrDataAsText(data)
   return { name: defaultDisplayName(data) || normalized, text: normalized, data }
+}
+
+function savedCodeFromBarcode(text: string, format: string): SavedQrCode {
+  const data: QrData = { type: QR_DATA_TYPES.barcode, format, text }
+  return { name: defaultDisplayName(data) || text, text, data }
 }
 
 export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: ScanScreenProps) {
@@ -110,13 +115,16 @@ export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: Sca
 
   const saveScan = (scan: ScanResult) => {
     const rawText = scan.text.trim()
+    const format = barcodeFormatName(scan.format, '')
     let entry: SavedQrCode
-    if (barcodeFormatName(scan.format) === 'QR_CODE') {
+    if (isQrBarcodeFormat(format)) {
       try {
         entry = parseSavedCode(JSON.parse(scan.text))
       } catch {
         entry = savedCodeFromText(rawText)
       }
+    } else if (format) {
+      entry = savedCodeFromBarcode(rawText, format)
     } else {
       entry = savedCodeFromText(rawText)
     }

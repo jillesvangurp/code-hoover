@@ -2,10 +2,11 @@ import { useCallback, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Contact, FileText, Grip, Link, Wifi } from 'lucide-react'
+import { Barcode, Contact, FileText, Grip, Link, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
-import { QR_DATA_TYPES, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
+import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
 import { QrCodeImage } from '../components/QrCodeImage'
@@ -32,6 +33,8 @@ function codeTypeLabel(code: SavedQrCode): string {
       return 'Wi-Fi'
     case QR_DATA_TYPES.vcard:
       return 'vCard'
+    case QR_DATA_TYPES.barcode:
+      return code.data.format
   }
 }
 
@@ -45,6 +48,8 @@ function codeTypeIcon(code: SavedQrCode) {
       return Wifi
     case QR_DATA_TYPES.vcard:
       return Contact
+    case QR_DATA_TYPES.barcode:
+      return Barcode
   }
 }
 
@@ -65,11 +70,17 @@ function codePreviewLines(code: SavedQrCode): string[] {
         code.data.email,
         code.data.phone,
       ].filter(Boolean)
+    case QR_DATA_TYPES.barcode:
+      return [code.data.text]
   }
 }
 
-function QrThumbnail({ text, label }: { text: string; label: string }) {
-  return (
+function CodeThumbnail({ data, text, label }: { data: QrData; text: string; label: string }) {
+  return data.type === QR_DATA_TYPES.barcode ? (
+    <span className="flex h-16 w-20 items-center justify-center overflow-hidden bg-white p-1">
+      <BarcodeImage format={data.format} text={data.text} fallbackSize={160} className="max-h-full max-w-full object-contain" alt={label} loading="lazy" />
+    </span>
+  ) : (
     <span className="qr-intro-code-frame" style={{ width: '5rem', height: '5rem' }}>
       <span className="qr-intro-finder qr-intro-finder-top-left" aria-hidden="true" />
       <span className="qr-intro-finder qr-intro-finder-top-right" aria-hidden="true" />
@@ -120,7 +131,7 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
           </div>
         )}
       </div>
-      <QrThumbnail text={code.text} label={displayName} />
+      <CodeThumbnail data={code.data} text={code.text} label={displayName} />
     </li>
   )
 }

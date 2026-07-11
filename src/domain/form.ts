@@ -90,6 +90,7 @@ export function dataToForm(name: string, data: QrData): QrFormState {
   switch (data.type) {
     case QR_DATA_TYPES.url: return { ...form, name, type: 'URL', url: data.url }
     case QR_DATA_TYPES.text: return textToForm(name, data.text)
+    case QR_DATA_TYPES.barcode: return { ...form, name, type: 'TEXT', text: data.text }
     case QR_DATA_TYPES.wifi: return { ...form, name, type: 'WIFI', ssid: data.ssid, password: data.password, encryption: data.encryption }
     case QR_DATA_TYPES.vcard: return {
       ...form, name: name || defaultDisplayName(data), type: 'VCARD',

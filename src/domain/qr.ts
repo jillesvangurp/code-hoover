@@ -3,6 +3,7 @@ export const QR_DATA_TYPES = {
   text: 'qr.QrData.Text',
   vcard: 'qr.QrData.VCard',
   wifi: 'qr.QrData.Wifi',
+  barcode: 'qr.QrData.Barcode',
 } as const
 
 export type QrType = 'URL' | 'TEXT' | 'VCARD' | 'WIFI'
@@ -48,7 +49,13 @@ export interface WifiData {
   encryption: string
 }
 
-export type QrData = UrlData | TextData | VCardData | WifiData
+export interface BarcodeData {
+  type: typeof QR_DATA_TYPES.barcode
+  format: string
+  text: string
+}
+
+export type QrData = UrlData | TextData | VCardData | WifiData | BarcodeData
 
 export interface SavedQrCode {
   name: string
@@ -76,6 +83,13 @@ export function normalizeQrData(value: unknown): QrData | null {
         ssid: stringValue(candidate.ssid),
         password: stringValue(candidate.password),
         encryption: stringValue(candidate.encryption) || 'WPA',
+      }
+    case QR_DATA_TYPES.barcode:
+    case 'BARCODE':
+      return {
+        type: QR_DATA_TYPES.barcode,
+        format: stringValue(candidate.format),
+        text: stringValue(candidate.text),
       }
     case QR_DATA_TYPES.vcard:
     case 'VCARD':
@@ -187,6 +201,8 @@ export function qrDataAsText(data: QrData): string {
       return data.text
     case QR_DATA_TYPES.wifi:
       return `WIFI:T:${data.encryption};S:${data.ssid};P:${data.password};;`
+    case QR_DATA_TYPES.barcode:
+      return data.text
     case QR_DATA_TYPES.vcard: {
       const lines = ['BEGIN:VCARD', 'VERSION:3.0']
       lines.push(`FN:${escapeVCard(bestVCardName(data) || 'vcard')}`)
@@ -212,6 +228,7 @@ export function defaultDisplayName(data: QrData): string {
   if (data.type === QR_DATA_TYPES.url) return data.url
   if (data.type === QR_DATA_TYPES.text) return data.text
   if (data.type === QR_DATA_TYPES.wifi) return data.ssid || qrDataAsText(data)
+  if (data.type === QR_DATA_TYPES.barcode) return data.text
 
   const base = bestVCardName(data) || 'vcard'
   return base.toLowerCase().endsWith(' vcard') ? base : `${base} vcard`
@@ -291,6 +308,12 @@ export type Translate = (id: string, args?: Record<string, string | number>) => 
 export function formatQrData(data: QrData, translate: Translate): string {
   if (data.type === QR_DATA_TYPES.url) return data.url
   if (data.type === QR_DATA_TYPES.text) return data.text
+  if (data.type === QR_DATA_TYPES.barcode) {
+    return [
+      translate('default-type-label', { value: data.format }),
+      data.text,
+    ].join('\n')
+  }
   if (data.type === QR_DATA_TYPES.wifi) {
     return [
       translate('default-ssid-label', { value: data.ssid }),

@@ -77,4 +77,22 @@ describe('QR payloads', () => {
     expect(qrDataAsText(wifi)).toBe('WIFI:T:WPA;S:Guest;P:secret;;')
     expect(defaultDisplayName(wifi)).toBe('Guest')
   })
+
+  it('preserves scanned barcode format metadata', () => {
+    const codes = parseSavedCodes(JSON.stringify([
+      {
+        name: '',
+        text: '5901234123457',
+        data: { type: QR_DATA_TYPES.barcode, format: 'EAN_13', text: '5901234123457' },
+      },
+    ]))
+
+    expect(codes[0]).toEqual({
+      name: '5901234123457',
+      text: '5901234123457',
+      data: { type: QR_DATA_TYPES.barcode, format: 'EAN_13', text: '5901234123457' },
+    })
+    expect(defaultDisplayName(codes[0].data)).toBe('5901234123457')
+    expect(qrDataAsText(codes[0].data)).toBe('5901234123457')
+  })
 })

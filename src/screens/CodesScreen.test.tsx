@@ -7,6 +7,10 @@ vi.mock('../components/QrCodeImage', () => ({
   QrCodeImage: ({ alt }: { alt: string }) => <div role="img" aria-label={alt} />,
 }))
 
+vi.mock('../components/BarcodeImage', () => ({
+  BarcodeImage: ({ alt, format, text }: { alt: string; format: string; text: string }) => <div role="img" aria-label={alt} data-format={format} data-text={text} />,
+}))
+
 describe('CodesScreen', () => {
   it('adds a URL code through the add screen', async () => {
     const user = userEvent.setup()
@@ -41,5 +45,16 @@ describe('CodesScreen', () => {
   it('shows saved codes without an inline add button', () => {
     render(<CodesScreen codes={[]} setCodes={vi.fn()} playDelete={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument()
+  })
+
+  it('shows saved barcode entries as barcodes', () => {
+    render(<CodesScreen codes={[{
+      name: 'Product',
+      text: '5901234123457',
+      data: { type: 'qr.QrData.Barcode', format: 'EAN_13', text: '5901234123457' },
+    }]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    expect(screen.getByText('EAN_13')).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: 'Product' })).toHaveAttribute('data-format', 'EAN_13')
   })
 })
