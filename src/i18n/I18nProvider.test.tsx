@@ -23,6 +23,15 @@ function LanguageControl() {
 describe('I18nProvider', () => {
   it('loads a Fluent bundle when the language flag changes', async () => {
     expect(LOCALES).toContainEqual({ id: 'en-PI', flag: '🏴‍☠️' })
+    expect(LOCALES).toEqual(expect.arrayContaining([
+      { id: 'fr-FR', flag: '🇫🇷' },
+      { id: 'it-IT', flag: '🇮🇹' },
+      { id: 'uk-UA', flag: '🇺🇦' },
+      { id: 'ga-IE', flag: '🇮🇪' },
+      { id: 'fi-FI', flag: '🇫🇮' },
+      { id: 'sv-SE', flag: '🇸🇪' },
+    ]))
+    expect(LOCALES.at(-1)).toEqual({ id: 'en-PI', flag: '🏴‍☠️' })
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const body = resources[String(input)]
       return new Response(body ?? '', { status: body ? 200 : 404 })

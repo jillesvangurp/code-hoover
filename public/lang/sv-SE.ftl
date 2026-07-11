@@ -1,0 +1,77 @@
+default-page-title=Code Hoover
+default-welcome-text=
+    Rikta kameran mot koder för att skanna och kopiera dem.
+default-scan=Skanna
+default-stop=Stoppa
+default-clear=Rensa
+default-copy=Kopiera
+default-dark-mode=Mörkt läge
+default-sound-effects=Ljudeffekter
+default-open=Öppna
+default-save=Spara
+default-delete=Ta bort
+default-add=Lägg till
+default-import=Importera
+default-export=Exportera
+default-cancel=Avbryt
+default-close=Stäng
+default-drag-to-reorder=Dra för att ändra ordning
+default-scanned-codes={ $count } skannade koder
+default-invalid-json=Ogiltig JSON
+default-name=Namn
+default-url=URL
+default-text=Text
+default-v-card=VCard
+default-wifi=Wi-Fi
+default-full-name=Fullständigt namn
+default-first-name=Förnamn
+default-last-name=Efternamn
+default-additional-names=Övriga namn
+default-name-prefix=Namnets prefix
+default-name-suffix=Namnets suffix
+default-nickname=Smeknamn
+default-title=Titel
+default-organization=Organisation
+default-email-type=E-posttyp
+default-phone-type=Telefontyp
+default-phone=Telefon
+default-email=E-post
+default-ssid=SSID
+default-password=Lösenord
+default-encryption=Kryptering
+default-street=Gata
+default-city=Stad
+default-region=Region
+default-postal-code=Postnummer
+default-country=Land
+default-note=Anteckning
+default-unknown=Okänd
+default-name-label=Namn: { $value }
+default-first-name-label=Förnamn: { $value }
+default-last-name-label=Efternamn: { $value }
+default-additional-names-label=Övriga namn: { $value }
+default-name-prefix-label=Namnets prefix: { $value }
+default-name-suffix-label=Namnets suffix: { $value }
+default-nickname-label=Smeknamn: { $value }
+default-organization-label=Organisation: { $value }
+default-title-label=Titel: { $value }
+default-phone-label=Telefon: { $value }
+default-email-label=E-post: { $value }
+default-url-label=URL: { $value }
+default-ssid-label=SSID: { $value }
+default-password-label=Lösenord: { $value }
+default-type-label=Typ: { $value }
+default-address-label=Adress: { $value }
+default-note-label=Anteckning: { $value }
+default-about=Om Code Hoover
+default-about-intro=
+    Med Code Hoover kan du skanna och skapa QR-koder direkt i webbläsaren. Samla alla koder och lägg till dem
+    i listan med sparade koder så att du kan visa dem för andra. Perfekt för Wi-Fi-uppgifter, vCards,
+    länkar till LinkedIn-profiler och mycket annat.
+default-github-repo=GitHub-kodförråd
+default-open-source-statement=Projektet är kostnadsfritt och har öppen källkod.
+default-open-on-different-device=Öppna på en annan enhet
+default-migration-instructions=
+    Flytta dina koder genom att öppna Code Hoover på en annan enhet med den här QR-koden.
+    Gå till skanningssidan och läs in koderna från kodvyn på den här enheten.
+    Spara sedan de koder du vill behålla.

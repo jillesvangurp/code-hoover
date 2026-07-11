@@ -1,0 +1,77 @@
+default-page-title=Code Hoover
+default-welcome-text=
+    Suuntaa kamera koodeihin skannataksesi ja kopioidaksesi ne.
+default-scan=Skannaa
+default-stop=Pysäytä
+default-clear=Tyhjennä
+default-copy=Kopioi
+default-dark-mode=Tumma tila
+default-sound-effects=Äänitehosteet
+default-open=Avaa
+default-save=Tallenna
+default-delete=Poista
+default-add=Lisää
+default-import=Tuo
+default-export=Vie
+default-cancel=Peruuta
+default-close=Sulje
+default-drag-to-reorder=Muuta järjestystä vetämällä
+default-scanned-codes={ $count } skannattua koodia
+default-invalid-json=Virheellinen JSON
+default-name=Nimi
+default-url=URL
+default-text=Teksti
+default-v-card=VCard
+default-wifi=Wi-Fi
+default-full-name=Koko nimi
+default-first-name=Etunimi
+default-last-name=Sukunimi
+default-additional-names=Muut nimet
+default-name-prefix=Nimen etuliite
+default-name-suffix=Nimen jälkiliite
+default-nickname=Lempinimi
+default-title=Titteli
+default-organization=Organisaatio
+default-email-type=Sähköpostin tyyppi
+default-phone-type=Puhelimen tyyppi
+default-phone=Puhelin
+default-email=Sähköposti
+default-ssid=SSID
+default-password=Salasana
+default-encryption=Salaus
+default-street=Katuosoite
+default-city=Kaupunki
+default-region=Alue
+default-postal-code=Postinumero
+default-country=Maa
+default-note=Huomautus
+default-unknown=Tuntematon
+default-name-label=Nimi: { $value }
+default-first-name-label=Etunimi: { $value }
+default-last-name-label=Sukunimi: { $value }
+default-additional-names-label=Muut nimet: { $value }
+default-name-prefix-label=Nimen etuliite: { $value }
+default-name-suffix-label=Nimen jälkiliite: { $value }
+default-nickname-label=Lempinimi: { $value }
+default-organization-label=Organisaatio: { $value }
+default-title-label=Titteli: { $value }
+default-phone-label=Puhelin: { $value }
+default-email-label=Sähköposti: { $value }
+default-url-label=URL: { $value }
+default-ssid-label=SSID: { $value }
+default-password-label=Salasana: { $value }
+default-type-label=Tyyppi: { $value }
+default-address-label=Osoite: { $value }
+default-note-label=Huomautus: { $value }
+default-about=Tietoja Code Hooverista
+default-about-intro=
+    Code Hooverilla voit skannata ja luoda QR-koodeja suoraan selaimessa. Kerää kaikki koodit ja lisää ne
+    tallennettujen koodien luetteloon, jotta voit näyttää niitä muille. Se sopii erinomaisesti Wi-Fi-tunnuksille,
+    vCard-korteille, LinkedIn-profiilien linkeille ja moneen muuhun.
+default-github-repo=GitHub-tietovarasto
+default-open-source-statement=Tämä projekti on maksuton ja avointa lähdekoodia.
+default-open-on-different-device=Avaa toisella laitteella
+default-migration-instructions=
+    Siirrä koodit avaamalla Code Hoover toisella laitteella tämän QR-koodin avulla.
+    Siirry skannaussivulle ja lue tämän laitteen koodinäkymässä näkyvät koodit.
+    Tallenna lopuksi ne koodit, jotka haluat säilyttää.

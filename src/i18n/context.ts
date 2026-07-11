@@ -6,6 +6,11 @@ export const LOCALES = [
   { id: 'de-DE', flag: '🇩🇪' },
   { id: 'nl-NL', flag: '🇳🇱' },
   { id: 'fr-FR', flag: '🇫🇷' },
+  { id: 'it-IT', flag: '🇮🇹' },
+  { id: 'uk-UA', flag: '🇺🇦' },
+  { id: 'ga-IE', flag: '🇮🇪' },
+  { id: 'fi-FI', flag: '🇫🇮' },
+  { id: 'sv-SE', flag: '🇸🇪' },
   { id: 'ja-JP', flag: '🇯🇵' },
   { id: 'en-PI', flag: '🏴‍☠️' },
 ] as const

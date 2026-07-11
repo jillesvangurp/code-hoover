@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import { Download, Menu, Moon, Sun, Upload, X } from 'lucide-react'
+import { Check, Download, Menu, Moon, Sun, Upload, X } from 'lucide-react'
 import type { SavedQrCode } from '../domain/qr'
 import { parseSavedCodes } from '../domain/qr'
 import { LOCALES, useI18n } from '../i18n/context'
@@ -59,11 +59,21 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
             <button
               key={id}
               type="button"
-              className={`btn btn-ghost btn-sm w-8 text-2xl filter hover:grayscale-0 ${locale === id ? 'grayscale-0' : 'grayscale'}`}
+              className={`btn btn-sm relative h-10 min-h-10 w-10 p-0 text-2xl transition-all ${locale === id
+                ? 'btn-outline border-2 border-base-content bg-base-100 opacity-100 shadow-md ring-2 ring-base-content ring-offset-2 ring-offset-base-200'
+                : 'btn-ghost grayscale opacity-50 hover:grayscale-0 hover:opacity-100'}`}
               title={id}
               aria-label={id}
+              aria-pressed={locale === id}
               onClick={() => { setLocale(id); closeMenus() }}
-            >{flag}</button>
+            >
+              {flag}
+              {locale === id && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-base-content text-base-100 ring-2 ring-base-200" aria-hidden="true">
+                  <Check size={11} strokeWidth={4} />
+                </span>
+              )}
+            </button>
           ))}
         </div>
       </li>

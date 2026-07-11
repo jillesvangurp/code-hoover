@@ -1,0 +1,77 @@
+default-page-title=Code Hoover
+default-welcome-text=
+    Dírigh do cheamara ar chóid chun iad a scanadh agus a chóipeáil.
+default-scan=Scan
+default-stop=Stop
+default-clear=Glan
+default-copy=Cóipeáil
+default-dark-mode=Mód dorcha
+default-sound-effects=Éifeachtaí fuaime
+default-open=Oscail
+default-save=Sábháil
+default-delete=Scrios
+default-add=Cuir leis
+default-import=Iompórtáil
+default-export=Easpórtáil
+default-cancel=Cealaigh
+default-close=Dún
+default-drag-to-reorder=Tarraing lena n-athordú
+default-scanned-codes={ $count } cód scanta
+default-invalid-json=JSON neamhbhailí
+default-name=Ainm
+default-url=URL
+default-text=Téacs
+default-v-card=VCard
+default-wifi=Wi-Fi
+default-full-name=Ainm iomlán
+default-first-name=Céadainm
+default-last-name=Sloinne
+default-additional-names=Ainmneacha eile
+default-name-prefix=Réimír ainm
+default-name-suffix=Iarmhír ainm
+default-nickname=Leasainm
+default-title=Teideal
+default-organization=Eagraíocht
+default-email-type=Cineál ríomhphoist
+default-phone-type=Cineál gutháin
+default-phone=Guthán
+default-email=Ríomhphost
+default-ssid=SSID
+default-password=Focal faire
+default-encryption=Criptiú
+default-street=Sráid
+default-city=Cathair
+default-region=Réigiún
+default-postal-code=Cód poist
+default-country=Tír
+default-note=Nóta
+default-unknown=Anaithnid
+default-name-label=Ainm: { $value }
+default-first-name-label=Céadainm: { $value }
+default-last-name-label=Sloinne: { $value }
+default-additional-names-label=Ainmneacha eile: { $value }
+default-name-prefix-label=Réimír ainm: { $value }
+default-name-suffix-label=Iarmhír ainm: { $value }
+default-nickname-label=Leasainm: { $value }
+default-organization-label=Eagraíocht: { $value }
+default-title-label=Teideal: { $value }
+default-phone-label=Guthán: { $value }
+default-email-label=Ríomhphost: { $value }
+default-url-label=URL: { $value }
+default-ssid-label=SSID: { $value }
+default-password-label=Focal faire: { $value }
+default-type-label=Cineál: { $value }
+default-address-label=Seoladh: { $value }
+default-note-label=Nóta: { $value }
+default-about=Maidir le Code Hoover
+default-about-intro=
+    Ligeann Code Hoover duit cóid QR a scanadh agus a chruthú go díreach sa bhrabhsálaí. Bailigh na cóid go léir
+    agus cuir le do liosta cód sábháilte iad chun iad a thaispeáint do dhaoine eile. Tá sé iontach do shonraí Wi-Fi,
+    vCards, naisc chuig próifílí LinkedIn agus go leor eile.
+default-github-repo=Stór GitHub
+default-open-source-statement=Tá an tionscadal seo saor in aisce agus foinse oscailte.
+default-open-on-different-device=Oscail ar ghléas eile
+default-migration-instructions=
+    Chun do chóid a aistriú, oscail Code Hoover ar ghléas eile leis an gcód QR seo.
+    Téigh go dtí an leathanach scanadh agus scan na cóid ar scáileán cód an ghléis seo.
+    Ansin sábháil na cóid is mian leat a choinneáil.

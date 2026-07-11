@@ -1,0 +1,77 @@
+default-page-title=Code Hoover
+default-welcome-text=
+    Наведіть камеру на коди, щоб відсканувати та скопіювати їх.
+default-scan=Сканувати
+default-stop=Зупинити
+default-clear=Очистити
+default-copy=Копіювати
+default-dark-mode=Темний режим
+default-sound-effects=Звукові ефекти
+default-open=Відкрити
+default-save=Зберегти
+default-delete=Видалити
+default-add=Додати
+default-import=Імпортувати
+default-export=Експортувати
+default-cancel=Скасувати
+default-close=Закрити
+default-drag-to-reorder=Перетягніть, щоб змінити порядок
+default-scanned-codes={ $count } відсканованих кодів
+default-invalid-json=Некоректний JSON
+default-name=Назва
+default-url=URL
+default-text=Текст
+default-v-card=VCard
+default-wifi=Wi-Fi
+default-full-name=Повне ім’я
+default-first-name=Ім’я
+default-last-name=Прізвище
+default-additional-names=Додаткові імена
+default-name-prefix=Префікс імені
+default-name-suffix=Суфікс імені
+default-nickname=Псевдонім
+default-title=Посада
+default-organization=Організація
+default-email-type=Тип електронної пошти
+default-phone-type=Тип телефону
+default-phone=Телефон
+default-email=Електронна пошта
+default-ssid=SSID
+default-password=Пароль
+default-encryption=Шифрування
+default-street=Вулиця
+default-city=Місто
+default-region=Область
+default-postal-code=Поштовий індекс
+default-country=Країна
+default-note=Примітка
+default-unknown=Невідомо
+default-name-label=Назва: { $value }
+default-first-name-label=Ім’я: { $value }
+default-last-name-label=Прізвище: { $value }
+default-additional-names-label=Додаткові імена: { $value }
+default-name-prefix-label=Префікс імені: { $value }
+default-name-suffix-label=Суфікс імені: { $value }
+default-nickname-label=Псевдонім: { $value }
+default-organization-label=Організація: { $value }
+default-title-label=Посада: { $value }
+default-phone-label=Телефон: { $value }
+default-email-label=Електронна пошта: { $value }
+default-url-label=URL: { $value }
+default-ssid-label=SSID: { $value }
+default-password-label=Пароль: { $value }
+default-type-label=Тип: { $value }
+default-address-label=Адреса: { $value }
+default-note-label=Примітка: { $value }
+default-about=Про Code Hoover
+default-about-intro=
+    Code Hoover дає змогу сканувати та створювати QR-коди безпосередньо у браузері. Збирайте всі коди та
+    додавайте їх до списку збережених, щоб показувати іншим. Зручно для даних Wi-Fi, vCard,
+    посилань на профілі LinkedIn та багато іншого.
+default-github-repo=Репозиторій GitHub
+default-open-source-statement=Цей проєкт безкоштовний і має відкритий вихідний код.
+default-open-on-different-device=Відкрити на іншому пристрої
+default-migration-instructions=
+    Щоб перенести коди, відкрийте Code Hoover на іншому пристрої за допомогою цього QR-коду.
+    Перейдіть на сторінку сканування та зчитайте коди з екрана кодів цього пристрою.
+    Потім збережіть ті, які хочете залишити.
