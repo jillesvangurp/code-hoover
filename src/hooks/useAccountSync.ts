@@ -24,7 +24,11 @@ export interface AccountSyncControls {
 
 export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCode[]) => void): AccountSyncControls {
   const [session, setSession] = useLocalStorage<AccountSession | null>('account-session', null, parseStoredAccountSession)
-  const [status, setStatus] = useState<AccountSyncStatus>({ state: 'idle', messageId: 'default-account-sync-off' })
+  const [status, setStatus] = useState<AccountSyncStatus>(() => (
+    session
+      ? { state: 'synced', messageId: 'default-account-sync-enabled' }
+      : { state: 'idle', messageId: 'default-account-sync-off' }
+  ))
   const lastUploadedJson = useRef(JSON.stringify(codes))
   const sessionRef = useRef(session)
   sessionRef.current = session
@@ -111,8 +115,18 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
   useEffect(() => {
     if (!session) {
       lastUploadedJson.current = JSON.stringify(codes)
+      setStatus((current) => (
+        current.messageId === 'default-account-sync-off'
+          ? current
+          : { state: 'idle', messageId: 'default-account-sync-off' }
+      ))
       return
     }
+    setStatus((current) => (
+      current.messageId === 'default-account-sync-off'
+        ? { state: 'synced', messageId: 'default-account-sync-enabled' }
+        : current
+    ))
     const nextJson = JSON.stringify(codes)
     if (nextJson === lastUploadedJson.current) return
     const timeout = window.setTimeout(() => {

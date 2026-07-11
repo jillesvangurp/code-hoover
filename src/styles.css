@@ -187,21 +187,17 @@
   }
 
   .qr-detail-code-frame {
-    width: min(100%, 28rem);
-    height: min(72vw, 28rem);
-    max-height: 50vh;
+    aspect-ratio: 1 / 1;
+    width: min(100%, 72vw, 28rem, 50vh);
+    height: auto;
   }
 
   .qr-detail-code-frame-vcard {
-    width: min(100%, 16rem);
-    height: min(48vw, 16rem);
-    max-height: 34vh;
+    width: min(100%, 48vw, 16rem, 34vh);
   }
 
   .qr-detail-code-frame-large {
-    width: min(100%, 32rem);
-    height: min(78vw, 32rem);
-    max-height: 72vh;
+    width: min(100%, 78vw, 32rem, 72vh);
   }
 
   .qr-detail-code-frame .qr-intro-finder {

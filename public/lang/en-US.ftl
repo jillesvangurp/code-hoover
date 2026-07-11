@@ -1,7 +1,7 @@
 default-page-title=Code Hoover
 default-welcome-text=
     Point your camera at codes to scan and copy.
-default-scan=Scan
+default-scan=SCAN
 default-stop=Stop
 default-clear=Clear
 default-scanner-library=Scanner: { $value }
@@ -53,11 +53,11 @@ default-account-email=Email
 default-account-password=Password
 default-account-sign-in=Sign in
 default-account-create=Create
-default-codes=Codes
+default-codes=CODES
 default-open=Open
 default-save=Save
 default-delete=Delete
-default-add=Add
+default-add=ADD
 default-import=Import
 default-import-json=Import JSON file
 default-export=Export
@@ -119,7 +119,7 @@ default-about-intro=
 default-github-repo=GitHub repository
 default-veritasium-video=Veritasium video on QR codes
 default-open-source-statement=This project is free and open source.
-default-open-on-different-device=Open on a different device
+default-open-on-different-device=Open on another device
 default-migration-instructions=
     Migration instructions: Simply open Code Hoover on another device with this QR code.
     Then go to the scan page to hoover up any codes you have from the codes screen here.

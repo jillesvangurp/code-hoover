@@ -2,7 +2,7 @@ import { useCallback, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Contact, FileText, Grip, Link, Plus, Wifi } from 'lucide-react'
+import { Contact, FileText, Grip, Link, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -14,6 +14,12 @@ interface CodesScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
   playDelete: () => void
+}
+
+interface AddCodeScreenProps {
+  codes: SavedQrCode[]
+  setCodes: (codes: SavedQrCode[]) => void
+  onDone: () => void
 }
 
 function codeTypeLabel(code: SavedQrCode): string {
@@ -119,11 +125,23 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
   )
 }
 
-export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
-  const [editing, setEditing] = useState(false)
+export function AddCodeScreen({ codes, setCodes, onDone }: AddCodeScreenProps) {
   const [form, setForm] = useState<QrFormState>(emptyQrForm)
+
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <QrForm form={form} onChange={setForm} />
+      <FormButtons
+        className="justify-center md:justify-start"
+        onSave={() => { setCodes([...codes, formToSavedCode(form)]); onDone() }}
+        onCancel={onDone}
+      />
+    </div>
+  )
+}
+
+export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const { t } = useI18n()
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -131,28 +149,12 @@ export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
 
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
   const onDragEnd = ({ active, over }: DragEndEvent) => {
-    if (!over || active.id === over.id) return
+  if (!over || active.id === over.id) return
     setCodes(arrayMove(codes, Number(active.id), Number(over.id)))
-  }
-
-  if (editing) {
-    return (
-      <div className="flex w-full flex-col gap-4">
-        <QrForm form={form} onChange={setForm} />
-        <FormButtons
-          className="justify-center md:justify-start"
-          onSave={() => { setCodes([...codes, formToSavedCode(form)]); setEditing(false) }}
-          onCancel={() => setEditing(false)}
-        />
-      </div>
-    )
   }
 
   return (
     <>
-      <div className="join mb-6 flex w-full flex-wrap justify-center md:justify-start">
-        <button type="button" className="btn btn-primary btn-sm w-24" onClick={() => { setForm(emptyQrForm()); setEditing(true) }}><Plus size={16} />{t('default-add')}</button>
-      </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={codes.map((_, index) => String(index))} strategy={verticalListSortingStrategy}>
           <ul className="flex w-full flex-col gap-4">

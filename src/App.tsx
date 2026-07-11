@@ -5,12 +5,12 @@ import { useAccountSync } from './hooks/useAccountSync'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useI18n } from './i18n/context'
 import { SoundEffects } from './lib/sounds'
-import { CodesScreen } from './screens/CodesScreen'
+import { AddCodeScreen, CodesScreen } from './screens/CodesScreen'
 
 const AboutScreen = lazy(() => import('./screens/AboutScreen').then((module) => ({ default: module.AboutScreen })))
 const ScanScreen = lazy(() => import('./screens/ScanScreen').then((module) => ({ default: module.ScanScreen })))
 
-export type Screen = 'codes' | 'scan' | 'about'
+export type Screen = 'codes' | 'scan' | 'add' | 'about'
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('codes')
@@ -41,8 +41,8 @@ export default function App() {
           playSoundPreview={sounds.playPreview}
           accountSync={accountSync}
         />
-        <div className="tabs tabs-box mb-6 grid w-full grid-cols-2" role="tablist" aria-label={t('default-page-title')}>
-          {(['codes', 'scan'] as const).map((tab) => (
+        <div className="tabs tabs-box mb-6 grid w-full grid-cols-3" role="tablist" aria-label={t('default-page-title')}>
+          {(['codes', 'scan', 'add'] as const).map((tab) => (
             <button
               key={tab}
               type="button"
@@ -56,6 +56,7 @@ export default function App() {
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
           {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} />}
           {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} playScanSuccess={sounds.playScanSuccess} playDelete={sounds.playDelete} />}
+          {screen === 'add' && <AddCodeScreen codes={codes} setCodes={setCodes} onDone={() => setScreen('codes')} />}
           {screen === 'about' && <AboutScreen />}
         </Suspense>
       </article>

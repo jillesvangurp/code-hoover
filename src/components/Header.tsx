@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Cloud, Download, DownloadCloud, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UploadCloud, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
+import { Cloud, Download, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
 import type { SavedQrCode } from '../domain/qr'
 import { parseSavedCodes } from '../domain/qr'
 import { LOCALES, useI18n } from '../i18n/context'
@@ -89,11 +89,6 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
     })
   }
 
-  const restoreAccountCodes = () => {
-    if (!window.confirm(t('default-account-sync-restore-confirm'))) return
-    runCloudAction(accountSync.restore)
-  }
-
   const deleteAccount = () => {
     if (!window.confirm(t('default-account-sync-delete-confirm'))) return
     runCloudAction(accountSync.deleteAccount)
@@ -102,6 +97,11 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
   const toggleSound = (enabled: boolean) => {
     setSoundEnabled(enabled)
     if (enabled) window.setTimeout(playSoundPreview, 0)
+  }
+
+  const toggleTheme = (enabled: boolean) => {
+    setDark(enabled)
+    closeMenus()
   }
 
   const accountBusy = accountSync.status.state === 'syncing'
@@ -127,9 +127,18 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </div>
       </li>
       <li>
-        <button type="button" className="w-full" title={t('default-dark-mode')} onClick={() => { setDark(!dark); closeMenus() }}>
-          {dark ? <Sun size={22} /> : <Moon size={22} />}{t('default-dark-mode')}
-        </button>
+        <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${dark ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
+          <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
+            {dark ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
+            <span>{t('default-dark-mode')}</span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className={`badge badge-sm min-w-10 border-0 px-2 text-xs font-bold uppercase ${dark ? 'bg-neutral-content text-neutral' : 'bg-base-300 text-base-content'}`}>
+              {dark ? t('default-on') : t('default-off')}
+            </span>
+            <input type="checkbox" className="toggle toggle-sm" checked={dark} aria-label={t('default-dark-mode')} onChange={(event) => toggleTheme(event.target.checked)} />
+          </span>
+        </label>
       </li>
       <li>
         <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${soundEnabled ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
@@ -155,8 +164,6 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
           {accountSync.signedIn && <p className="m-0 truncate text-xs font-medium opacity-80">{accountSync.email}</p>}
           {accountSync.signedIn ? (
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="btn btn-xs" disabled={accountBusy} onClick={() => runCloudAction(accountSync.uploadNow)}><UploadCloud size={14} />{t('default-account-sync-save')}</button>
-              <button type="button" className="btn btn-xs" disabled={accountBusy} onClick={restoreAccountCodes}><DownloadCloud size={14} />{t('default-account-sync-restore')}</button>
               <button type="button" className="btn btn-xs" disabled={accountBusy} onClick={() => runCloudAction(accountSync.signOut)}><LogOut size={14} />{t('default-account-sync-sign-out')}</button>
               <button type="button" className="btn btn-xs btn-error" disabled={accountBusy} onClick={deleteAccount}><Trash2 size={14} />{t('default-account-sync-delete')}</button>
             </div>
@@ -206,8 +213,8 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </details>
       </div>
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] flex justify-end bg-black/35 text-base-content lg:hidden" role="dialog" aria-modal="true" onClick={closeMenus}>
-          <div className="flex h-full w-[min(24rem,92vw)] flex-col bg-base-100 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+        <div className="fixed inset-0 z-[100] bg-base-100 text-base-content lg:hidden" role="dialog" aria-modal="true" onClick={closeMenus}>
+          <div className="flex h-full w-full flex-col bg-base-100" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-base-300 px-4 py-3">
               <div className="flex items-center gap-3"><img className="h-8 w-8 dark:invert" src="/favicon.svg" alt="" /><h2 className="m-0 text-lg font-semibold">{t('default-page-title')}</h2></div>
               <button type="button" className="btn btn-ghost btn-circle" aria-label={t('default-close')} onClick={closeMenus}><X /></button>
