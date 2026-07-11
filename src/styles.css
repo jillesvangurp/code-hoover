@@ -82,6 +82,11 @@
     @apply bg-base-200;
     scrollbar-gutter: stable both-edges;
   }
+  @media (display-mode: standalone) {
+    body {
+      overscroll-behavior-y: none;
+    }
+  }
   h1 {
     @apply text-3xl mb-6 clear-both;
   }

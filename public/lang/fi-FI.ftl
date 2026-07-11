@@ -75,3 +75,7 @@ default-migration-instructions=
     Siirrä koodit avaamalla Code Hoover toisella laitteella tämän QR-koodin avulla.
     Siirry skannaussivulle ja lue tämän laitteen koodinäkymässä näkyvät koodit.
     Tallenna lopuksi ne koodit, jotka haluat säilyttää.
+default-install-app=Asenna Code Hoover
+default-install=Asenna
+default-install-app-description=Käytä sitä sovelluksena ja pidä skanneri saatavilla ilman verkkoyhteyttä.
+default-ios-install-instructions=Napauta Safarissa Jaa, valitse Lisää Koti-valikkoon ja vahvista valitsemalla Lisää.

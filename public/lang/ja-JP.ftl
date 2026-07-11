@@ -75,3 +75,7 @@ default-migration-instructions=
     コードを移行するには、このQRコードを使って別の端末でCode Hooverを開きます。
     次にスキャン画面を開き、この端末のコード画面に表示されているコードを吸い込みます。
     最後に、残しておきたいコードを保存してください。
+default-install-app=Code Hooverをインストール
+default-install=インストール
+default-install-app-description=アプリとして使用し、オフラインでもスキャナーを利用できます。
+default-ios-install-instructions=Safariで共有をタップし、「ホーム画面に追加」を選んで「追加」をタップします。

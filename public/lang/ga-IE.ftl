@@ -75,3 +75,7 @@ default-migration-instructions=
     Chun do chóid a aistriú, oscail Code Hoover ar ghléas eile leis an gcód QR seo.
     Téigh go dtí an leathanach scanadh agus scan na cóid ar scáileán cód an ghléis seo.
     Ansin sábháil na cóid is mian leat a choinneáil.
+default-install-app=Suiteáil Code Hoover
+default-install=Suiteáil
+default-install-app-description=Úsáid mar aip é agus coinnigh an scanóir ar fáil as líne.
+default-ios-install-instructions=In Safari, tapáil Comhroinn, roghnaigh Cuir leis an Scáileán Baile, agus deimhnigh Cuir leis.

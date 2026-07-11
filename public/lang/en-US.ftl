@@ -75,3 +75,7 @@ default-migration-instructions=
     Migration instructions: Simply open Code Hoover on another device with this QR code.
     Then go to the scan page to hoover up any codes you have from the codes screen here.
     And then save the ones you want to keep.
+default-install-app=Install Code Hoover
+default-install=Install
+default-install-app-description=Use it like an app and keep the scanner available offline.
+default-ios-install-instructions=In Safari, tap Share, then choose Add to Home Screen and confirm Add.

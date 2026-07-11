@@ -75,3 +75,7 @@ default-migration-instructions=
     Flytta dina koder genom att öppna Code Hoover på en annan enhet med den här QR-koden.
     Gå till skanningssidan och läs in koderna från kodvyn på den här enheten.
     Spara sedan de koder du vill behålla.
+default-install-app=Installera Code Hoover
+default-install=Installera
+default-install-app-description=Använd den som en app och ha skannern tillgänglig offline.
+default-ios-install-instructions=Tryck på Dela i Safari, välj Lägg till på hemskärmen och bekräfta med Lägg till.

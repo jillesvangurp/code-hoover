@@ -75,3 +75,7 @@ default-migration-instructions=
     Zo verhuis je je codes: open Code Hoover met deze QR-code op een ander apparaat.
     Ga daar naar de scanpagina en zuig de codes op vanaf het codescherm van dit apparaat.
     Sla daarna de codes op die je wilt bewaren.
+default-install-app=Code Hoover installeren
+default-install=Installeren
+default-install-app-description=Gebruik het als app en houd de scanner offline beschikbaar.
+default-ios-install-instructions=Tik in Safari op Deel, kies Zet op beginscherm en bevestig met Voeg toe.

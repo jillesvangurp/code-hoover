@@ -14,6 +14,11 @@ Code Hoover is a small React web application for scanning, creating, and saving 
 - Use the app in English, German, Dutch, French, or Japanese.
 - Follow the system light/dark preference and switch themes manually.
 - Enable or disable scan and delete sounds.
+- Install it as an offline-capable app on Android, iPhone, or iPad.
+
+## Install on a phone
+
+On Android, open the site in Chrome and use the in-app **Install** button or Chrome's **Install app** menu item. On iPhone or iPad, open it in Safari, tap **Share**, then **Add to Home Screen**. Camera access still requires HTTPS and user permission.
 
 ## Development
 

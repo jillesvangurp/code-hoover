@@ -75,3 +75,7 @@ default-migration-instructions=
     Pour transférer vos codes, ouvrez Code Hoover sur un autre appareil à l’aide de ce code QR.
     Accédez ensuite à la page de scan pour aspirer les codes affichés sur l’écran des codes de cet appareil.
     Enregistrez enfin ceux que vous souhaitez conserver.
+default-install-app=Installer Code Hoover
+default-install=Installer
+default-install-app-description=Utilisez-le comme une application et gardez le scanner disponible hors ligne.
+default-ios-install-instructions=Dans Safari, touchez Partager, choisissez Sur l’écran d’accueil, puis confirmez avec Ajouter.

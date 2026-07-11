@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Header } from './components/Header'
+import { InstallApp } from './components/InstallApp'
 import { parseSavedCodes } from './domain/qr'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { SoundEffects } from './lib/sounds'
@@ -35,6 +36,7 @@ export default function App() {
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
         />
+        <InstallApp />
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
           {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} onScan={() => setScreen('scan')} playDelete={sounds.playDelete} />}
           {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} onStop={() => setScreen('codes')} playScanSuccess={sounds.playScanSuccess} playDelete={sounds.playDelete} />}

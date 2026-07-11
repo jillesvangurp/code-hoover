@@ -75,3 +75,7 @@ default-migration-instructions=
     To move yer treasure, open Code Hoover on another device with this QR code.
     Sail to the scan page and plunder the codes shown on this device's treasure screen.
     Then stow away the ones ye mean to keep.
+default-install-app=Install Code Hoover
+default-install=Install
+default-install-app-description=Use it like an app and keep the scanner ready when the seas go offline.
+default-ios-install-instructions=In Safari, tap Share, choose Add to Home Screen, then confirm Add.
