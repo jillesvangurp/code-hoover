@@ -79,4 +79,22 @@ describe('CodesScreen', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     Reflect.deleteProperty(navigator, 'share')
   })
+
+  it('keeps sharing available with a clipboard fallback', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } })
+    render(<CodesScreen
+      codes={[{ name: 'Message', text: 'Hello world', data: { type: 'qr.QrData.Text', text: 'Hello world' } }]}
+      setCodes={vi.fn()}
+      onScan={vi.fn()}
+      playDelete={vi.fn()}
+    />)
+
+    await user.click(screen.getAllByRole('button', { name: /share/i })[0])
+
+    expect(writeText).toHaveBeenCalledWith('Hello world')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    Reflect.deleteProperty(navigator, 'clipboard')
+  })
 })

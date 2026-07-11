@@ -23,17 +23,23 @@ interface CodesScreenProps {
 
 function ShareButton({ title, text, url }: { title: string; text?: string; url?: string }) {
   const { t } = useI18n()
-  if (typeof navigator.share !== 'function') return null
 
   return (
     <button
       type="button"
       className="btn btn-ghost btn-xs btn-circle absolute left-3 top-3"
       aria-label={t('default-share')}
+      title={typeof navigator.share === 'function' ? t('default-share') : t('default-copy')}
       onClick={(event) => {
         event.stopPropagation()
         const data = url ? { title, url } : { title, text }
-        void navigator.share(data).catch(() => undefined)
+        if (typeof navigator.share === 'function') {
+          void navigator.share(data).catch(() => undefined)
+        } else {
+          const payload = url ?? text ?? title
+          if (navigator.clipboard?.writeText) void navigator.clipboard.writeText(payload)
+          else window.prompt(t('default-copy'), payload)
+        }
       }}
     ><Share2 size={16} /></button>
   )
