@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
-import { Check, Copy, ExternalLink, Trash2, X } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
-import { QR_DATA_TYPES, defaultDisplayName, parseSavedCode, parseVCard, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseSavedCode, parseVCard, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 
 interface ScanResult {
@@ -14,7 +14,6 @@ interface ScanScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
   playScanSuccess: () => void
-  playDelete: () => void
 }
 
 function savedCodeFromText(text: string): SavedQrCode {
@@ -28,14 +27,30 @@ function savedCodeFromBarcode(text: string, format: string): SavedQrCode {
   return { name: defaultDisplayName(data) || text, text, data }
 }
 
-export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: ScanScreenProps) {
+function savedCodeFromScan(text: string, format: number): SavedQrCode {
+  const rawText = text.trim()
+  const formatName = barcodeFormatName(format, '')
+  if (isQrBarcodeFormat(formatName)) {
+    try {
+      return parseSavedCode(JSON.parse(text))
+    } catch {
+      return savedCodeFromText(rawText)
+    }
+  }
+  if (formatName) return savedCodeFromBarcode(rawText, formatName)
+  return savedCodeFromText(rawText)
+}
+
+export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps) {
   const [scans, setScans] = useState<ScanResult[]>([])
   const [scannerLabel, setScannerLabel] = useState('BarcodeDetector' in window ? 'Barcode Detector API' : '@zxing/browser')
   const [scanning, setScanning] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const { t } = useI18n()
   const playScanRef = useRef(playScanSuccess)
+  const codesRef = useRef(codes)
   playScanRef.current = playScanSuccess
+  codesRef.current = codes
 
   useEffect(() => {
     const video = videoRef.current
@@ -47,10 +62,18 @@ export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: Sca
     const reader = new BrowserMultiFormatReader(undefined, { delayBetweenScanAttempts: 300 })
 
     const addScan = (text: string, format: number) => {
+      const rawText = text.trim()
+      if (!rawText) return
       setScans((current) => {
-        if (current.some((scan) => scan.text === text)) return current
+        if (current.some((scan) => scan.text === rawText)) return current
+        const entry = savedCodeFromScan(rawText, format)
+        const nextCodes = mergeSavedCodes(codesRef.current, [entry])
+        if (nextCodes.length !== codesRef.current.length) {
+          codesRef.current = nextCodes
+          setCodes(nextCodes)
+        }
         playScanRef.current()
-        return [{ text, format }, ...current]
+        return [{ text: rawText, format }, ...current]
       })
     }
 
@@ -111,50 +134,23 @@ export function ScanScreen({ codes, setCodes, playScanSuccess, playDelete }: Sca
       video.pause()
       video.srcObject = null
     }
-  }, [])
-
-  const saveScan = (scan: ScanResult) => {
-    const rawText = scan.text.trim()
-    const format = barcodeFormatName(scan.format, '')
-    let entry: SavedQrCode
-    if (isQrBarcodeFormat(format)) {
-      try {
-        entry = parseSavedCode(JSON.parse(scan.text))
-      } catch {
-        entry = savedCodeFromText(rawText)
-      }
-    } else if (format) {
-      entry = savedCodeFromBarcode(rawText, format)
-    } else {
-      entry = savedCodeFromText(rawText)
-    }
-    const fallbackName = defaultDisplayName(entry.data) || entry.text
-    const defaultName = entry.name || fallbackName
-    const promptedName = window.prompt(t('default-name'), defaultName) ?? defaultName
-    setCodes([...codes, { ...entry, name: promptedName.trim() || fallbackName }])
-  }
+  }, [setCodes])
 
   return (
     <>
-      <section className="flex w-full flex-col items-center gap-4">
-        <div className="flex w-full justify-center md:justify-start">
-          <button type="button" className="btn btn-secondary btn-sm w-24" onClick={() => setScans([])}><X size={16} />{t('default-clear')}</button>
-        </div>
-        <p className="text-sm opacity-70">{t('default-scanner-library', { value: scannerLabel })}</p>
+      <section className="flex w-full flex-col items-center gap-2">
+        <video ref={videoRef} className="mx-auto h-[42vh] w-full rounded-md border object-cover" muted playsInline />
+        <p className="m-0 text-xs opacity-70">{t('default-scanner-library', { value: scannerLabel })}</p>
         {!scanning && <p>{t('default-welcome-text')}</p>}
-        <video ref={videoRef} className="mx-auto h-[33vh] w-full rounded-md border" muted playsInline />
       </section>
       <p className="mb-2 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
       <ul className="w-full space-y-2">
         {scans.map((scan) => (
-          <li key={scan.text} className="card w-full bg-base-200 p-3">
-            <p className="break-words font-mono">{scan.text}</p>
-            <p className="text-xs opacity-70">{barcodeFormatName(scan.format, t('default-unknown'))}</p>
-            <div className="join mt-2 flex w-full flex-wrap justify-center sm:justify-start">
-              <button type="button" className="btn btn-primary btn-xs w-24" title={t('default-copy')} onClick={() => void navigator.clipboard.writeText(scan.text)}><Copy size={14} />{t('default-copy')}</button>
-              {/^https?:\/\//.test(scan.text) && <button type="button" className="btn btn-secondary btn-xs w-24" onClick={() => window.open(scan.text, '_blank', 'noopener,noreferrer')}><ExternalLink size={14} />{t('default-open')}</button>}
-              <button type="button" className="btn btn-accent btn-xs w-24" onClick={() => saveScan(scan)}><Check size={14} />{t('default-save')}</button>
-              <button type="button" className="btn btn-warning btn-xs w-24" onClick={() => { setScans(scans.filter((current) => current !== scan)); playDelete() }}><Trash2 size={14} />{t('default-delete')}</button>
+          <li key={scan.text} className="flex w-full items-start gap-3 rounded-md bg-base-200 p-3">
+            <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="m-0 break-words font-mono text-sm">{scan.text}</p>
+              <p className="m-0 text-xs opacity-70">{barcodeFormatName(scan.format, t('default-unknown'))}</p>
             </div>
           </li>
         ))}
