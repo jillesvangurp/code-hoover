@@ -4,11 +4,9 @@ default-welcome-text=
 default-scan=スキャン
 default-stop=停止
 default-clear=クリア
-default-scanner-library=スキャナー: { $value }
 default-copy=コピー
 default-dark-mode=ダークモード
 default-sound-effects=効果音
-default-codes=コード
 default-open=開く
 default-save=保存
 default-delete=削除
@@ -71,7 +69,6 @@ default-about-intro=
     保存済みコードのリストに追加して、ほかの人に見せることができます。Wi-Fi認証情報、vCard、
     LinkedInプロフィールへのリンクなど、さまざまな用途に便利です。
 default-github-repo=GitHubリポジトリ
-default-veritasium-video=QRコードについてのVeritasium動画
 default-open-source-statement=このプロジェクトは無料のオープンソースです。
 default-open-on-different-device=別の端末で開く
 default-migration-instructions=

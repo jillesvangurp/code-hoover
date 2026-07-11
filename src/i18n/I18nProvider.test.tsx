@@ -2,11 +2,11 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { I18nProvider } from './I18nProvider'
-import { useI18n } from './context'
+import { LOCALES, useI18n } from './context'
 
 const resources: Record<string, string> = {
   '/lang/en-US.ftl': 'default-about=About',
-  '/lang/de-DE.ftl': 'default-about=Über Code Hoover',
+  '/lang/en-PI.ftl': 'default-about=About This Fine Vessel',
 }
 
 function LanguageControl() {
@@ -14,7 +14,7 @@ function LanguageControl() {
   return (
     <>
       <p>{t('default-about')}</p>
-      <button type="button" onClick={() => setLocale('de-DE')}>🇩🇪</button>
+      <button type="button" aria-label="en-PI" onClick={() => setLocale('en-PI')}>🏴‍☠️</button>
       <output>{locale}</output>
     </>
   )
@@ -22,6 +22,7 @@ function LanguageControl() {
 
 describe('I18nProvider', () => {
   it('loads a Fluent bundle when the language flag changes', async () => {
+    expect(LOCALES).toContainEqual({ id: 'en-PI', flag: '🏴‍☠️' })
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
       const body = resources[String(input)]
       return new Response(body ?? '', { status: body ? 200 : 404 })
@@ -31,11 +32,11 @@ describe('I18nProvider', () => {
     render(<I18nProvider><LanguageControl /></I18nProvider>)
     expect(await screen.findByText('About')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '🇩🇪' }))
+    await user.click(screen.getByRole('button', { name: 'en-PI' }))
 
-    expect(await screen.findByText('Über Code Hoover')).toBeInTheDocument()
-    expect(screen.getByText('de-DE')).toBeInTheDocument()
-    expect(localStorage.getItem('locale')).toBe('de-DE')
-    await waitFor(() => expect(document.documentElement.lang).toBe('de-DE'))
+    expect(await screen.findByText('About This Fine Vessel')).toBeInTheDocument()
+    expect(screen.getByText('en-PI')).toBeInTheDocument()
+    expect(localStorage.getItem('locale')).toBe('en-PI')
+    await waitFor(() => expect(document.documentElement.lang).toBe('en-PI'))
   })
 })

@@ -4,11 +4,9 @@ default-welcome-text=
 default-scan=Scannen
 default-stop=Stop
 default-clear=Wissen
-default-scanner-library=Scanner: { $value }
 default-copy=Kopiëren
 default-dark-mode=Donkere modus
 default-sound-effects=Geluidseffecten
-default-codes=Codes
 default-open=Openen
 default-save=Opslaan
 default-delete=Verwijderen
@@ -71,7 +69,6 @@ default-about-intro=
     ze toe aan je lijst met opgeslagen codes, zodat je ze aan anderen kunt laten zien. Handig voor wifi-inloggegevens,
     vCards, links naar LinkedIn-profielen en nog veel meer.
 default-github-repo=GitHub-repository
-default-veritasium-video=Veritasium-video over QR-codes
 default-open-source-statement=Dit project is gratis en opensource.
 default-open-on-different-device=Openen op een ander apparaat
 default-migration-instructions=

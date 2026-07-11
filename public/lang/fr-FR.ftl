@@ -4,11 +4,9 @@ default-welcome-text=
 default-scan=Scanner
 default-stop=Arrêter
 default-clear=Effacer
-default-scanner-library=Scanner : { $value }
 default-copy=Copier
 default-dark-mode=Mode sombre
 default-sound-effects=Effets sonores
-default-codes=Codes
 default-open=Ouvrir
 default-save=Enregistrer
 default-delete=Supprimer
@@ -71,7 +69,6 @@ default-about-intro=
     puis ajoutez-les à votre liste de codes enregistrés pour pouvoir les montrer à d’autres personnes. Idéal pour les
     identifiants Wi-Fi, les vCards, les liens vers des profils LinkedIn et bien plus encore.
 default-github-repo=Dépôt GitHub
-default-veritasium-video=Vidéo de Veritasium sur les codes QR
 default-open-source-statement=Ce projet est gratuit et open source.
 default-open-on-different-device=Ouvrir sur un autre appareil
 default-migration-instructions=

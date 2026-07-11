@@ -7,6 +7,7 @@ export const LOCALES = [
   { id: 'nl-NL', flag: '🇳🇱' },
   { id: 'fr-FR', flag: '🇫🇷' },
   { id: 'ja-JP', flag: '🇯🇵' },
+  { id: 'en-PI', flag: '🏴‍☠️' },
 ] as const
 
 export type Locale = (typeof LOCALES)[number]['id']
