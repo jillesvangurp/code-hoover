@@ -113,12 +113,10 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
             {isVCard && <BusinessCardPreview data={data} codeName={code.name} />}
             <QrIntroFrame text={qrDataAsText(data)} size={500} className={`qr-detail-code-frame ${isVCard ? 'qr-detail-code-frame-vcard' : ''}`} label={code.name || code.text} />
             <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
-            <div className="mx-auto flex w-full max-w-sm justify-center md:justify-end">
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
-            </div>
             <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
             <FormButtons
               className="modal-action justify-center md:justify-end"
+              onCopy={() => void navigator.clipboard.writeText(copyText)}
               onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
               onDelete={() => { onDelete(); onClose(); history.back() }}
             />

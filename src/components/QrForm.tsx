@@ -1,5 +1,5 @@
 import type { ChangeEvent } from 'react'
-import { Check, Trash2, X } from 'lucide-react'
+import { Check, Copy, Trash2, X } from 'lucide-react'
 import type { QrFormState } from '../domain/form'
 import type { QrType } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -80,16 +80,18 @@ export function QrForm({ form, onChange, showTypeSelect = true }: QrFormProps) {
 
 interface FormButtonsProps {
   onSave: () => void
+  onCopy?: () => void
   onCancel?: () => void
   onDelete?: () => void
   className?: string
 }
 
-export function FormButtons({ onSave, onCancel, onDelete, className = '' }: FormButtonsProps) {
+export function FormButtons({ onSave, onCopy, onCancel, onDelete, className = '' }: FormButtonsProps) {
   const { t } = useI18n()
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
       <button type="button" className="btn btn-primary btn-sm" onClick={onSave}><Check size={16} />{t('default-save')}</button>
+      {onCopy && <button type="button" className="btn btn-secondary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>}
       {onCancel && <button type="button" className="btn btn-secondary btn-sm" onClick={onCancel}><X size={16} />{t('default-cancel')}</button>}
       {onDelete && <button type="button" className="btn btn-warning btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>}
     </div>
