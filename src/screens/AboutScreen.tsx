@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n/context'
-import { CODE_HOOVER_APP_URL, CODE_HOOVER_REPOSITORY_URL } from '../constants/links'
+import { CODE_HOOVER_APP_URL, CODE_HOOVER_REPOSITORY_URL, ORIGINAL_CODE_HOOVER_REPOSITORY_URL } from '../constants/links'
 import { HooverGraphic } from '../components/HooverGraphic'
 import { QrIntroFrame } from '../components/QrIntroFrame'
 
@@ -21,10 +21,15 @@ export function AboutScreen() {
         <a className="link link-primary text-center text-sm" href={CODE_HOOVER_APP_URL} target="_blank" rel="noopener noreferrer">{t('default-open-on-different-device')}</a>
       </div>
       <hr className="divider" />
-      <p>{t('default-open-source-statement')}</p>
+      <p>
+        {t('default-project-based-on-prefix')}{' '}
+        <a className="link link-hover" href={CODE_HOOVER_REPOSITORY_URL} target="_blank" rel="noopener noreferrer">{t('default-this-project')}</a>
+        {' '}{t('default-project-based-on-middle')}{' '}
+        <a className="link link-hover" href={ORIGINAL_CODE_HOOVER_REPOSITORY_URL} target="_blank" rel="noopener noreferrer">{t('default-original-code-hoover')}</a>
+        .
+      </p>
       <div className="flex flex-col gap-1 text-xs opacity-60">
         <p className="m-0">{t('default-last-updated', { value: lastUpdated })}</p>
-        <a className="link link-hover" href={CODE_HOOVER_REPOSITORY_URL} target="_blank" rel="noopener noreferrer">{t('default-github-repo')}</a>
       </div>
     </div>
   )
