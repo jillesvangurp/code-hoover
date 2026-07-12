@@ -134,7 +134,7 @@ function VCardDetails({ data, codeName, createdAt }: { data: VCardData; codeName
 function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt: string) {
   let parsed: URL | null = null
   try {
-    parsed = new URL(url)
+    parsed = new URL(/^[a-z][a-z\d+.-]*:/i.test(url.trim()) ? url : `https://${url.trim()}`)
   } catch {
     parsed = null
   }
@@ -176,6 +176,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const copyText = barcodeData ? barcodeData.text : qrDataAsText(data)
   const displayCodeName = form.name || code.name
   const createdAt = formatCreatedAt(code.createdAt, locale)
+  const urlPreviewMetadata = [codeFamilyLabel(data), codePayloadTypeLabel(data), createdAt].filter(Boolean)
   const deleteCode = () => {
     if (!window.confirm(t('default-delete-confirm'))) return
     onDelete()
@@ -234,7 +235,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                 {data.type === QR_DATA_TYPES.url ? (
                   <>
                     <section className="mx-auto w-full max-w-xl" aria-label={displayCodeName}>
-                      <UrlPreview url={data.url} featured />
+                      <UrlPreview url={data.url} featured metadata={urlPreviewMetadata} />
                     </section>
                     <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
                       <div className="rounded-md border border-base-300 bg-white p-2">

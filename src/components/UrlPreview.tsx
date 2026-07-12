@@ -6,23 +6,31 @@ interface UrlPreviewProps {
   url: string
   compact?: boolean
   featured?: boolean
+  metadata?: string[]
+}
+
+function normalizeUrlForOpen(url: string): string {
+  const trimmed = url.trim()
+  if (/^[a-z][a-z\d+.-]*:/i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
 }
 
 function parseUrl(url: string): URL | null {
   try {
-    return new URL(url)
+    return new URL(normalizeUrlForOpen(url))
   } catch {
     return null
   }
 }
 
-export function UrlPreview({ url, compact = false, featured = false }: UrlPreviewProps) {
+export function UrlPreview({ url, compact = false, featured = false, metadata = [] }: UrlPreviewProps) {
   const [faviconFailed, setFaviconFailed] = useState(false)
   const parsed = parseUrl(url)
   const { t } = useI18n()
   const host = parsed?.hostname.replace(/^www\./, '') || url
   const path = parsed ? `${parsed.pathname}${parsed.search}` : ''
   const faviconUrl = parsed ? `${parsed.origin}/favicon.ico` : ''
+  const href = parsed?.href || url
 
   const content = (
     <>
@@ -36,6 +44,11 @@ export function UrlPreview({ url, compact = false, featured = false }: UrlPrevie
       <span className="min-w-0 flex-1 text-left">
         <span className={`block truncate font-semibold ${featured ? 'text-xl' : 'text-sm'}`}>{host}</span>
         <span className={`block truncate opacity-70 ${featured ? 'text-sm' : 'text-xs'}`}>{path && path !== '/' ? path : parsed?.protocol.replace(':', '') || url}</span>
+        {metadata.length > 0 && (
+          <span className="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs font-medium opacity-60">
+            {metadata.map((item) => <span key={item}>{item}</span>)}
+          </span>
+        )}
       </span>
       {!compact && <span className="btn btn-ghost btn-xs shrink-0"><ExternalLink size={14} />{t('default-open')}</span>}
     </>
@@ -50,7 +63,7 @@ export function UrlPreview({ url, compact = false, featured = false }: UrlPrevie
   return (
     <a
       className={className}
-      href={parsed?.href || url}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       onClick={(event) => event.stopPropagation()}
