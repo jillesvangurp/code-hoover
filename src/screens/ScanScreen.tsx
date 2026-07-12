@@ -143,18 +143,22 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
         <p className="m-0 text-xs opacity-70">{t('default-scanner-library', { value: scannerLabel })}</p>
         {!scanning && <p>{t('default-welcome-text')}</p>}
       </section>
-      <p className="mb-2 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
-      <ul className="w-full space-y-2">
-        {scans.map((scan) => (
-          <li key={scan.text} className="flex w-full items-start gap-3 rounded-md bg-base-200 p-3">
-            <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="m-0 break-words font-mono text-sm">{scan.text}</p>
-              <p className="m-0 text-xs opacity-70">{barcodeFormatName(scan.format, t('default-unknown'))}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {scans.length > 0 && (
+        <>
+          <p className="mb-2 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
+          <ul className="w-full space-y-2">
+            {scans.map((scan) => (
+              <li key={scan.text} className="flex w-full items-start gap-3 rounded-md bg-base-200 p-3">
+                <Check size={16} className="mt-0.5 shrink-0 text-success" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="m-0 break-words font-mono text-sm">{scan.text}</p>
+                  <p className="m-0 text-xs opacity-70">{barcodeFormatName(scan.format, t('default-unknown'))}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </>
   )
 }
