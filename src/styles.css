@@ -108,6 +108,70 @@
     filter: invert(1);
   }
 
+  .app-shell-loading {
+    opacity: 0;
+  }
+
+  .loading-splash {
+    animation: loading-splash-out 180ms ease-in 720ms both;
+  }
+
+  .loading-splash-stage {
+    position: relative;
+    width: 12rem;
+    height: 7rem;
+    overflow: hidden;
+  }
+
+  .loading-splash-logo {
+    position: absolute;
+    left: 50%;
+    bottom: 0.3rem;
+    width: 4.75rem;
+    height: 4.75rem;
+    translate: -50% 0;
+    animation: loading-hoover-roll 720ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .loading-splash-codes {
+    position: absolute;
+    inset: 0;
+  }
+
+  .loading-splash-codes span {
+    position: absolute;
+    top: var(--code-y);
+    left: var(--code-x);
+    width: 0.74rem;
+    height: 0.74rem;
+    border: 0.16rem solid currentColor;
+    background:
+      linear-gradient(currentColor 0 0) 50% 50% / 0.2rem 0.2rem no-repeat,
+      var(--color-base-100);
+    opacity: 0;
+    animation: loading-code-hoover 620ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation-delay: calc(var(--code-index) * 34ms);
+  }
+
+  .loading-splash-bar {
+    position: relative;
+    width: min(16rem, 70vw);
+    height: 0.35rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: color-mix(in oklch, currentColor 16%, transparent);
+  }
+
+  .loading-splash-bar::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    transform-origin: left;
+    animation: loading-bar-fill 620ms cubic-bezier(0.2, 0.8, 0.2, 1) 90ms both;
+  }
+
   .qr-intro-card {
     animation: qr-card-enter 560ms cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: calc(var(--qr-card-index, 0) * 80ms);
@@ -218,12 +282,21 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
+    .app-shell-loading,
+    .loading-splash,
+    .loading-splash-logo,
+    .loading-splash-codes span,
+    .loading-splash-bar::after,
     .qr-intro-card,
     .qr-intro-finder,
     .qr-intro-code-frame::before,
     .qr-intro-code-frame::after,
     .qr-intro-code {
       animation: none;
+    }
+
+    .app-shell-loading {
+      opacity: 1;
     }
   }
 }
@@ -238,6 +311,58 @@
     opacity: 1;
     translate: 0 0;
     scale: 1;
+  }
+}
+
+@keyframes loading-splash-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes loading-hoover-roll {
+  0% {
+    translate: -38% 0;
+    rotate: -3deg;
+  }
+  52% {
+    translate: -55% 0;
+    rotate: 3deg;
+  }
+  100% {
+    translate: -50% 0;
+    rotate: 0deg;
+  }
+}
+
+@keyframes loading-code-hoover {
+  0% {
+    opacity: 0;
+    translate: 0 -0.2rem;
+    scale: 0.8;
+  }
+  18% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+    translate: var(--code-dx) var(--code-dy);
+    scale: 0.72;
+  }
+  100% {
+    opacity: 0;
+    translate: var(--code-dx) var(--code-dy);
+    scale: 0.22;
+  }
+}
+
+@keyframes loading-bar-fill {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
   }
 }
 

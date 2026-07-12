@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, QrCode, ScanBarcode } from 'lucide-react'
 import { Header } from './components/Header'
+import { LoadingSplash } from './components/LoadingSplash'
 import { parseSavedCodes } from './domain/qr'
 import { useAccountSync } from './hooks/useAccountSync'
 import { useLocalStorage } from './hooks/useLocalStorage'
@@ -20,6 +21,7 @@ const NAV_TABS = [
 ] as const
 
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true)
   const [screen, setScreen] = useState<Screen>('codes')
   const [codes, setCodes] = useLocalStorage('codes', [], parseSavedCodes)
   const [soundEnabled, setSoundEnabled] = useLocalStorage('sound-enabled', true, (value) => value === 'true' || value === '"true"')
@@ -34,9 +36,15 @@ export default function App() {
     document.documentElement.setAttribute('data-theme', dark ? 'qr-dark' : 'qr-light')
   }, [dark])
 
+  useEffect(() => {
+    const splashTimer = window.setTimeout(() => setShowSplash(false), 850)
+    return () => window.clearTimeout(splashTimer)
+  }, [])
+
   return (
     <main className="flex min-h-screen flex-col items-center px-4 py-6 text-base-content sm:py-10">
-      <article className="flex w-full max-w-xl flex-grow flex-col gap-6 rounded-3xl bg-base-100 p-6 shadow-xl sm:p-10 lg:max-w-3xl">
+      {showSplash && <LoadingSplash />}
+      <article className={`flex w-full max-w-xl flex-grow flex-col gap-6 rounded-3xl bg-base-100 p-6 shadow-xl sm:p-10 lg:max-w-3xl ${showSplash ? 'app-shell-loading' : ''}`}>
         <Header
           codes={codes}
           setCodes={setCodes}
