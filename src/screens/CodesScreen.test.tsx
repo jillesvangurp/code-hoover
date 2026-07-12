@@ -125,7 +125,7 @@ describe('CodesScreen', () => {
       },
     ]} setCodes={vi.fn()} playDelete={vi.fn()} playCodeLoad={playCodeLoad} />)
 
-    act(() => vi.advanceTimersByTime(95))
+    act(() => vi.advanceTimersByTime(42))
 
     expect(playCodeLoad).toHaveBeenNthCalledWith(1, 0)
     expect(playCodeLoad).toHaveBeenNthCalledWith(2, 1)

@@ -18,10 +18,10 @@ export class SoundEffects {
     this.createAudio('/sounds/happy-pop.wav', 0.28),
   ]
   private readonly codeLoads = [
-    this.createAudio('/sounds/code-load-1.wav', 0.2),
-    this.createAudio('/sounds/code-load-2.wav', 0.2),
-    this.createAudio('/sounds/code-load-3.wav', 0.2),
-    this.createAudio('/sounds/code-load-4.wav', 0.2),
+    this.createAudio('/sounds/code-load-1.wav', 0.11),
+    this.createAudio('/sounds/code-load-2.wav', 0.1),
+    this.createAudio('/sounds/code-load-3.wav', 0.1),
+    this.createAudio('/sounds/code-load-4.wav', 0.1),
   ]
   private tapIndex = 0
   private successIndex = 0

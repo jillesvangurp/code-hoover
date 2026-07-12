@@ -276,7 +276,7 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
   useEffect(() => {
     if (!playCodeLoad || showLoadEffect || !codes.length) return
-    const timers = codes.map((_, index) => window.setTimeout(() => playCodeLoad(index), index * 95))
+    const timers = codes.map((_, index) => window.setTimeout(() => playCodeLoad(index), index * 42))
     return () => timers.forEach(window.clearTimeout)
   }, [codeLoadKey, codes, playCodeLoad, showLoadEffect])
 
