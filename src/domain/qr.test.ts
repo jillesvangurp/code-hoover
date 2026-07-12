@@ -141,14 +141,14 @@ describe('QR payloads', () => {
     expect(qrDataAsText({ type: QR_DATA_TYPES.sms, phone: '+4912345', message: 'Ping me' })).toBe('sms:+4912345?body=Ping+me')
   })
 
-  it('uses map-native payloads for coordinates and Google Maps search for place queries', () => {
+  it('uses Google Maps search URLs for location payloads', () => {
     expect(qrDataAsText({
       type: QR_DATA_TYPES.location,
       label: 'FORMATION office',
       query: '',
       latitude: '52.5200',
       longitude: '13.4050',
-    })).toBe('geo:52.5200,13.4050?q=52.5200%2C13.4050%28FORMATION+office%29')
+    })).toBe('https://www.google.com/maps/search/?api=1&query=52.5200%2C13.4050')
 
     expect(qrDataAsText({
       type: QR_DATA_TYPES.location,

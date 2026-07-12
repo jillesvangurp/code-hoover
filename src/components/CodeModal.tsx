@@ -1,11 +1,11 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, Barcode, Building2, Check, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
+import { ArrowLeft, Barcode, Building2, CalendarDays, Check, Copy, FileText, Globe, Mail, MapPin, MessageSquare, Phone, Trash2, UserRound, Wifi } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
-import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
+import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type LocationData, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { useModalHistory } from '../hooks/useModalHistory'
 import { BarcodeImage } from './BarcodeImage'
-import { FormButtons, QrForm } from './QrForm'
+import { QrForm } from './QrForm'
 import { QrIntroFrame } from './QrIntroFrame'
 import { UrlPreview } from './UrlPreview'
 
@@ -156,6 +156,230 @@ function UrlDetails({ data, url, codeName, createdAt }: { data: QrData; url: str
   return <DetailList rows={rows} />
 }
 
+function mapHref(data: LocationData): string {
+  return qrDataAsText(data)
+}
+
+function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName: string; createdAt: string }) {
+  const previewBase = "mx-auto w-full max-w-xl overflow-hidden rounded-lg border border-base-300 bg-base-100 text-base-content shadow-xl"
+
+  if (data.type === QR_DATA_TYPES.email) {
+    return (
+      <section className={previewBase} aria-label={codeName}>
+        <div className="flex items-center gap-3 border-b border-base-300 bg-base-200 p-4">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><Mail size={24} aria-hidden="true" /></span>
+          <div className="min-w-0">
+            <p className="m-0 truncate text-xs font-semibold uppercase opacity-60">Email</p>
+            <h2 className="m-0 truncate text-xl font-bold">{data.email || codeName}</h2>
+          </div>
+        </div>
+        <div className="space-y-3 p-5">
+          <p className="m-0 text-xs font-semibold uppercase opacity-60">Subject</p>
+          <p className="m-0 break-words text-lg font-semibold">{data.subject || codeName}</p>
+          {data.body && <p className="m-0 whitespace-pre-wrap break-words rounded-md bg-base-200 p-3 text-sm opacity-80">{data.body}</p>}
+          {createdAt && <p className="m-0 text-xs opacity-60">{createdAt}</p>}
+        </div>
+      </section>
+    )
+  }
+
+  if (data.type === QR_DATA_TYPES.phone) {
+    return (
+      <section className={previewBase} aria-label={codeName}>
+        <div className="flex min-h-36 items-center gap-4 p-5">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><Phone size={28} aria-hidden="true" /></span>
+          <div className="min-w-0">
+            <p className="m-0 text-xs font-semibold uppercase opacity-60">Phone</p>
+            <h2 className="m-0 break-words font-mono text-2xl font-bold">{data.phone || codeName}</h2>
+            {createdAt && <p className="m-0 mt-2 text-xs opacity-60">{createdAt}</p>}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (data.type === QR_DATA_TYPES.sms) {
+    return (
+      <section className={previewBase} aria-label={codeName}>
+        <div className="border-b border-base-300 bg-base-200 p-4">
+          <p className="m-0 flex items-center gap-2 text-sm font-semibold"><MessageSquare size={18} aria-hidden="true" />{data.phone || codeName}</p>
+        </div>
+        <div className="p-5">
+          <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-neutral px-4 py-3 text-neutral-content">
+            <p className="m-0 whitespace-pre-wrap break-words text-sm">{data.message || 'SMS message'}</p>
+          </div>
+          {createdAt && <p className="m-0 mt-3 text-xs opacity-60">{createdAt}</p>}
+        </div>
+      </section>
+    )
+  }
+
+  if (data.type === QR_DATA_TYPES.location) {
+    const coordinates = [data.latitude, data.longitude].filter(Boolean).join(', ')
+    const place = data.query || data.label || coordinates || codeName
+    return (
+      <section className={previewBase} aria-label={codeName}>
+        <a className="block text-base-content no-underline hover:text-base-content" href={mapHref(data)} target="_blank" rel="noopener noreferrer">
+          <div className="relative flex min-h-48 items-center justify-center overflow-hidden bg-base-200">
+            <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'linear-gradient(var(--color-base-300) 1px, transparent 1px), linear-gradient(90deg, var(--color-base-300) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+            <div className="absolute left-1/4 top-0 h-full w-px rotate-12 bg-base-300" />
+            <div className="absolute right-1/4 top-0 h-full w-px -rotate-12 bg-base-300" />
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-neutral text-neutral-content shadow-xl">
+              <MapPin size={34} aria-hidden="true" />
+            </div>
+          </div>
+          <div className="p-5">
+            <p className="m-0 text-xs font-semibold uppercase opacity-60">Maps</p>
+            <h2 className="m-0 mt-1 break-words text-2xl font-bold">{data.label || place}</h2>
+            {data.query && <p className="m-0 mt-2 break-words text-sm opacity-75">{data.query}</p>}
+            {coordinates && <p className="m-0 mt-2 font-mono text-xs opacity-60">{coordinates}</p>}
+          </div>
+        </a>
+      </section>
+    )
+  }
+
+  if (data.type === QR_DATA_TYPES.event) {
+    return (
+      <section className={previewBase} aria-label={codeName}>
+        <div className="grid grid-cols-[5rem_minmax(0,1fr)]">
+          <div className="flex min-h-40 flex-col items-center justify-center bg-neutral text-neutral-content">
+            <CalendarDays size={30} aria-hidden="true" />
+            <span className="mt-2 text-xs font-bold uppercase">Event</span>
+          </div>
+          <div className="min-w-0 p-5">
+            <h2 className="m-0 break-words text-2xl font-bold">{data.title || codeName}</h2>
+            {data.start && <p className="m-0 mt-3 text-sm font-semibold">{data.start}{data.end ? ` - ${data.end}` : ''}</p>}
+            {data.location && <p className="m-0 mt-2 flex items-center gap-2 text-sm opacity-75"><MapPin size={15} aria-hidden="true" />{data.location}</p>}
+            {data.description && <p className="m-0 mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm opacity-75">{data.description}</p>}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (data.type === QR_DATA_TYPES.wifi) {
+    return (
+      <section className={previewBase} aria-label={codeName}>
+        <div className="flex min-h-36 items-center gap-4 p-5">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><Wifi size={28} aria-hidden="true" /></span>
+          <div className="min-w-0">
+            <p className="m-0 text-xs font-semibold uppercase opacity-60">Wi-Fi</p>
+            <h2 className="m-0 break-words text-2xl font-bold">{data.ssid || codeName}</h2>
+            <p className="m-0 mt-2 text-sm opacity-70">{data.encryption || 'WPA'}</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className={previewBase} aria-label={codeName}>
+      <div className="flex min-h-36 items-center gap-4 p-5">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><FileText size={28} aria-hidden="true" /></span>
+        <div className="min-w-0">
+          <p className="m-0 text-xs font-semibold uppercase opacity-60">{codePayloadTypeLabel(data)}</p>
+          <h2 className="m-0 break-words text-xl font-bold">{codeName}</h2>
+          {'text' in data && <p className="m-0 mt-2 line-clamp-3 break-words text-sm opacity-70">{data.text}</p>}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function detailRowsForPayload(data: QrData, codeName: string, createdAt: string) {
+  const rows: Array<[string, string]> = metadataRowsFor(data, codeName, createdAt)
+  switch (data.type) {
+    case QR_DATA_TYPES.email:
+      rows.push(['Email', data.email], ['Subject', data.subject], ['Body', data.body])
+      break
+    case QR_DATA_TYPES.phone:
+      rows.push(['Phone', data.phone])
+      break
+    case QR_DATA_TYPES.sms:
+      rows.push(['Phone', data.phone], ['Message', data.message])
+      break
+    case QR_DATA_TYPES.location:
+      rows.push(['Label', data.label], ['Address or place', data.query], ['Coordinates', [data.latitude, data.longitude].filter(Boolean).join(', ')])
+      break
+    case QR_DATA_TYPES.event:
+      rows.push(['Title', data.title], ['Start', data.start], ['End', data.end], ['Location', data.location], ['Description', data.description])
+      break
+    case QR_DATA_TYPES.wifi:
+      rows.push(['SSID', data.ssid], ['Password', data.password], ['Encryption', data.encryption])
+      break
+    case QR_DATA_TYPES.text:
+      rows.push(['Text', data.text])
+      break
+    default:
+      rows.push(['Payload', qrDataAsText(data)])
+  }
+  return rows.filter((row): row is [string, string] => Boolean(row[1]))
+}
+
+function PayloadDetails({ data, codeName, createdAt }: { data: QrData; codeName: string; createdAt: string }) {
+  return <DetailList rows={detailRowsForPayload(data, codeName, createdAt)} />
+}
+
+function PayloadSections({
+  data,
+  form,
+  setForm,
+  codeName,
+  codeText,
+  createdAt,
+  panel,
+  setPanel,
+  onCopy,
+  onSave,
+  onDelete,
+}: {
+  data: QrData
+  form: QrFormState
+  setForm: (form: QrFormState) => void
+  codeName: string
+  codeText: string
+  createdAt: string
+  panel: 'details' | 'fields' | 'raw'
+  setPanel: (panel: 'details' | 'fields' | 'raw') => void
+  onCopy: () => void
+  onSave: () => void
+  onDelete: () => void
+}) {
+  const { t } = useI18n()
+  return (
+    <>
+      <PayloadPreview data={data} codeName={codeName} createdAt={createdAt} />
+      <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
+        <div className="rounded-md border border-base-300 bg-white p-2">
+          <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={codeName || codeText} expandable />
+        </div>
+        <div className="min-w-0">
+          <h3 className="m-0 text-base font-semibold">{codePayloadTypeLabel(data)} code</h3>
+          <p className="m-0 mt-1 break-words text-sm opacity-70">{formatQrData(data, t)}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="btn btn-primary btn-sm" onClick={onSave}><Check size={16} />{t('default-save')}</button>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>
+            <button type="button" className="btn btn-error btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>
+          </div>
+        </div>
+      </section>
+      <section className="mx-auto w-full max-w-xl">
+        <div role="tablist" className="tabs tabs-box w-full">
+          <button type="button" role="tab" aria-selected={panel === 'details'} className={`tab flex-1 ${panel === 'details' ? 'tab-active' : ''}`} onClick={() => setPanel('details')}>Details</button>
+          <button type="button" role="tab" aria-selected={panel === 'fields'} className={`tab flex-1 ${panel === 'fields' ? 'tab-active' : ''}`} onClick={() => setPanel('fields')}>Fields</button>
+          <button type="button" role="tab" aria-selected={panel === 'raw'} className={`tab flex-1 ${panel === 'raw' ? 'tab-active' : ''}`} onClick={() => setPanel('raw')}>Raw</button>
+        </div>
+        <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
+          {panel === 'details' && <PayloadDetails data={data} codeName={codeName} createdAt={createdAt} />}
+          {panel === 'fields' && <QrForm form={form} onChange={setForm} showTypeSelect={false} />}
+          {panel === 'raw' && <pre className="m-0 max-h-80 overflow-auto whitespace-pre-wrap break-words text-left text-xs">{qrDataAsText(data)}</pre>}
+        </div>
+      </section>
+    </>
+  )
+}
+
 function BarcodePreview({ data, codeName, createdAt }: { data: QrData & { type: typeof QR_DATA_TYPES.barcode }; codeName: string; createdAt: string }) {
   return (
     <section className="mx-auto w-full max-w-xl" aria-label={codeName}>
@@ -238,6 +462,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const [form, setForm] = useState<QrFormState>(() => dataToForm(code.name, code.data))
   const [vcardPanel, setVcardPanel] = useState<'details' | 'fields' | 'raw'>('details')
   const [urlPanel, setUrlPanel] = useState<'details' | 'fields' | 'raw'>('details')
+  const [payloadPanel, setPayloadPanel] = useState<'details' | 'fields' | 'raw'>('details')
   const [barcodePanel, setBarcodePanel] = useState<'details' | 'raw'>('details')
   const { locale, t } = useI18n()
   const close = useCallback(() => onClose(), [onClose])
@@ -336,17 +561,19 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     </section>
                   </>
                 ) : (
-                  <>
-                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} expandable />
-                    <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
-                    <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
-                    <FormButtons
-                      className="modal-action justify-center md:justify-end"
-                      onCopy={() => void navigator.clipboard.writeText(copyText)}
-                      onSave={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}
-                      onDelete={deleteCode}
-                    />
-                  </>
+                  <PayloadSections
+                    data={data}
+                    form={form}
+                    setForm={setForm}
+                    codeName={displayCodeName}
+                    codeText={code.text}
+                    createdAt={createdAt}
+                    panel={payloadPanel}
+                    setPanel={setPayloadPanel}
+                    onCopy={() => void navigator.clipboard.writeText(copyText)}
+                    onSave={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}
+                    onDelete={deleteCode}
+                  />
                 )}
               </>
             )}

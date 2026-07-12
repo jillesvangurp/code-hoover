@@ -370,6 +370,10 @@ function locationQuery(data: LocationData): string {
   return data.query.trim() || data.label.trim()
 }
 
+function mapsSearchUrl(query: string): string {
+  return appendQuery('https://www.google.com/maps/search/', [['api', '1'], ['query', query]])
+}
+
 export function qrDataAsText(data: QrData): string {
   switch (data.type) {
     case QR_DATA_TYPES.url:
@@ -387,11 +391,10 @@ export function qrDataAsText(data: QrData): string {
     case QR_DATA_TYPES.location: {
       if (hasCoordinates(data)) {
         const coordinates = `${data.latitude.trim()},${data.longitude.trim()}`
-        const label = data.label.trim()
-        return label ? `geo:${coordinates}?q=${encodeUriParameter(`${coordinates}(${label})`)}` : `geo:${coordinates}`
+        return mapsSearchUrl(coordinates)
       }
       const query = locationQuery(data)
-      return query ? appendQuery('https://www.google.com/maps/search/', [['api', '1'], ['query', query]]) : 'geo:0,0'
+      return query ? mapsSearchUrl(query) : mapsSearchUrl('0,0')
     }
     case QR_DATA_TYPES.event: {
       const lines = ['BEGIN:VEVENT']

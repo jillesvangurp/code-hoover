@@ -40,14 +40,18 @@ export default function App() {
   useEffect(() => {
     const splashTimer = window.setTimeout(() => {
       setShowSplash(false)
+      sounds.playAppStart()
       setShowCodesLoadEffect(true)
     }, 850)
-    const codesEffectTimer = window.setTimeout(() => setShowCodesLoadEffect(false), 2300)
+    const codesEffectTimer = window.setTimeout(() => {
+      setShowCodesLoadEffect(false)
+      sounds.playLoaded()
+    }, 2300)
     return () => {
       window.clearTimeout(splashTimer)
       window.clearTimeout(codesEffectTimer)
     }
-  }, [])
+  }, [sounds])
 
   return (
     <main className="flex min-h-screen flex-col items-center px-4 py-6 text-base-content sm:py-10">
@@ -62,6 +66,8 @@ export default function App() {
           soundEnabled={soundEnabled}
           setSoundEnabled={setSoundEnabled}
           playSoundPreview={sounds.playPreview}
+          playComplete={sounds.playComplete}
+          playSuccess={sounds.playSuccess}
           accountSync={accountSync}
         />
         <div className="tabs tabs-box mb-6 grid w-full grid-cols-3" role="tablist" aria-label={t('default-page-title')}>
