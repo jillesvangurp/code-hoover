@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dataToForm, emptyQrForm, formToSavedCode } from './form'
+import { dataToForm, emptyQrForm, formToSavedCode, mailFrontAgentForm } from './form'
 import { QR_DATA_TYPES } from './qr'
 
 describe('QR form conversion', () => {
@@ -67,6 +67,19 @@ describe('QR form conversion', () => {
     }, null)).toMatchObject({
       name: 'Demo',
       data: { type: QR_DATA_TYPES.event, title: 'Demo', start: '2026-07-12T12:00', location: 'Berlin' },
+    })
+  })
+
+  it('creates the MailFront email-agent onboarding QR preset', () => {
+    expect(formToSavedCode(mailFrontAgentForm(), null)).toEqual({
+      name: 'Email the Agent',
+      text: 'mailto:mail-agent@formationxyz.com?subject=Demo+question+for+MailFront&body=Hi+MailFront%2C%0A%0AWhat+can+you+answer+from+your+knowledge+base%3F%0A%0AThanks.',
+      data: {
+        type: QR_DATA_TYPES.email,
+        email: 'mail-agent@formationxyz.com',
+        subject: 'Demo question for MailFront',
+        body: 'Hi MailFront,\n\nWhat can you answer from your knowledge base?\n\nThanks.',
+      },
     })
   })
 

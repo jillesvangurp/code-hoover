@@ -45,6 +45,10 @@ export interface QrFormState {
   vcardNote: string
 }
 
+export const MAILFRONT_AGENT_EMAIL = 'mail-agent@formationxyz.com'
+export const MAILFRONT_AGENT_SUBJECT = 'Demo question for MailFront'
+export const MAILFRONT_AGENT_BODY = 'Hi MailFront,\n\nWhat can you answer from your knowledge base?\n\nThanks.'
+
 export function emptyQrForm(): QrFormState {
   return {
     name: '', type: 'URL', url: '', text: '', ssid: '', password: '', encryption: 'WPA',
@@ -55,6 +59,17 @@ export function emptyQrForm(): QrFormState {
     vcardPrefix: '', vcardSuffix: '', vcardNickname: '', vcardTitle: '', vcardOrganization: '',
     vcardEmail: '', vcardEmailType: 'INTERNET', vcardPhone: '', vcardPhoneType: '', vcardUrl: '',
     vcardStreet: '', vcardCity: '', vcardRegion: '', vcardPostalCode: '', vcardCountry: '', vcardNote: '',
+  }
+}
+
+export function mailFrontAgentForm(): QrFormState {
+  return {
+    ...emptyQrForm(),
+    name: 'Email the Agent',
+    type: 'EMAIL',
+    email: MAILFRONT_AGENT_EMAIL,
+    emailSubject: MAILFRONT_AGENT_SUBJECT,
+    emailBody: MAILFRONT_AGENT_BODY,
   }
 }
 

@@ -35,6 +35,33 @@ describe('CodesScreen', () => {
     expect(onDone).toHaveBeenCalledOnce()
   })
 
+  it('adds the MailFront email-agent helper code', async () => {
+    const user = userEvent.setup()
+    const setCodes = vi.fn()
+    const onDone = vi.fn()
+    const playSave = vi.fn()
+    render(<AddCodeScreen codes={[]} setCodes={setCodes} onDone={onDone} playSave={playSave} />)
+
+    await user.click(screen.getByRole('button', { name: /email the agent/i }))
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(setCodes).toHaveBeenCalledWith([
+      {
+        name: 'Email the Agent',
+        text: 'mailto:mail-agent@formationxyz.com?subject=Demo+question+for+MailFront&body=Hi+MailFront%2C%0A%0AWhat+can+you+answer+from+your+knowledge+base%3F%0A%0AThanks.',
+        data: {
+          type: 'qr.QrData.Email',
+          email: 'mail-agent@formationxyz.com',
+          subject: 'Demo question for MailFront',
+          body: 'Hi MailFront,\n\nWhat can you answer from your knowledge base?\n\nThanks.',
+        },
+        createdAt: expect.any(String),
+      },
+    ])
+    expect(playSave).toHaveBeenCalledOnce()
+    expect(onDone).toHaveBeenCalledOnce()
+  })
+
   it('cancels without changing saved codes', async () => {
     const user = userEvent.setup()
     const setCodes = vi.fn()
