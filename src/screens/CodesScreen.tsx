@@ -1,4 +1,4 @@
-import { useCallback, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -23,6 +23,7 @@ interface CodesScreenProps {
   playDelete: () => void
   playOpen?: () => void
   playToggle?: () => void
+  playCodeLoad?: (index: number) => void
   showLoadEffect?: boolean
 }
 
@@ -263,15 +264,22 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
   )
 }
 
-export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, showLoadEffect = false }: CodesScreenProps) {
+export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, showLoadEffect = false }: CodesScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<CodesViewMode>('list')
+  const codeLoadKey = useMemo(() => codes.map((code) => `${code.text}:${code.createdAt ?? ''}`).join('|'), [codes])
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
+  useEffect(() => {
+    if (!playCodeLoad || showLoadEffect || !codes.length) return
+    const timers = codes.map((_, index) => window.setTimeout(() => playCodeLoad(index), index * 95))
+    return () => timers.forEach(window.clearTimeout)
+  }, [codeLoadKey, codes, playCodeLoad, showLoadEffect])
+
   const onDragEnd = ({ active, over }: DragEndEvent) => {
   if (!over || active.id === over.id) return
     setCodes(arrayMove(codes, Number(active.id), Number(over.id)))

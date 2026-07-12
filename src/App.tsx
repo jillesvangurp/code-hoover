@@ -88,7 +88,7 @@ export default function App() {
           ))}
         </div>
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
-          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} playOpen={sounds.playOpen} playToggle={sounds.playToggle} showLoadEffect={showCodesLoadEffect} />}
+          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} playOpen={sounds.playOpen} playToggle={sounds.playToggle} playCodeLoad={sounds.playCodeLoad} showLoadEffect={showCodesLoadEffect} />}
           {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} playScanSuccess={sounds.playScanSuccess} />}
           {screen === 'add' && <AddCodeScreen codes={codes} setCodes={setCodes} onDone={() => setScreen('codes')} playSave={sounds.playSave} />}
           {screen === 'about' && <AboutScreen />}

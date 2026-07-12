@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { AddCodeScreen, CodesScreen } from './CodesScreen'
@@ -106,6 +106,31 @@ describe('CodesScreen', () => {
     expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'true')
     expect(playToggle).toHaveBeenCalledOnce()
+  })
+
+  it('plays a staggered sound for each code loaded in the codes view', () => {
+    vi.useFakeTimers()
+    const playCodeLoad = vi.fn()
+
+    render(<CodesScreen codes={[
+      {
+        name: 'First',
+        text: 'https://first.example',
+        data: { type: 'qr.QrData.Url', url: 'https://first.example' },
+      },
+      {
+        name: 'Second',
+        text: 'https://second.example',
+        data: { type: 'qr.QrData.Url', url: 'https://second.example' },
+      },
+    ]} setCodes={vi.fn()} playDelete={vi.fn()} playCodeLoad={playCodeLoad} />)
+
+    act(() => vi.advanceTimersByTime(95))
+
+    expect(playCodeLoad).toHaveBeenNthCalledWith(1, 0)
+    expect(playCodeLoad).toHaveBeenNthCalledWith(2, 1)
+
+    vi.useRealTimers()
   })
 
   it('plays a sound when opening a saved code', async () => {
