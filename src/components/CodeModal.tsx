@@ -7,6 +7,7 @@ import { useModalHistory } from '../hooks/useModalHistory'
 import { BarcodeImage } from './BarcodeImage'
 import { FormButtons, QrForm } from './QrForm'
 import { QrIntroFrame } from './QrIntroFrame'
+import { UrlPreview } from './UrlPreview'
 
 interface CodeModalProps {
   code: SavedQrCode
@@ -180,6 +181,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
               </>
             ) : (
               <>
+                {data.type === QR_DATA_TYPES.url && <UrlPreview url={data.url} />}
                 <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} />
                 <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
                 <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>

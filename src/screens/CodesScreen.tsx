@@ -12,6 +12,7 @@ import { FormButtons, QrForm } from '../components/QrForm'
 import { HooverGraphic } from '../components/HooverGraphic'
 import { QrCodeImage } from '../components/QrCodeImage'
 import { QrIntroFrame } from '../components/QrIntroFrame'
+import { UrlPreview } from '../components/UrlPreview'
 
 const EMPTY_STATE_SAMPLE_URL = 'https://tryformation.com'
 
@@ -128,7 +129,9 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
           <span>{codeTypeLabel(code)}</span>
         </div>
         <p className="m-0 truncate text-lg font-semibold leading-tight">{displayName}</p>
-        {previewLines.length > 0 && (
+        {code.data.type === QR_DATA_TYPES.url ? (
+          <UrlPreview url={code.data.url} compact />
+        ) : previewLines.length > 0 && (
           <div className="mt-2 space-y-1">
             {previewLines.slice(0, 3).map((line) => (
               <p key={line} className="m-0 truncate text-sm opacity-75">{line}</p>
