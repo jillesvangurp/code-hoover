@@ -44,6 +44,7 @@ default-close=閉じる
 default-back=戻る
 default-drag-to-reorder=ドラッグして並べ替え
 default-scanned-codes={ $count } 件のコードをスキャンしました
+default-scan-multiple=Scan multiple codes at once
 default-empty-codes-title=最初のコードをスキャン
 default-empty-codes-body=保存したコードはここに表示されます。スキャンタブでQRコードやバーコードを追加してください。
 default-invalid-json=無効なJSON

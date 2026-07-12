@@ -44,6 +44,7 @@ default-close=Sluiten
 default-back=Terug
 default-drag-to-reorder=Sleep om opnieuw te ordenen
 default-scanned-codes={ $count } gescande codes
+default-scan-multiple=Scan multiple codes at once
 default-empty-codes-title=Scan je eerste code
 default-empty-codes-body=Je opgeslagen codes verschijnen hier. Gebruik het scantabblad om een QR-code of barcode toe te voegen.
 default-invalid-json=Ongeldige JSON

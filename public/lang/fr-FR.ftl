@@ -44,6 +44,7 @@ default-close=Fermer
 default-back=Retour
 default-drag-to-reorder=Faites glisser pour réorganiser
 default-scanned-codes={ $count } codes scannés
+default-scan-multiple=Scan multiple codes at once
 default-empty-codes-title=Scannez votre premier code
 default-empty-codes-body=Vos codes enregistrés apparaîtront ici. Utilisez l’onglet scan pour ajouter un QR code ou un code-barres.
 default-invalid-json=JSON invalide

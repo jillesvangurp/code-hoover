@@ -43,14 +43,17 @@ function savedCodeFromScan(text: string, format: number): SavedQrCode {
 
 export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps) {
   const [scans, setScans] = useState<ScanResult[]>([])
+  const [scanMultiple, setScanMultiple] = useState(false)
   const [scannerLabel, setScannerLabel] = useState('BarcodeDetector' in window ? 'Barcode Detector API' : '@zxing/browser')
   const [scanning, setScanning] = useState(false)
   const videoRef = useRef<HTMLVideoElement>(null)
   const { t } = useI18n()
   const playScanRef = useRef(playScanSuccess)
   const codesRef = useRef(codes)
+  const scanMultipleRef = useRef(scanMultiple)
   playScanRef.current = playScanSuccess
   codesRef.current = codes
+  scanMultipleRef.current = scanMultiple
 
   useEffect(() => {
     const video = videoRef.current
@@ -105,7 +108,8 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
         const detect = async () => {
           if (stopped) return
           try {
-            for (const barcode of await detector.detect(video)) {
+            const barcodes = await detector.detect(video)
+            for (const barcode of scanMultipleRef.current ? barcodes : barcodes.slice(0, 1)) {
               addScan(barcode.rawValue, BARCODE_FORMAT_NAMES.indexOf(barcode.format.replaceAll('-', '_').toUpperCase()))
             }
           } catch {
@@ -140,6 +144,13 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
     <>
       <section className="flex w-full flex-col items-center gap-2">
         <video ref={videoRef} className="mx-auto h-[42vh] w-full rounded-md border object-cover" muted playsInline />
+        <label className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
+          <span className="font-medium">{t('default-scan-multiple')}</span>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="text-xs uppercase opacity-70">{scanMultiple ? t('default-on') : t('default-off')}</span>
+            <input type="checkbox" className="toggle toggle-sm" checked={scanMultiple} aria-label={t('default-scan-multiple')} onChange={(event) => setScanMultiple(event.target.checked)} />
+          </span>
+        </label>
         <p className="m-0 text-xs opacity-70">{t('default-scanner-library', { value: scannerLabel })}</p>
         {!scanning && <p>{t('default-welcome-text')}</p>}
       </section>
