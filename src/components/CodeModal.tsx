@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, Barcode, Building2, CalendarDays, Check, Copy, FileText, Globe, Mail, MapPin, MessageSquare, Phone, Trash2, UserRound, Wifi } from 'lucide-react'
+import { ArrowLeft, Barcode, Building2, CalendarDays, Check, Clock, Copy, ExternalLink, FileText, Globe, Mail, MapPin, MessageSquare, Navigation, Phone, Send, Trash2, UserRound, Wifi } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type LocationData, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -160,23 +160,40 @@ function mapHref(data: LocationData): string {
   return qrDataAsText(data)
 }
 
+function eventDataUrl(data: QrData): string {
+  return `data:text/calendar;charset=utf-8,${encodeURIComponent(qrDataAsText(data))}`
+}
+
+function compactEventDate(value: string): { month: string; day: string; time: string } {
+  const match = /^(\d{4})-?(\d{2})-?(\d{2})(?:T?(\d{2}):?(\d{2}))?/.exec(value)
+  if (!match) return { month: 'EVENT', day: '•', time: value }
+  const [, year, month, day, hour, minute] = match
+  const date = new Date(Number(year), Number(month) - 1, Number(day))
+  const monthLabel = Number.isNaN(date.getTime()) ? 'EVENT' : new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date).toUpperCase()
+  return { month: monthLabel, day, time: hour && minute ? `${hour}:${minute}` : '' }
+}
+
 function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName: string; createdAt: string }) {
   const previewBase = "mx-auto w-full max-w-xl overflow-hidden rounded-lg border border-base-300 bg-base-100 text-base-content shadow-xl"
 
   if (data.type === QR_DATA_TYPES.email) {
+    const emailHref = qrDataAsText(data)
     return (
       <section className={previewBase} aria-label={codeName}>
-        <div className="flex items-center gap-3 border-b border-base-300 bg-base-200 p-4">
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><Mail size={24} aria-hidden="true" /></span>
-          <div className="min-w-0">
-            <p className="m-0 truncate text-xs font-semibold uppercase opacity-60">Email</p>
-            <h2 className="m-0 truncate text-xl font-bold">{data.email || codeName}</h2>
+        <div className="border-b border-base-300 bg-base-200 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Mail size={18} aria-hidden="true" />New message</span>
+            <a className="btn btn-neutral btn-xs shrink-0" href={emailHref}><Send size={13} aria-hidden="true" />Compose</a>
           </div>
         </div>
         <div className="space-y-3 p-5">
-          <p className="m-0 text-xs font-semibold uppercase opacity-60">Subject</p>
-          <p className="m-0 break-words text-lg font-semibold">{data.subject || codeName}</p>
-          {data.body && <p className="m-0 whitespace-pre-wrap break-words rounded-md bg-base-200 p-3 text-sm opacity-80">{data.body}</p>}
+          <div className="grid gap-2 text-sm">
+            <p className="m-0 min-w-0 border-b border-base-300 pb-2"><span className="font-semibold opacity-60">To</span> <span className="break-words">{data.email || 'recipient@example.com'}</span></p>
+            <p className="m-0 min-w-0 border-b border-base-300 pb-2"><span className="font-semibold opacity-60">Subject</span> <span className="break-words font-semibold">{data.subject || codeName}</span></p>
+          </div>
+          <div className="min-h-28 rounded-md bg-base-200 p-4">
+            <p className="m-0 whitespace-pre-wrap break-words text-sm leading-relaxed">{data.body || 'Email body'}</p>
+          </div>
           {createdAt && <p className="m-0 text-xs opacity-60">{createdAt}</p>}
         </div>
       </section>
@@ -186,12 +203,17 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
   if (data.type === QR_DATA_TYPES.phone) {
     return (
       <section className={previewBase} aria-label={codeName}>
-        <div className="flex min-h-36 items-center gap-4 p-5">
-          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><Phone size={28} aria-hidden="true" /></span>
+        <div className="grid gap-5 p-5 sm:grid-cols-[minmax(0,1fr)_8rem] sm:items-center">
           <div className="min-w-0">
-            <p className="m-0 text-xs font-semibold uppercase opacity-60">Phone</p>
-            <h2 className="m-0 break-words font-mono text-2xl font-bold">{data.phone || codeName}</h2>
-            {createdAt && <p className="m-0 mt-2 text-xs opacity-60">{createdAt}</p>}
+            <p className="m-0 text-xs font-semibold uppercase opacity-60">Phone call</p>
+            <h2 className="m-0 mt-1 break-words font-mono text-3xl font-bold">{data.phone || codeName}</h2>
+            <a className="btn btn-neutral btn-sm mt-4" href={qrDataAsText(data)}><Phone size={16} aria-hidden="true" />Call</a>
+            {createdAt && <p className="m-0 mt-3 text-xs opacity-60">{createdAt}</p>}
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 text-center text-xs font-semibold opacity-70">
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '*', '0', '#'].map((key) => (
+              <span key={key} className="flex aspect-square items-center justify-center rounded-full border border-base-300 bg-base-200">{key}</span>
+            ))}
           </div>
         </div>
       </section>
@@ -201,11 +223,15 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
   if (data.type === QR_DATA_TYPES.sms) {
     return (
       <section className={previewBase} aria-label={codeName}>
-        <div className="border-b border-base-300 bg-base-200 p-4">
-          <p className="m-0 flex items-center gap-2 text-sm font-semibold"><MessageSquare size={18} aria-hidden="true" />{data.phone || codeName}</p>
+        <div className="flex items-center justify-between gap-3 border-b border-base-300 bg-base-200 p-4">
+          <p className="m-0 flex min-w-0 items-center gap-2 text-sm font-semibold"><MessageSquare size={18} aria-hidden="true" /><span className="truncate">{data.phone || codeName}</span></p>
+          <a className="btn btn-neutral btn-xs shrink-0" href={qrDataAsText(data)}><Send size={13} aria-hidden="true" />Open</a>
         </div>
-        <div className="p-5">
-          <div className="max-w-[85%] rounded-2xl rounded-bl-md bg-neutral px-4 py-3 text-neutral-content">
+        <div className="min-h-44 space-y-3 bg-base-200 p-5">
+          <div className="max-w-[82%] rounded-2xl rounded-bl-md bg-base-100 px-4 py-3 text-base-content shadow-sm">
+            <p className="m-0 text-xs opacity-60">To: {data.phone || 'phone number'}</p>
+          </div>
+          <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-neutral px-4 py-3 text-neutral-content">
             <p className="m-0 whitespace-pre-wrap break-words text-sm">{data.message || 'SMS message'}</p>
           </div>
           {createdAt && <p className="m-0 mt-3 text-xs opacity-60">{createdAt}</p>}
@@ -220,10 +246,12 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
     return (
       <section className={previewBase} aria-label={codeName}>
         <a className="block text-base-content no-underline hover:text-base-content" href={mapHref(data)} target="_blank" rel="noopener noreferrer">
-          <div className="relative flex min-h-48 items-center justify-center overflow-hidden bg-base-200">
+          <div className="relative flex min-h-52 items-center justify-center overflow-hidden bg-base-200">
             <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'linear-gradient(var(--color-base-300) 1px, transparent 1px), linear-gradient(90deg, var(--color-base-300) 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
-            <div className="absolute left-1/4 top-0 h-full w-px rotate-12 bg-base-300" />
-            <div className="absolute right-1/4 top-0 h-full w-px -rotate-12 bg-base-300" />
+            <div className="absolute left-[18%] top-0 h-full w-8 rotate-12 bg-base-100/70" />
+            <div className="absolute right-[18%] top-0 h-full w-8 -rotate-12 bg-base-100/70" />
+            <div className="absolute left-0 top-[36%] h-8 w-full -rotate-6 bg-base-100/70" />
+            <div className="absolute bottom-3 right-3 rounded-md border border-base-300 bg-base-100 px-2 py-1 text-xs font-semibold shadow-sm">Google Maps</div>
             <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-neutral text-neutral-content shadow-xl">
               <MapPin size={34} aria-hidden="true" />
             </div>
@@ -233,6 +261,7 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
             <h2 className="m-0 mt-1 break-words text-2xl font-bold">{data.label || place}</h2>
             {data.query && <p className="m-0 mt-2 break-words text-sm opacity-75">{data.query}</p>}
             {coordinates && <p className="m-0 mt-2 font-mono text-xs opacity-60">{coordinates}</p>}
+            <span className="btn btn-neutral btn-sm mt-4"><Navigation size={16} aria-hidden="true" />Open map<ExternalLink size={13} aria-hidden="true" /></span>
           </div>
         </a>
       </section>
@@ -240,18 +269,21 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
   }
 
   if (data.type === QR_DATA_TYPES.event) {
+    const eventDate = compactEventDate(data.start)
     return (
       <section className={previewBase} aria-label={codeName}>
-        <div className="grid grid-cols-[5rem_minmax(0,1fr)]">
-          <div className="flex min-h-40 flex-col items-center justify-center bg-neutral text-neutral-content">
-            <CalendarDays size={30} aria-hidden="true" />
-            <span className="mt-2 text-xs font-bold uppercase">Event</span>
+        <div className="grid grid-cols-[5.5rem_minmax(0,1fr)]">
+          <div className="flex min-h-48 flex-col items-center justify-center bg-neutral text-neutral-content">
+            <span className="text-xs font-bold uppercase opacity-80">{eventDate.month}</span>
+            <span className="text-3xl font-black leading-none">{eventDate.day}</span>
+            <CalendarDays className="mt-3" size={24} aria-hidden="true" />
           </div>
           <div className="min-w-0 p-5">
             <h2 className="m-0 break-words text-2xl font-bold">{data.title || codeName}</h2>
-            {data.start && <p className="m-0 mt-3 text-sm font-semibold">{data.start}{data.end ? ` - ${data.end}` : ''}</p>}
+            {data.start && <p className="m-0 mt-3 flex items-center gap-2 text-sm font-semibold"><Clock size={15} aria-hidden="true" />{eventDate.time || data.start}{data.end ? ` - ${data.end}` : ''}</p>}
             {data.location && <p className="m-0 mt-2 flex items-center gap-2 text-sm opacity-75"><MapPin size={15} aria-hidden="true" />{data.location}</p>}
             {data.description && <p className="m-0 mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm opacity-75">{data.description}</p>}
+            <a className="btn btn-neutral btn-sm mt-4" href={eventDataUrl(data)} download={`${(data.title || codeName || 'event').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'event'}.ics`}><CalendarDays size={16} aria-hidden="true" />Add event</a>
           </div>
         </div>
       </section>
