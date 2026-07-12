@@ -2,7 +2,7 @@ import { useCallback, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Barcode, CalendarDays, Contact, ExternalLink, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, Wifi } from 'lucide-react'
+import { Barcode, CalendarDays, Contact, ExternalLink, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { CODE_TYPES_HELP_URL, QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -33,8 +33,8 @@ interface AddCodeScreenProps {
   playSave?: () => void
 }
 
-function codeTypeIcon(code: SavedQrCode) {
-  switch (code.data.type) {
+function codeTypeIcon(data: QrData) {
+  switch (data.type) {
     case QR_DATA_TYPES.url:
       return Link
     case QR_DATA_TYPES.text:
@@ -56,6 +56,20 @@ function codeTypeIcon(code: SavedQrCode) {
     case QR_DATA_TYPES.barcode:
       return Barcode
   }
+}
+
+function CodeTypeBadge({ data }: { data: QrData }) {
+  const TypeIcon = codeTypeIcon(data)
+  const FamilyIcon = data.type === QR_DATA_TYPES.barcode ? Barcode : QrCode
+  const label = codePayloadTypeLabel(data)
+
+  return (
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-base-300 bg-base-100 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-base-content shadow-sm">
+      <TypeIcon size={15} className="shrink-0" aria-hidden="true" />
+      <span className="truncate">{label}</span>
+      <FamilyIcon size={14} className="shrink-0 opacity-60" aria-hidden="true" />
+    </span>
+  )
 }
 
 function codePreviewLines(code: SavedQrCode): string[] {
@@ -120,7 +134,6 @@ function SortableCode({ id, code, viewMode, onClick }: { id: string; code: Saved
   const { locale, t } = useI18n()
   const displayName = code.name || code.text
   const previewLines = codePreviewLines(code)
-  const TypeIcon = codeTypeIcon(code)
   const createdAt = formatCreatedAt(code.createdAt, locale)
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -146,9 +159,9 @@ function SortableCode({ id, code, viewMode, onClick }: { id: string; code: Saved
         {...listeners}
       ><Grip size={16} /></button>
       <div className={`min-w-0 ${isGrid ? 'order-3' : ''}`}>
-        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wide opacity-60">
-          <TypeIcon size={14} className="shrink-0" aria-hidden="true" />
-          <span>{codeFamilyLabel(code.data)} · {codePayloadTypeLabel(code.data)}</span>
+        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <CodeTypeBadge data={code.data} />
+          <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{codeFamilyLabel(code.data)}</span>
           <a
             className="inline-flex items-center gap-1 normal-case tracking-normal underline-offset-2 hover:underline"
             href={CODE_TYPES_HELP_URL}

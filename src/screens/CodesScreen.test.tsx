@@ -57,7 +57,8 @@ describe('CodesScreen', () => {
       data: { type: 'qr.QrData.Barcode', format: 'EAN_13', text: '5901234123457' },
     }]} setCodes={vi.fn()} playDelete={vi.fn()} />)
 
-    expect(screen.getByText('Barcode · EAN_13')).toBeInTheDocument()
+    expect(screen.getByText('Barcode')).toBeInTheDocument()
+    expect(screen.getAllByText('EAN_13').length).toBeGreaterThan(0)
     expect(screen.getByRole('img', { name: 'Product' })).toHaveAttribute('data-format', 'EAN_13')
   })
 
