@@ -115,9 +115,42 @@ function VCardDetails({ data, codeName }: { data: VCardData; codeName: string })
   )
 }
 
+function detailRowsForUrl(url: string, codeName: string) {
+  let parsed: URL | null = null
+  try {
+    parsed = new URL(url)
+  } catch {
+    parsed = null
+  }
+
+  return [
+    ['Card name', codeName],
+    ['URL', url],
+    ['Site', parsed?.hostname.replace(/^www\./, '')],
+    ['Path', parsed ? `${parsed.pathname}${parsed.search}` : ''],
+    ['Protocol', parsed?.protocol.replace(':', '').toUpperCase()],
+  ].filter((row): row is [string, string] => Boolean(row[1]))
+}
+
+function UrlDetails({ url, codeName }: { url: string; codeName: string }) {
+  const rows = detailRowsForUrl(url, codeName)
+
+  return (
+    <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+      {rows.map(([label, value]) => (
+        <div key={label} className="grid gap-1 sm:contents">
+          <dt className="text-xs font-semibold uppercase opacity-60">{label}</dt>
+          <dd className="m-0 min-w-0 break-words text-sm">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const [form, setForm] = useState<QrFormState>(() => dataToForm(code.name, code.data))
   const [vcardPanel, setVcardPanel] = useState<'details' | 'fields' | 'raw'>('details')
+  const [urlPanel, setUrlPanel] = useState<'details' | 'fields' | 'raw'>('details')
   const { t } = useI18n()
   const close = useCallback(() => onClose(), [onClose])
   useModalHistory(true, close)
@@ -181,16 +214,51 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
               </>
             ) : (
               <>
-                {data.type === QR_DATA_TYPES.url && <UrlPreview url={data.url} />}
-                <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} />
-                <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
-                <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
-                <FormButtons
-                  className="modal-action justify-center md:justify-end"
-                  onCopy={() => void navigator.clipboard.writeText(copyText)}
-                  onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
-                  onDelete={deleteCode}
-                />
+                {data.type === QR_DATA_TYPES.url ? (
+                  <>
+                    <section className="mx-auto w-full max-w-xl" aria-label={displayCodeName}>
+                      <UrlPreview url={data.url} featured />
+                    </section>
+                    <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
+                      <div className="rounded-md border border-base-300 bg-white p-2">
+                        <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="m-0 text-base font-semibold">Open link</h3>
+                        <p className="m-0 mt-1 break-words text-sm opacity-70">{data.url}</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
+                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
+                          <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
+                        </div>
+                      </div>
+                    </section>
+                    <section className="mx-auto w-full max-w-xl">
+                      <div role="tablist" className="tabs tabs-box w-full">
+                        <button type="button" role="tab" aria-selected={urlPanel === 'details'} className={`tab flex-1 ${urlPanel === 'details' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('details')}>Details</button>
+                        <button type="button" role="tab" aria-selected={urlPanel === 'fields'} className={`tab flex-1 ${urlPanel === 'fields' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('fields')}>Fields</button>
+                        <button type="button" role="tab" aria-selected={urlPanel === 'raw'} className={`tab flex-1 ${urlPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('raw')}>Raw URL</button>
+                      </div>
+                      <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
+                        {urlPanel === 'details' && <UrlDetails url={data.url} codeName={displayCodeName} />}
+                        {urlPanel === 'fields' && <QrForm form={form} onChange={setForm} showTypeSelect={false} />}
+                        {urlPanel === 'raw' && <pre className="m-0 max-h-80 overflow-auto whitespace-pre-wrap break-words text-left text-xs">{qrDataAsText(data)}</pre>}
+                      </div>
+                    </section>
+                  </>
+                ) : (
+                  <>
+                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} />
+                    <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
+                    <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
+                    <FormButtons
+                      className="modal-action justify-center md:justify-end"
+                      onCopy={() => void navigator.clipboard.writeText(copyText)}
+                      onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
+                      onDelete={deleteCode}
+                    />
+                  </>
+                )}
               </>
             )}
           </>
