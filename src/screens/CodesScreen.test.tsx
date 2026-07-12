@@ -77,6 +77,14 @@ describe('CodesScreen', () => {
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument()
   })
 
+  it('shows only a progress bar in the codes loading area', () => {
+    render(<CodesScreen codes={[]} setCodes={vi.fn()} playDelete={vi.fn()} showLoadEffect />)
+
+    expect(screen.getByRole('progressbar', { name: /loading codes/i })).toBeInTheDocument()
+    expect(screen.queryByText(/code hoover/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /code hoover/i })).not.toBeInTheDocument()
+  })
+
   it('shows saved barcode entries as barcodes', () => {
     render(<CodesScreen codes={[{
       name: 'Product',

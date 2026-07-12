@@ -9,7 +9,6 @@ import { useI18n } from '../i18n/context'
 import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
-import { HooverGraphic } from '../components/HooverGraphic'
 import { QrCodeImage } from '../components/QrCodeImage'
 import { QrIntroFrame } from '../components/QrIntroFrame'
 import { UrlPreview } from '../components/UrlPreview'
@@ -290,8 +289,8 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
     <>
       <CodesViewToggle viewMode={viewMode} setViewMode={(nextViewMode) => { playToggle?.(); setViewMode(nextViewMode) }} />
       {showLoadEffect ? (
-        <section className="codes-load-effect flex min-h-80 w-full items-center justify-center rounded-2xl bg-base-200 px-5 py-8" aria-label="Loading codes">
-          <HooverGraphic showBar />
+        <section className="flex min-h-80 w-full items-center justify-center px-5 py-8" aria-label="Loading codes">
+          <div className="loading-splash-bar" role="progressbar" aria-label="Loading codes" />
         </section>
       ) : codes.length === 0 ? (
         <EmptyCodesState />
