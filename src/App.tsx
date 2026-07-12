@@ -22,6 +22,7 @@ const NAV_TABS = [
 
 export default function App() {
   const [showSplash, setShowSplash] = useState(true)
+  const [showCodesLoadEffect, setShowCodesLoadEffect] = useState(false)
   const [screen, setScreen] = useState<Screen>('codes')
   const [codes, setCodes] = useLocalStorage('codes', [], parseSavedCodes)
   const [soundEnabled, setSoundEnabled] = useLocalStorage('sound-enabled', true, (value) => value === 'true' || value === '"true"')
@@ -37,8 +38,15 @@ export default function App() {
   }, [dark])
 
   useEffect(() => {
-    const splashTimer = window.setTimeout(() => setShowSplash(false), 850)
-    return () => window.clearTimeout(splashTimer)
+    const splashTimer = window.setTimeout(() => {
+      setShowSplash(false)
+      setShowCodesLoadEffect(true)
+    }, 850)
+    const codesEffectTimer = window.setTimeout(() => setShowCodesLoadEffect(false), 2300)
+    return () => {
+      window.clearTimeout(splashTimer)
+      window.clearTimeout(codesEffectTimer)
+    }
   }, [])
 
   return (
@@ -71,7 +79,7 @@ export default function App() {
           ))}
         </div>
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
-          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} />}
+          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} showLoadEffect={showCodesLoadEffect} />}
           {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} playScanSuccess={sounds.playScanSuccess} />}
           {screen === 'add' && <AddCodeScreen codes={codes} setCodes={setCodes} onDone={() => setScreen('codes')} />}
           {screen === 'about' && <AboutScreen />}

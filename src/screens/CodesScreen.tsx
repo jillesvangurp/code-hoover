@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/context'
 import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
+import { HooverGraphic } from '../components/HooverGraphic'
 import { QrCodeImage } from '../components/QrCodeImage'
 import { QrIntroFrame } from '../components/QrIntroFrame'
 
@@ -18,6 +19,7 @@ interface CodesScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
   playDelete: () => void
+  showLoadEffect?: boolean
 }
 
 interface AddCodeScreenProps {
@@ -168,7 +170,7 @@ export function AddCodeScreen({ codes, setCodes, onDone }: AddCodeScreenProps) {
   )
 }
 
-export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
+export function CodesScreen({ codes, setCodes, playDelete, showLoadEffect = false }: CodesScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -183,7 +185,11 @@ export function CodesScreen({ codes, setCodes, playDelete }: CodesScreenProps) {
 
   return (
     <>
-      {codes.length === 0 ? (
+      {showLoadEffect ? (
+        <section className="codes-load-effect flex min-h-80 w-full items-center justify-center rounded-2xl bg-base-200 px-5 py-8" aria-label="Loading codes">
+          <HooverGraphic showBar />
+        </section>
+      ) : codes.length === 0 ? (
         <EmptyCodesState />
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
