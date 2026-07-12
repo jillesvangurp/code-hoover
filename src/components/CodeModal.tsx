@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { ArrowLeft, Building2, Check, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
-import { QR_DATA_TYPES, formatQrData, qrDataAsText, type SavedQrCode, type VCardData } from '../domain/qr'
+import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { useModalHistory } from '../hooks/useModalHistory'
 import { BarcodeImage } from './BarcodeImage'
@@ -84,10 +84,26 @@ function BusinessCardPreview({ data, codeName }: { data: VCardData; codeName: st
   )
 }
 
-function detailRowsFor(data: VCardData, codeName: string) {
-  const address = [data.street, data.city, data.region, data.postalCode, data.country].filter(Boolean).join(', ')
+function formatCreatedAt(createdAt: string | undefined, locale: string): string {
+  if (!createdAt) return ''
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
+
+function metadataRowsFor(data: QrData, codeName: string, createdAt: string) {
   return [
     ['Card name', codeName],
+    ['Code family', codeFamilyLabel(data)],
+    ['Code type', codePayloadTypeLabel(data)],
+    ['Created', createdAt],
+  ].filter((row): row is [string, string] => Boolean(row[1]))
+}
+
+function detailRowsFor(data: VCardData, codeName: string, createdAt: string) {
+  const address = [data.street, data.city, data.region, data.postalCode, data.country].filter(Boolean).join(', ')
+  return [
+    ...metadataRowsFor(data, codeName, createdAt),
     ['Name', compactName(data, codeName)],
     ['Title', data.title],
     ['Organization', data.organization],
@@ -100,8 +116,8 @@ function detailRowsFor(data: VCardData, codeName: string) {
   ].filter((row): row is [string, string] => Boolean(row[1]))
 }
 
-function VCardDetails({ data, codeName }: { data: VCardData; codeName: string }) {
-  const rows = detailRowsFor(data, codeName)
+function VCardDetails({ data, codeName, createdAt }: { data: VCardData; codeName: string; createdAt: string }) {
+  const rows = detailRowsFor(data, codeName, createdAt)
 
   return (
     <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
@@ -115,7 +131,7 @@ function VCardDetails({ data, codeName }: { data: VCardData; codeName: string })
   )
 }
 
-function detailRowsForUrl(url: string, codeName: string) {
+function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt: string) {
   let parsed: URL | null = null
   try {
     parsed = new URL(url)
@@ -124,7 +140,7 @@ function detailRowsForUrl(url: string, codeName: string) {
   }
 
   return [
-    ['Card name', codeName],
+    ...metadataRowsFor(data, codeName, createdAt),
     ['URL', url],
     ['Site', parsed?.hostname.replace(/^www\./, '')],
     ['Path', parsed ? `${parsed.pathname}${parsed.search}` : ''],
@@ -132,8 +148,8 @@ function detailRowsForUrl(url: string, codeName: string) {
   ].filter((row): row is [string, string] => Boolean(row[1]))
 }
 
-function UrlDetails({ url, codeName }: { url: string; codeName: string }) {
-  const rows = detailRowsForUrl(url, codeName)
+function UrlDetails({ data, url, codeName, createdAt }: { data: QrData; url: string; codeName: string; createdAt: string }) {
+  const rows = detailRowsForUrl(data, url, codeName, createdAt)
 
   return (
     <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
@@ -151,7 +167,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const [form, setForm] = useState<QrFormState>(() => dataToForm(code.name, code.data))
   const [vcardPanel, setVcardPanel] = useState<'details' | 'fields' | 'raw'>('details')
   const [urlPanel, setUrlPanel] = useState<'details' | 'fields' | 'raw'>('details')
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const close = useCallback(() => onClose(), [onClose])
   useModalHistory(true, close)
   const data = formToQrData(form)
@@ -159,6 +175,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const isVCard = data.type === QR_DATA_TYPES.vcard
   const copyText = barcodeData ? barcodeData.text : qrDataAsText(data)
   const displayCodeName = form.name || code.name
+  const createdAt = formatCreatedAt(code.createdAt, locale)
   const deleteCode = () => {
     if (!window.confirm(t('default-delete-confirm'))) return
     onDelete()
@@ -193,7 +210,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                   <div className="min-w-0">
                     <h3 className="m-0 text-base font-semibold">Scan contact</h3>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
                       <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
                     </div>
@@ -206,7 +223,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     <button type="button" role="tab" aria-selected={vcardPanel === 'raw'} className={`tab flex-1 ${vcardPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('raw')}>Raw vCard</button>
                   </div>
                   <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
-                    {vcardPanel === 'details' && <VCardDetails data={data} codeName={displayCodeName} />}
+                    {vcardPanel === 'details' && <VCardDetails data={data} codeName={displayCodeName} createdAt={createdAt} />}
                     {vcardPanel === 'fields' && <QrForm form={form} onChange={setForm} showTypeSelect={false} />}
                     {vcardPanel === 'raw' && <pre className="m-0 max-h-80 overflow-auto whitespace-pre-wrap break-words text-left text-xs">{qrDataAsText(data)}</pre>}
                   </div>
@@ -227,7 +244,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                         <h3 className="m-0 text-base font-semibold">Open link</h3>
                         <p className="m-0 mt-1 break-words text-sm opacity-70">{data.url}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
+                          <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
                           <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
                         </div>
@@ -240,7 +257,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                         <button type="button" role="tab" aria-selected={urlPanel === 'raw'} className={`tab flex-1 ${urlPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('raw')}>Raw URL</button>
                       </div>
                       <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
-                        {urlPanel === 'details' && <UrlDetails url={data.url} codeName={displayCodeName} />}
+                        {urlPanel === 'details' && <UrlDetails data={data} url={data.url} codeName={displayCodeName} createdAt={createdAt} />}
                         {urlPanel === 'fields' && <QrForm form={form} onChange={setForm} showTypeSelect={false} />}
                         {urlPanel === 'raw' && <pre className="m-0 max-h-80 overflow-auto whitespace-pre-wrap break-words text-left text-xs">{qrDataAsText(data)}</pre>}
                       </div>
@@ -254,7 +271,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     <FormButtons
                       className="modal-action justify-center md:justify-end"
                       onCopy={() => void navigator.clipboard.writeText(copyText)}
-                      onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
+                      onSave={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}
                       onDelete={deleteCode}
                     />
                   </>

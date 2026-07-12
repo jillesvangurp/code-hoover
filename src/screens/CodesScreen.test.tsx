@@ -27,6 +27,7 @@ describe('CodesScreen', () => {
         name: 'https://example.com',
         text: 'https://example.com',
         data: { type: 'qr.QrData.Url', url: 'https://example.com' },
+        createdAt: expect.any(String),
       },
     ])
     expect(onDone).toHaveBeenCalledOnce()
@@ -54,7 +55,7 @@ describe('CodesScreen', () => {
       data: { type: 'qr.QrData.Barcode', format: 'EAN_13', text: '5901234123457' },
     }]} setCodes={vi.fn()} playDelete={vi.fn()} />)
 
-    expect(screen.getByText('EAN_13')).toBeInTheDocument()
+    expect(screen.getByText('Barcode · EAN_13')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Product' })).toHaveAttribute('data-format', 'EAN_13')
   })
 

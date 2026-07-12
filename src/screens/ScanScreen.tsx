@@ -19,12 +19,12 @@ interface ScanScreenProps {
 function savedCodeFromText(text: string): SavedQrCode {
   const data: QrData = parseVCard(text) ?? { type: QR_DATA_TYPES.text, text }
   const normalized = qrDataAsText(data)
-  return { name: defaultDisplayName(data) || normalized, text: normalized, data }
+  return { name: defaultDisplayName(data) || normalized, text: normalized, data, createdAt: new Date().toISOString() }
 }
 
 function savedCodeFromBarcode(text: string, format: string): SavedQrCode {
   const data: QrData = { type: QR_DATA_TYPES.barcode, format, text }
-  return { name: defaultDisplayName(data) || text, text, data }
+  return { name: defaultDisplayName(data) || text, text, data, createdAt: new Date().toISOString() }
 }
 
 function savedCodeFromScan(text: string, format: number): SavedQrCode {

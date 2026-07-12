@@ -2,9 +2,9 @@ import { useCallback, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Barcode, Contact, FileText, Grip, Link, Wifi } from 'lucide-react'
+import { Barcode, Contact, ExternalLink, FileText, Grip, Link, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
-import { QR_DATA_TYPES, type QrData, type SavedQrCode } from '../domain/qr'
+import { CODE_TYPES_HELP_URL, QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
@@ -27,21 +27,6 @@ interface AddCodeScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
   onDone: () => void
-}
-
-function codeTypeLabel(code: SavedQrCode): string {
-  switch (code.data.type) {
-    case QR_DATA_TYPES.url:
-      return 'URL'
-    case QR_DATA_TYPES.text:
-      return 'Text'
-    case QR_DATA_TYPES.wifi:
-      return 'Wi-Fi'
-    case QR_DATA_TYPES.vcard:
-      return 'vCard'
-    case QR_DATA_TYPES.barcode:
-      return code.data.format
-  }
 }
 
 function codeTypeIcon(code: SavedQrCode) {
@@ -81,6 +66,13 @@ function codePreviewLines(code: SavedQrCode): string[] {
   }
 }
 
+function formatCreatedAt(createdAt: string | undefined, locale: string): string {
+  if (!createdAt) return ''
+  const date = new Date(createdAt)
+  if (Number.isNaN(date.getTime())) return ''
+  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+}
+
 function CodeThumbnail({ data, text, label }: { data: QrData; text: string; label: string }) {
   return data.type === QR_DATA_TYPES.barcode ? (
     <span className="flex h-16 w-20 items-center justify-center overflow-hidden bg-white p-1">
@@ -98,10 +90,11 @@ function CodeThumbnail({ data, text, label }: { data: QrData; text: string; labe
 
 function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
-  const { t } = useI18n()
+  const { locale, t } = useI18n()
   const displayName = code.name || code.text
   const previewLines = codePreviewLines(code)
   const TypeIcon = codeTypeIcon(code)
+  const createdAt = formatCreatedAt(code.createdAt, locale)
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -124,11 +117,22 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
         {...listeners}
       ><Grip size={16} /></button>
       <div className="min-w-0">
-        <div className="mb-2 flex min-w-0 items-center gap-2 text-xs font-semibold uppercase tracking-wide opacity-60">
+        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wide opacity-60">
           <TypeIcon size={14} className="shrink-0" aria-hidden="true" />
-          <span>{codeTypeLabel(code)}</span>
+          <span>{codeFamilyLabel(code.data)} · {codePayloadTypeLabel(code.data)}</span>
+          <a
+            className="inline-flex items-center gap-1 normal-case tracking-normal underline-offset-2 hover:underline"
+            href={CODE_TYPES_HELP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {t('default-code-types')}
+            <ExternalLink size={12} aria-hidden="true" />
+          </a>
         </div>
         <p className="m-0 truncate text-lg font-semibold leading-tight">{displayName}</p>
+        {createdAt && <p className="m-0 mt-1 truncate text-xs opacity-60">{t('default-created')}: {createdAt}</p>}
         {code.data.type === QR_DATA_TYPES.url ? (
           <UrlPreview url={code.data.url} compact />
         ) : previewLines.length > 0 && (

@@ -105,7 +105,8 @@ export function dataToForm(name: string, data: QrData): QrFormState {
   }
 }
 
-export function formToSavedCode(form: QrFormState): SavedQrCode {
+export function formToSavedCode(form: QrFormState, createdAt: string | null | undefined = new Date().toISOString()): SavedQrCode {
   const data = formToQrData(form)
-  return { name: form.name.trim() || defaultDisplayName(data), text: qrDataAsText(data), data }
+  const savedCode = { name: form.name.trim() || defaultDisplayName(data), text: qrDataAsText(data), data }
+  return createdAt ? { ...savedCode, createdAt } : savedCode
 }

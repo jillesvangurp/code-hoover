@@ -61,9 +61,31 @@ export interface SavedQrCode {
   name: string
   text: string
   data: QrData
+  createdAt?: string
 }
 
+export const CODE_TYPES_HELP_URL = 'https://en.wikipedia.org/wiki/Barcode#Types_of_barcodes'
+
 const stringValue = (value: unknown): string => (typeof value === 'string' ? value : '')
+
+export function codeFamilyLabel(data: QrData): string {
+  return data.type === QR_DATA_TYPES.barcode ? 'Barcode' : 'QR code'
+}
+
+export function codePayloadTypeLabel(data: QrData): string {
+  switch (data.type) {
+    case QR_DATA_TYPES.url:
+      return 'URL'
+    case QR_DATA_TYPES.text:
+      return 'Text'
+    case QR_DATA_TYPES.wifi:
+      return 'Wi-Fi'
+    case QR_DATA_TYPES.vcard:
+      return 'vCard'
+    case QR_DATA_TYPES.barcode:
+      return data.format || 'Barcode'
+  }
+}
 
 export function savedCodeIdentity(code: SavedQrCode): string {
   if (code.data.type === QR_DATA_TYPES.barcode) return `${code.data.type}\n${code.data.format}\n${code.data.text}`
@@ -75,7 +97,11 @@ export function mergeSavedCodes(primary: SavedQrCode[], secondary: SavedQrCode[]
   const merged: SavedQrCode[] = []
   for (const code of [...primary, ...secondary]) {
     const identity = savedCodeIdentity(code)
-    if (seen.has(identity)) continue
+    if (seen.has(identity)) {
+      const existing = merged.find((savedCode) => savedCodeIdentity(savedCode) === identity)
+      if (existing && !existing.createdAt && code.createdAt) existing.createdAt = code.createdAt
+      continue
+    }
     seen.add(identity)
     merged.push(code)
   }
@@ -150,7 +176,8 @@ export function parseSavedCode(item: unknown): SavedQrCode {
   const data = normalizeQrData(candidate.data)
   if (!data || typeof candidate.text !== 'string') throw new Error('Invalid saved code')
   const name = stringValue(candidate.name).trim() || candidate.text
-  return { name, text: candidate.text, data }
+  const createdAt = typeof candidate.createdAt === 'string' && candidate.createdAt.trim() ? candidate.createdAt : undefined
+  return { name, text: candidate.text, data, ...(createdAt ? { createdAt } : {}) }
 }
 
 function escapeVCard(value: string): string {

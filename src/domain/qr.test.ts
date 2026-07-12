@@ -25,6 +25,19 @@ describe('saved code compatibility', () => {
     expect(() => parseSavedCodes('[{"name":"broken"}]')).toThrow('Invalid saved code')
   })
 
+  it('preserves optional creation metadata when present', () => {
+    const codes = parseSavedCodes(JSON.stringify([
+      {
+        name: 'Example',
+        text: 'https://example.com',
+        createdAt: '2026-07-12T09:00:00.000Z',
+        data: { type: QR_DATA_TYPES.url, url: 'https://example.com' },
+      },
+    ]))
+
+    expect(codes[0].createdAt).toBe('2026-07-12T09:00:00.000Z')
+  })
+
   it('merges account sync lists by payload without dropping either device', () => {
     const laptop: SavedQrCode[] = [
       { name: 'Laptop', text: 'https://laptop.example', data: { type: QR_DATA_TYPES.url, url: 'https://laptop.example' } },
@@ -40,6 +53,15 @@ describe('saved code compatibility', () => {
       laptop[1],
       mobile[1],
     ])
+  })
+
+  it('keeps creation metadata from a duplicate sync copy when the local copy lacks it', () => {
+    const merged = mergeSavedCodes(
+      [{ name: 'Local', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }],
+      [{ name: 'Remote', text: 'shared', createdAt: '2026-07-12T09:00:00.000Z', data: { type: QR_DATA_TYPES.text, text: 'shared' } }],
+    )
+
+    expect(merged[0].createdAt).toBe('2026-07-12T09:00:00.000Z')
   })
 })
 
