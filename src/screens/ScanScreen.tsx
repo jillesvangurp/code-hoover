@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { Check, X } from 'lucide-react'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseSavedCode, parseVCard, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCode, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 
 interface ScanResult {
@@ -17,7 +17,7 @@ interface ScanScreenProps {
 }
 
 function savedCodeFromText(text: string): SavedQrCode {
-  const data: QrData = parseVCard(text) ?? { type: QR_DATA_TYPES.text, text }
+  const data: QrData = parseQrPayload(text) ?? { type: QR_DATA_TYPES.text, text }
   const normalized = qrDataAsText(data)
   return { name: defaultDisplayName(data) || normalized, text: normalized, data, createdAt: new Date().toISOString() }
 }

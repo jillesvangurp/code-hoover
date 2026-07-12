@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseSavedCodes, parseVCard, qrDataAsText, type SavedQrCode, type VCardData } from './qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, type SavedQrCode, type VCardData } from './qr'
 
 describe('saved code compatibility', () => {
   it('reads the legacy serialization format and restores blank names', () => {
@@ -133,5 +133,54 @@ describe('QR payloads', () => {
     })
     expect(defaultDisplayName(codes[0].data)).toBe('5901234123457')
     expect(qrDataAsText(codes[0].data)).toBe('5901234123457')
+  })
+
+  it('formats common action payloads as QR-friendly URIs', () => {
+    expect(qrDataAsText({ type: QR_DATA_TYPES.email, email: 'hello@example.com', subject: 'Hi there', body: 'Line one' })).toBe('mailto:hello@example.com?subject=Hi+there&body=Line+one')
+    expect(qrDataAsText({ type: QR_DATA_TYPES.phone, phone: '+4912345' })).toBe('tel:+4912345')
+    expect(qrDataAsText({ type: QR_DATA_TYPES.sms, phone: '+4912345', message: 'Ping me' })).toBe('sms:+4912345?body=Ping+me')
+  })
+
+  it('uses map-native payloads for coordinates and Google Maps search for place queries', () => {
+    expect(qrDataAsText({
+      type: QR_DATA_TYPES.location,
+      label: 'FORMATION office',
+      query: '',
+      latitude: '52.5200',
+      longitude: '13.4050',
+    })).toBe('geo:52.5200,13.4050?q=52.5200%2C13.4050%28FORMATION+office%29')
+
+    expect(qrDataAsText({
+      type: QR_DATA_TYPES.location,
+      label: '',
+      query: 'FORMATION Berlin',
+      latitude: '',
+      longitude: '',
+    })).toBe('https://www.google.com/maps/search/?api=1&query=FORMATION+Berlin')
+  })
+
+  it('parses common action, map, and event payloads into structured data', () => {
+    expect(parseQrPayload('mailto:hello@example.com?subject=Hi+there&body=Line+one')).toEqual({
+      type: QR_DATA_TYPES.email,
+      email: 'hello@example.com',
+      subject: 'Hi there',
+      body: 'Line one',
+    })
+    expect(parseQrPayload('tel:+4912345')).toEqual({ type: QR_DATA_TYPES.phone, phone: '+4912345' })
+    expect(parseQrPayload('sms:+4912345?body=Ping+me')).toEqual({ type: QR_DATA_TYPES.sms, phone: '+4912345', message: 'Ping me' })
+    expect(parseQrPayload('geo:52.5200,13.4050?q=52.5200%2C13.4050%28FORMATION+office%29')).toMatchObject({
+      type: QR_DATA_TYPES.location,
+      label: 'FORMATION office',
+      latitude: '52.5200',
+      longitude: '13.4050',
+    })
+    expect(parseQrPayload('BEGIN:VEVENT\nSUMMARY:Demo\nDTSTART:20260712T120000\nLOCATION:Berlin\nEND:VEVENT')).toEqual({
+      type: QR_DATA_TYPES.event,
+      title: 'Demo',
+      start: '20260712T120000',
+      end: '',
+      location: 'Berlin',
+      description: '',
+    })
   })
 })

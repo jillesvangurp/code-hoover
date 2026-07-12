@@ -1,5 +1,7 @@
 export class SoundEffects {
   private readonly scan = this.createAudio('/sounds/bleep.wav', 0.45)
+  private readonly tap = this.createAudio('/sounds/bleep.wav', 0.18)
+  private readonly save = this.createAudio('/sounds/bleep.wav', 0.32)
   private readonly remove = this.createAudio('/sounds/boing.wav', 0.5)
 
   constructor(private readonly enabled: () => boolean) {}
@@ -23,5 +25,9 @@ export class SoundEffects {
 
   playScanSuccess = () => this.play(this.scan)
   playPreview = () => this.play(this.scan)
+  playTap = () => this.play(this.tap)
+  playOpen = () => this.play(this.tap)
+  playToggle = () => this.play(this.tap)
+  playSave = () => this.play(this.save)
   playDelete = () => this.play(this.remove)
 }

@@ -16,7 +16,8 @@ describe('CodesScreen', () => {
     const user = userEvent.setup()
     const setCodes = vi.fn()
     const onDone = vi.fn()
-    render(<AddCodeScreen codes={[]} setCodes={setCodes} onDone={onDone} />)
+    const playSave = vi.fn()
+    render(<AddCodeScreen codes={[]} setCodes={setCodes} onDone={onDone} playSave={playSave} />)
 
     const inputs = screen.getAllByRole('textbox')
     await user.type(inputs[1], 'https://example.com')
@@ -30,6 +31,7 @@ describe('CodesScreen', () => {
         createdAt: expect.any(String),
       },
     ])
+    expect(playSave).toHaveBeenCalledOnce()
     expect(onDone).toHaveBeenCalledOnce()
   })
 
@@ -57,6 +59,39 @@ describe('CodesScreen', () => {
 
     expect(screen.getByText('Barcode · EAN_13')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Product' })).toHaveAttribute('data-format', 'EAN_13')
+  })
+
+  it('switches between list and grid views for saved codes', async () => {
+    const user = userEvent.setup()
+    const playToggle = vi.fn()
+    render(<CodesScreen codes={[{
+      name: 'Example',
+      text: 'https://example.com',
+      data: { type: 'qr.QrData.Url', url: 'https://example.com' },
+    }]} setCodes={vi.fn()} playDelete={vi.fn()} playToggle={playToggle} />)
+
+    expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(screen.getByRole('button', { name: /grid/i }))
+
+    expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(playToggle).toHaveBeenCalledOnce()
+  })
+
+  it('plays a sound when opening a saved code', async () => {
+    const user = userEvent.setup()
+    const playOpen = vi.fn()
+    render(<CodesScreen codes={[{
+      name: 'Example',
+      text: 'https://example.com',
+      data: { type: 'qr.QrData.Url', url: 'https://example.com' },
+    }]} setCodes={vi.fn()} playDelete={vi.fn()} playOpen={playOpen} />)
+
+    await user.click(screen.getByText('Example'))
+
+    expect(playOpen).toHaveBeenCalledOnce()
   })
 
   it('confirms before deleting a saved code', async () => {

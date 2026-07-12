@@ -3,10 +3,15 @@ export const QR_DATA_TYPES = {
   text: 'qr.QrData.Text',
   vcard: 'qr.QrData.VCard',
   wifi: 'qr.QrData.Wifi',
+  email: 'qr.QrData.Email',
+  phone: 'qr.QrData.Phone',
+  sms: 'qr.QrData.Sms',
+  location: 'qr.QrData.Location',
+  event: 'qr.QrData.Event',
   barcode: 'qr.QrData.Barcode',
 } as const
 
-export type QrType = 'URL' | 'TEXT' | 'VCARD' | 'WIFI'
+export type QrType = 'URL' | 'TEXT' | 'VCARD' | 'WIFI' | 'EMAIL' | 'PHONE' | 'SMS' | 'LOCATION' | 'EVENT'
 
 export interface UrlData {
   type: typeof QR_DATA_TYPES.url
@@ -49,13 +54,48 @@ export interface WifiData {
   encryption: string
 }
 
+export interface EmailData {
+  type: typeof QR_DATA_TYPES.email
+  email: string
+  subject: string
+  body: string
+}
+
+export interface PhoneData {
+  type: typeof QR_DATA_TYPES.phone
+  phone: string
+}
+
+export interface SmsData {
+  type: typeof QR_DATA_TYPES.sms
+  phone: string
+  message: string
+}
+
+export interface LocationData {
+  type: typeof QR_DATA_TYPES.location
+  label: string
+  query: string
+  latitude: string
+  longitude: string
+}
+
+export interface EventData {
+  type: typeof QR_DATA_TYPES.event
+  title: string
+  start: string
+  end: string
+  location: string
+  description: string
+}
+
 export interface BarcodeData {
   type: typeof QR_DATA_TYPES.barcode
   format: string
   text: string
 }
 
-export type QrData = UrlData | TextData | VCardData | WifiData | BarcodeData
+export type QrData = UrlData | TextData | VCardData | WifiData | EmailData | PhoneData | SmsData | LocationData | EventData | BarcodeData
 
 export interface SavedQrCode {
   name: string
@@ -80,6 +120,16 @@ export function codePayloadTypeLabel(data: QrData): string {
       return 'Text'
     case QR_DATA_TYPES.wifi:
       return 'Wi-Fi'
+    case QR_DATA_TYPES.email:
+      return 'Email'
+    case QR_DATA_TYPES.phone:
+      return 'Phone'
+    case QR_DATA_TYPES.sms:
+      return 'SMS'
+    case QR_DATA_TYPES.location:
+      return 'Maps'
+    case QR_DATA_TYPES.event:
+      return 'Event'
     case QR_DATA_TYPES.vcard:
       return 'vCard'
     case QR_DATA_TYPES.barcode:
@@ -126,6 +176,46 @@ export function normalizeQrData(value: unknown): QrData | null {
         ssid: stringValue(candidate.ssid),
         password: stringValue(candidate.password),
         encryption: stringValue(candidate.encryption) || 'WPA',
+      }
+    case QR_DATA_TYPES.email:
+    case 'EMAIL':
+      return {
+        type: QR_DATA_TYPES.email,
+        email: stringValue(candidate.email),
+        subject: stringValue(candidate.subject),
+        body: stringValue(candidate.body),
+      }
+    case QR_DATA_TYPES.phone:
+    case 'PHONE':
+      return {
+        type: QR_DATA_TYPES.phone,
+        phone: stringValue(candidate.phone),
+      }
+    case QR_DATA_TYPES.sms:
+    case 'SMS':
+      return {
+        type: QR_DATA_TYPES.sms,
+        phone: stringValue(candidate.phone),
+        message: stringValue(candidate.message),
+      }
+    case QR_DATA_TYPES.location:
+    case 'LOCATION':
+      return {
+        type: QR_DATA_TYPES.location,
+        label: stringValue(candidate.label),
+        query: stringValue(candidate.query),
+        latitude: stringValue(candidate.latitude),
+        longitude: stringValue(candidate.longitude),
+      }
+    case QR_DATA_TYPES.event:
+    case 'EVENT':
+      return {
+        type: QR_DATA_TYPES.event,
+        title: stringValue(candidate.title),
+        start: stringValue(candidate.start),
+        end: stringValue(candidate.end),
+        location: stringValue(candidate.location),
+        description: stringValue(candidate.description),
       }
     case QR_DATA_TYPES.barcode:
     case 'BARCODE':
@@ -237,6 +327,49 @@ function bestVCardName(data: VCardData): string {
   return structured || data.organization.trim() || data.nickname.trim()
 }
 
+function encodeUriParameter(value: string): string {
+  return encodeURIComponent(value)
+    .replaceAll('%20', '+')
+    .replaceAll('(', '%28')
+    .replaceAll(')', '%29')
+}
+
+function appendQuery(base: string, parameters: Array<[string, string]>): string {
+  const query = parameters
+    .filter(([, value]) => value)
+    .map(([key, value]) => `${encodeURIComponent(key)}=${encodeUriParameter(value)}`)
+    .join('&')
+  return query ? `${base}?${query}` : base
+}
+
+function escapeICal(value: string): string {
+  return value
+    .replaceAll('\\', '\\\\')
+    .replaceAll('\r\n', '\\n')
+    .replaceAll('\n', '\\n')
+    .replaceAll('\r', '\\n')
+    .replaceAll(';', '\\;')
+    .replaceAll(',', '\\,')
+}
+
+function unescapeICal(value: string): string {
+  return value
+    .replace(/\\[nN]/g, '\n')
+    .replace(/\\([\\;,])/g, '$1')
+}
+
+function formatEventDateTime(value: string): string {
+  return value.trim().replaceAll('-', '').replaceAll(':', '')
+}
+
+function hasCoordinates(data: LocationData): boolean {
+  return Boolean(data.latitude.trim() && data.longitude.trim())
+}
+
+function locationQuery(data: LocationData): string {
+  return data.query.trim() || data.label.trim()
+}
+
 export function qrDataAsText(data: QrData): string {
   switch (data.type) {
     case QR_DATA_TYPES.url:
@@ -245,6 +378,31 @@ export function qrDataAsText(data: QrData): string {
       return data.text
     case QR_DATA_TYPES.wifi:
       return `WIFI:T:${data.encryption};S:${data.ssid};P:${data.password};;`
+    case QR_DATA_TYPES.email:
+      return appendQuery(`mailto:${data.email.trim()}`, [['subject', data.subject], ['body', data.body]])
+    case QR_DATA_TYPES.phone:
+      return `tel:${data.phone.trim()}`
+    case QR_DATA_TYPES.sms:
+      return appendQuery(`sms:${data.phone.trim()}`, [['body', data.message]])
+    case QR_DATA_TYPES.location: {
+      if (hasCoordinates(data)) {
+        const coordinates = `${data.latitude.trim()},${data.longitude.trim()}`
+        const label = data.label.trim()
+        return label ? `geo:${coordinates}?q=${encodeUriParameter(`${coordinates}(${label})`)}` : `geo:${coordinates}`
+      }
+      const query = locationQuery(data)
+      return query ? appendQuery('https://www.google.com/maps/search/', [['api', '1'], ['query', query]]) : 'geo:0,0'
+    }
+    case QR_DATA_TYPES.event: {
+      const lines = ['BEGIN:VEVENT']
+      lines.push(`SUMMARY:${escapeICal(data.title || 'Event')}`)
+      if (data.start) lines.push(`DTSTART:${formatEventDateTime(data.start)}`)
+      if (data.end) lines.push(`DTEND:${formatEventDateTime(data.end)}`)
+      if (data.location) lines.push(`LOCATION:${escapeICal(data.location)}`)
+      if (data.description) lines.push(`DESCRIPTION:${escapeICal(data.description)}`)
+      lines.push('END:VEVENT')
+      return lines.join('\n')
+    }
     case QR_DATA_TYPES.barcode:
       return data.text
     case QR_DATA_TYPES.vcard: {
@@ -272,6 +430,11 @@ export function defaultDisplayName(data: QrData): string {
   if (data.type === QR_DATA_TYPES.url) return data.url
   if (data.type === QR_DATA_TYPES.text) return data.text
   if (data.type === QR_DATA_TYPES.wifi) return data.ssid || qrDataAsText(data)
+  if (data.type === QR_DATA_TYPES.email) return data.email || qrDataAsText(data)
+  if (data.type === QR_DATA_TYPES.phone) return data.phone || qrDataAsText(data)
+  if (data.type === QR_DATA_TYPES.sms) return data.phone || qrDataAsText(data)
+  if (data.type === QR_DATA_TYPES.location) return data.label || data.query || [data.latitude, data.longitude].filter(Boolean).join(', ') || 'Maps'
+  if (data.type === QR_DATA_TYPES.event) return data.title || 'Event'
   if (data.type === QR_DATA_TYPES.barcode) return data.text
 
   const base = bestVCardName(data) || 'vcard'
@@ -347,11 +510,155 @@ export function parseVCard(text: string): VCardData | null {
   return hasField ? data : null
 }
 
+function decodeUriValue(value: string): string {
+  try {
+    return decodeURIComponent(value.replaceAll('+', ' '))
+  } catch {
+    return value
+  }
+}
+
+function decodeUriPathValue(value: string): string {
+  try {
+    return decodeURIComponent(value)
+  } catch {
+    return value
+  }
+}
+
+function parseQueryString(query: string): Record<string, string> {
+  return Object.fromEntries(query.replace(/^\?/, '').split('&').map((part) => {
+    const separator = part.indexOf('=')
+    if (separator < 0) return [decodeUriValue(part), '']
+    return [decodeUriValue(part.slice(0, separator)), decodeUriValue(part.slice(separator + 1))]
+  }).filter(([key]) => key))
+}
+
+function parseMailto(text: string): EmailData | null {
+  const match = /^mailto:([^?]*)(\?.*)?$/i.exec(text.trim())
+  if (!match) return null
+  const parameters = parseQueryString(match[2] ?? '')
+  return {
+    type: QR_DATA_TYPES.email,
+    email: decodeUriPathValue(match[1] ?? ''),
+    subject: parameters.subject ?? '',
+    body: parameters.body ?? '',
+  }
+}
+
+function parsePhonePayload(text: string): PhoneData | null {
+  const match = /^tel:(.+)$/i.exec(text.trim())
+  return match ? { type: QR_DATA_TYPES.phone, phone: decodeUriPathValue(match[1] ?? '') } : null
+}
+
+function parseSmsPayload(text: string): SmsData | null {
+  const trimmed = text.trim()
+  const smsUri = /^sms:([^?]*)(\?.*)?$/i.exec(trimmed)
+  if (smsUri) {
+    const parameters = parseQueryString(smsUri[2] ?? '')
+    return { type: QR_DATA_TYPES.sms, phone: decodeUriPathValue(smsUri[1] ?? ''), message: parameters.body ?? '' }
+  }
+  const smsto = /^SMSTO:([^:]*):(.*)$/i.exec(trimmed)
+  return smsto ? { type: QR_DATA_TYPES.sms, phone: smsto[1] ?? '', message: smsto[2] ?? '' } : null
+}
+
+function parseLocationPayload(text: string): LocationData | null {
+  const trimmed = text.trim()
+  const geo = /^geo:([^,?]+),([^?]+)(?:\?(.*))?$/i.exec(trimmed)
+  if (geo) {
+    const parameters = parseQueryString(geo[3] ?? '')
+    const rawQuery = parameters.q ?? ''
+    const labelMatch = /\((.*)\)$/.exec(rawQuery)
+    return {
+      type: QR_DATA_TYPES.location,
+      label: labelMatch?.[1] ?? '',
+      query: rawQuery,
+      latitude: geo[1] ?? '',
+      longitude: geo[2] ?? '',
+    }
+  }
+
+  try {
+    const url = new URL(trimmed)
+    if (!/^(www\.)?google\.[^/]+$/i.test(url.hostname) && !/^maps\.app\.goo\.gl$/i.test(url.hostname)) return null
+    const query = url.searchParams.get('query') ?? url.searchParams.get('q') ?? ''
+    if (!query && !url.pathname.includes('/maps')) return null
+    return { type: QR_DATA_TYPES.location, label: query, query, latitude: '', longitude: '' }
+  } catch {
+    return null
+  }
+}
+
+function parseEventPayload(text: string): EventData | null {
+  const trimmed = text.trim()
+  if (!/\bBEGIN:VEVENT\b/i.test(trimmed)) return null
+  const data: EventData = { type: QR_DATA_TYPES.event, title: '', start: '', end: '', location: '', description: '' }
+  let hasField = false
+
+  for (const rawLine of unfoldVCard(trimmed)) {
+    const line = rawLine.trim()
+    const separator = line.indexOf(':')
+    if (separator < 0) continue
+    const key = line.slice(0, separator).split(';')[0].toUpperCase()
+    const value = unescapeICal(line.slice(separator + 1))
+    switch (key) {
+      case 'SUMMARY': data.title = value; break
+      case 'DTSTART': data.start = value; break
+      case 'DTEND': data.end = value; break
+      case 'LOCATION': data.location = value; break
+      case 'DESCRIPTION': data.description = value; break
+      default: continue
+    }
+    hasField ||= Boolean(value)
+  }
+
+  return hasField ? data : null
+}
+
+export function parseQrPayload(text: string): QrData | null {
+  return parseVCard(text)
+    ?? parseEventPayload(text)
+    ?? parseMailto(text)
+    ?? parsePhonePayload(text)
+    ?? parseSmsPayload(text)
+    ?? parseLocationPayload(text)
+}
+
 export type Translate = (id: string, args?: Record<string, string | number>) => string
 
 export function formatQrData(data: QrData, translate: Translate): string {
   if (data.type === QR_DATA_TYPES.url) return data.url
   if (data.type === QR_DATA_TYPES.text) return data.text
+  if (data.type === QR_DATA_TYPES.email) {
+    return [
+      translate('default-email-label', { value: data.email }),
+      data.subject ? translate('default-subject-label', { value: data.subject }) : '',
+      data.body ? translate('default-body-label', { value: data.body }) : '',
+    ].filter(Boolean).join('\n')
+  }
+  if (data.type === QR_DATA_TYPES.phone) return translate('default-phone-label', { value: data.phone })
+  if (data.type === QR_DATA_TYPES.sms) {
+    return [
+      translate('default-phone-label', { value: data.phone }),
+      data.message ? translate('default-message-label', { value: data.message }) : '',
+    ].filter(Boolean).join('\n')
+  }
+  if (data.type === QR_DATA_TYPES.location) {
+    return [
+      data.label ? translate('default-label-label', { value: data.label }) : '',
+      locationQuery(data) ? translate('default-map-query-label', { value: locationQuery(data) }) : '',
+      hasCoordinates(data) ? translate('default-coordinates-label', { value: `${data.latitude}, ${data.longitude}` }) : '',
+    ].filter(Boolean).join('\n')
+  }
+  if (data.type === QR_DATA_TYPES.event) {
+    return [
+      translate('default-title-label', { value: data.title }),
+      data.start ? translate('default-start-label', { value: data.start }) : '',
+      data.end ? translate('default-end-label', { value: data.end }) : '',
+      data.location ? translate('default-location-label', { value: data.location }) : '',
+      data.description ? translate('default-description-label', { value: data.description }) : '',
+    ].filter(Boolean).join('\n')
+  }
   if (data.type === QR_DATA_TYPES.barcode) {
     return [
       translate('default-type-label', { value: data.format }),

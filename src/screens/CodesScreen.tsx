@@ -1,8 +1,8 @@
 import { useCallback, useState, type CSSProperties } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Barcode, Contact, ExternalLink, FileText, Grip, Link, Wifi } from 'lucide-react'
+import { Barcode, CalendarDays, Contact, ExternalLink, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { CODE_TYPES_HELP_URL, QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -15,11 +15,14 @@ import { QrIntroFrame } from '../components/QrIntroFrame'
 import { UrlPreview } from '../components/UrlPreview'
 
 const EMPTY_STATE_SAMPLE_URL = 'https://tryformation.com'
+type CodesViewMode = 'list' | 'grid'
 
 interface CodesScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
   playDelete: () => void
+  playOpen?: () => void
+  playToggle?: () => void
   showLoadEffect?: boolean
 }
 
@@ -27,6 +30,7 @@ interface AddCodeScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
   onDone: () => void
+  playSave?: () => void
 }
 
 function codeTypeIcon(code: SavedQrCode) {
@@ -37,6 +41,16 @@ function codeTypeIcon(code: SavedQrCode) {
       return FileText
     case QR_DATA_TYPES.wifi:
       return Wifi
+    case QR_DATA_TYPES.email:
+      return Mail
+    case QR_DATA_TYPES.phone:
+      return Phone
+    case QR_DATA_TYPES.sms:
+      return MessageSquare
+    case QR_DATA_TYPES.location:
+      return MapPin
+    case QR_DATA_TYPES.event:
+      return CalendarDays
     case QR_DATA_TYPES.vcard:
       return Contact
     case QR_DATA_TYPES.barcode:
@@ -55,6 +69,19 @@ function codePreviewLines(code: SavedQrCode): string[] {
         code.data.ssid || 'Unnamed network',
         code.data.encryption ? `${code.data.encryption} security` : '',
       ].filter(Boolean)
+    case QR_DATA_TYPES.email:
+      return [code.data.email, code.data.subject].filter(Boolean)
+    case QR_DATA_TYPES.phone:
+      return [code.data.phone]
+    case QR_DATA_TYPES.sms:
+      return [code.data.phone, code.data.message].filter(Boolean)
+    case QR_DATA_TYPES.location:
+      return [
+        code.data.query || code.data.label,
+        [code.data.latitude, code.data.longitude].filter(Boolean).join(', '),
+      ].filter(Boolean)
+    case QR_DATA_TYPES.event:
+      return [code.data.start, code.data.location, code.data.description].filter(Boolean)
     case QR_DATA_TYPES.vcard:
       return [
         [code.data.title, code.data.organization].filter(Boolean).join(' · '),
@@ -88,7 +115,7 @@ function CodeThumbnail({ data, text, label }: { data: QrData; text: string; labe
   )
 }
 
-function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; onClick: () => void }) {
+function SortableCode({ id, code, viewMode, onClick }: { id: string; code: SavedQrCode; viewMode: CodesViewMode; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
   const { locale, t } = useI18n()
   const displayName = code.name || code.text
@@ -101,22 +128,24 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
     '--qr-card-index': id,
   } as CSSProperties
 
+  const isGrid = viewMode === 'grid'
+
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className="qr-intro-card card grid w-full cursor-pointer grid-cols-[1.75rem_minmax(0,1fr)_5rem] items-center gap-3 overflow-hidden rounded-2xl bg-base-200 p-4 text-left transition-colors hover:bg-base-300"
+      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 p-4 text-left transition-colors hover:bg-base-300 ${isGrid ? 'grid min-h-72 grid-rows-[auto_1fr_auto] gap-3' : 'grid grid-cols-[1.75rem_minmax(0,1fr)_5rem] items-center gap-3'}`}
       onClick={onClick}
     >
       <button
         type="button"
-        className="btn btn-ghost btn-xs btn-circle cursor-grab touch-none self-start"
+        className={`btn btn-ghost btn-xs btn-circle cursor-grab touch-none self-start ${isGrid ? 'justify-self-start' : ''}`}
         aria-label={t('default-drag-to-reorder')}
         onClick={(event) => event.stopPropagation()}
         {...attributes}
         {...listeners}
       ><Grip size={16} /></button>
-      <div className="min-w-0">
+      <div className={`min-w-0 ${isGrid ? 'order-3' : ''}`}>
         <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-xs font-semibold uppercase tracking-wide opacity-60">
           <TypeIcon size={14} className="shrink-0" aria-hidden="true" />
           <span>{codeFamilyLabel(code.data)} · {codePayloadTypeLabel(code.data)}</span>
@@ -143,8 +172,42 @@ function SortableCode({ id, code, onClick }: { id: string; code: SavedQrCode; on
           </div>
         )}
       </div>
-      <CodeThumbnail data={code.data} text={code.text} label={displayName} />
+      <div className={isGrid ? 'order-2 flex min-h-28 items-center justify-center' : ''}>
+        <CodeThumbnail data={code.data} text={code.text} label={displayName} />
+      </div>
     </li>
+  )
+}
+
+function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; setViewMode: (viewMode: CodesViewMode) => void }) {
+  const changeViewMode = (nextViewMode: CodesViewMode) => {
+    if (viewMode === nextViewMode) return
+    setViewMode(nextViewMode)
+  }
+
+  return (
+    <div className="grid w-full grid-cols-3" aria-label="Code view controls">
+      <div className="join justify-self-center">
+        <button
+          type="button"
+          className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-neutral' : 'btn-ghost'}`}
+          aria-pressed={viewMode === 'list'}
+          onClick={() => changeViewMode('list')}
+        >
+          <List size={16} aria-hidden="true" />
+          List
+        </button>
+        <button
+          type="button"
+          className={`btn btn-sm join-item ${viewMode === 'grid' ? 'btn-neutral' : 'btn-ghost'}`}
+          aria-pressed={viewMode === 'grid'}
+          onClick={() => changeViewMode('grid')}
+        >
+          <Grid2X2 size={16} aria-hidden="true" />
+          Grid
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -162,7 +225,7 @@ function EmptyCodesState() {
   )
 }
 
-export function AddCodeScreen({ codes, setCodes, onDone }: AddCodeScreenProps) {
+export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScreenProps) {
   const [form, setForm] = useState<QrFormState>(emptyQrForm)
 
   return (
@@ -170,15 +233,16 @@ export function AddCodeScreen({ codes, setCodes, onDone }: AddCodeScreenProps) {
       <QrForm form={form} onChange={setForm} />
       <FormButtons
         className="justify-center md:justify-start"
-        onSave={() => { setCodes([...codes, formToSavedCode(form)]); onDone() }}
+        onSave={() => { setCodes([...codes, formToSavedCode(form)]); playSave?.(); onDone() }}
         onCancel={onDone}
       />
     </div>
   )
 }
 
-export function CodesScreen({ codes, setCodes, playDelete, showLoadEffect = false }: CodesScreenProps) {
+export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, showLoadEffect = false }: CodesScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<CodesViewMode>('list')
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -192,6 +256,7 @@ export function CodesScreen({ codes, setCodes, playDelete, showLoadEffect = fals
 
   return (
     <>
+      <CodesViewToggle viewMode={viewMode} setViewMode={(nextViewMode) => { playToggle?.(); setViewMode(nextViewMode) }} />
       {showLoadEffect ? (
         <section className="codes-load-effect flex min-h-80 w-full items-center justify-center rounded-2xl bg-base-200 px-5 py-8" aria-label="Loading codes">
           <HooverGraphic showBar />
@@ -200,9 +265,9 @@ export function CodesScreen({ codes, setCodes, playDelete, showLoadEffect = fals
         <EmptyCodesState />
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={codes.map((_, index) => String(index))} strategy={verticalListSortingStrategy}>
-            <ul className="flex w-full flex-col gap-4">
-              {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} onClick={() => setSelectedIndex(index)} />)}
+          <SortableContext items={codes.map((_, index) => String(index))} strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}>
+            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
+              {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} viewMode={viewMode} onClick={() => { playOpen?.(); setSelectedIndex(index) }} />)}
             </ul>
           </SortableContext>
         </DndContext>

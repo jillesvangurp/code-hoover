@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, Building2, Check, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
+import { ArrowLeft, Barcode, Building2, Check, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -100,6 +100,19 @@ function metadataRowsFor(data: QrData, codeName: string, createdAt: string) {
   ].filter((row): row is [string, string] => Boolean(row[1]))
 }
 
+function DetailList({ rows }: { rows: Array<[string, string]> }) {
+  return (
+    <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+      {rows.map(([label, value]) => (
+        <div key={label} className="grid gap-1 sm:contents">
+          <dt className="text-xs font-semibold uppercase opacity-60">{label}</dt>
+          <dd className="m-0 min-w-0 break-words text-sm">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 function detailRowsFor(data: VCardData, codeName: string, createdAt: string) {
   const address = [data.street, data.city, data.region, data.postalCode, data.country].filter(Boolean).join(', ')
   return [
@@ -118,17 +131,7 @@ function detailRowsFor(data: VCardData, codeName: string, createdAt: string) {
 
 function VCardDetails({ data, codeName, createdAt }: { data: VCardData; codeName: string; createdAt: string }) {
   const rows = detailRowsFor(data, codeName, createdAt)
-
-  return (
-    <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
-      {rows.map(([label, value]) => (
-        <div key={label} className="grid gap-1 sm:contents">
-          <dt className="text-xs font-semibold uppercase opacity-60">{label}</dt>
-          <dd className="m-0 min-w-0 break-words text-sm">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  )
+  return <DetailList rows={rows} />
 }
 
 function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt: string) {
@@ -150,16 +153,84 @@ function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt
 
 function UrlDetails({ data, url, codeName, createdAt }: { data: QrData; url: string; codeName: string; createdAt: string }) {
   const rows = detailRowsForUrl(data, url, codeName, createdAt)
+  return <DetailList rows={rows} />
+}
+
+function BarcodePreview({ data, codeName, createdAt }: { data: QrData & { type: typeof QR_DATA_TYPES.barcode }; codeName: string; createdAt: string }) {
+  return (
+    <section className="mx-auto w-full max-w-xl" aria-label={codeName}>
+      <div className="flex min-h-32 min-w-0 items-center gap-4 rounded-lg border border-base-300 bg-base-100 p-5 text-base-content shadow-xl">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-base-300 bg-white text-black">
+          <Barcode size={30} aria-hidden="true" />
+        </span>
+        <span className="min-w-0 flex-1 text-left">
+          <span className="block truncate text-xl font-semibold">{codeName}</span>
+          <span className="block truncate text-sm opacity-70">{data.format || 'Barcode'}</span>
+          {createdAt && <span className="mt-2 block text-xs font-medium opacity-60">{createdAt}</span>}
+        </span>
+      </div>
+    </section>
+  )
+}
+
+function detailRowsForBarcode(data: QrData & { type: typeof QR_DATA_TYPES.barcode }, codeName: string, createdAt: string) {
+  return [
+    ...metadataRowsFor(data, codeName, createdAt),
+    ['Format', data.format],
+    ['Value', data.text],
+  ].filter((row): row is [string, string] => Boolean(row[1]))
+}
+
+function BarcodeDetails({ data, codeName, createdAt }: { data: QrData & { type: typeof QR_DATA_TYPES.barcode }; codeName: string; createdAt: string }) {
+  return <DetailList rows={detailRowsForBarcode(data, codeName, createdAt)} />
+}
+
+function BarcodeSections({
+  data,
+  codeName,
+  createdAt,
+  panel,
+  setPanel,
+  onCopy,
+  onDelete,
+}: {
+  data: QrData & { type: typeof QR_DATA_TYPES.barcode }
+  codeName: string
+  createdAt: string
+  panel: 'details' | 'raw'
+  setPanel: (panel: 'details' | 'raw') => void
+  onCopy: () => void
+  onDelete: () => void
+}) {
+  const { t } = useI18n()
 
   return (
-    <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
-      {rows.map(([label, value]) => (
-        <div key={label} className="grid gap-1 sm:contents">
-          <dt className="text-xs font-semibold uppercase opacity-60">{label}</dt>
-          <dd className="m-0 min-w-0 break-words text-sm">{value}</dd>
+    <>
+      <BarcodePreview data={data} codeName={codeName} createdAt={createdAt} />
+      <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
+        <div className="flex min-h-36 items-center justify-center rounded-md border border-base-300 bg-white p-3">
+          <BarcodeImage format={data.format} text={data.text} fallbackSize={500} className="max-h-52 max-w-full object-contain" alt={codeName} />
         </div>
-      ))}
-    </dl>
+        <div className="min-w-0">
+          <h3 className="m-0 text-base font-semibold">Scan barcode</h3>
+          <p className="m-0 mt-1 break-words font-mono text-sm opacity-70">{data.text}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" className="btn btn-primary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>
+            <button type="button" className="btn btn-error btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>
+          </div>
+        </div>
+      </section>
+      <section className="mx-auto w-full max-w-xl">
+        <div role="tablist" className="tabs tabs-box w-full">
+          <button type="button" role="tab" aria-selected={panel === 'details'} className={`tab flex-1 ${panel === 'details' ? 'tab-active' : ''}`} onClick={() => setPanel('details')}>Details</button>
+          <button type="button" role="tab" aria-selected={panel === 'raw'} className={`tab flex-1 ${panel === 'raw' ? 'tab-active' : ''}`} onClick={() => setPanel('raw')}>Raw barcode</button>
+        </div>
+        <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
+          {panel === 'details' && <BarcodeDetails data={data} codeName={codeName} createdAt={createdAt} />}
+          {panel === 'raw' && <pre className="m-0 max-h-80 overflow-auto whitespace-pre-wrap break-words text-left text-xs">{formatQrData(data, t)}</pre>}
+        </div>
+      </section>
+    </>
   )
 }
 
@@ -167,6 +238,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const [form, setForm] = useState<QrFormState>(() => dataToForm(code.name, code.data))
   const [vcardPanel, setVcardPanel] = useState<'details' | 'fields' | 'raw'>('details')
   const [urlPanel, setUrlPanel] = useState<'details' | 'fields' | 'raw'>('details')
+  const [barcodePanel, setBarcodePanel] = useState<'details' | 'raw'>('details')
   const { locale, t } = useI18n()
   const close = useCallback(() => onClose(), [onClose])
   useModalHistory(true, close)
@@ -189,16 +261,15 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
       <div className="relative flex max-h-[calc(100dvh-3rem)] w-full max-w-xl flex-col gap-5 overflow-y-auto rounded-3xl bg-base-100 p-6 pt-16 shadow-xl sm:max-h-[calc(100dvh-5rem)] sm:p-10 sm:pt-16 lg:max-w-3xl">
         <button type="button" className="btn btn-ghost btn-sm btn-circle absolute left-4 top-4 z-10" aria-label={t('default-back')} onClick={() => { onClose(); history.back() }}><ArrowLeft /></button>
         {barcodeData ? (
-          <>
-            <div className="mx-auto flex w-full max-w-2xl items-center justify-center bg-white p-5">
-              <BarcodeImage format={barcodeData.format} text={barcodeData.text} fallbackSize={500} className="max-h-[60vh] max-w-full object-contain" alt={code.name || code.text} />
-            </div>
-            <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(barcodeData, t)}</pre>
-            <div className="modal-action justify-center md:justify-end">
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
-              <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
-            </div>
-          </>
+          <BarcodeSections
+            data={barcodeData}
+            codeName={displayCodeName}
+            createdAt={createdAt}
+            panel={barcodePanel}
+            setPanel={setBarcodePanel}
+            onCopy={() => void navigator.clipboard.writeText(copyText)}
+            onDelete={deleteCode}
+          />
         ) : (
           <>
             {isVCard ? (

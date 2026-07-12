@@ -74,14 +74,17 @@ export default function App() {
               aria-selected={screen === tab}
               title={t(`default-${tab}`)}
               className={`tab w-full ${screen === tab ? 'tab-active bg-neutral text-neutral-content' : 'bg-base-100 text-base-content hover:bg-neutral hover:text-neutral-content'}`}
-              onClick={() => setScreen(tab)}
+              onClick={() => {
+                if (screen !== tab) sounds.playTap()
+                setScreen(tab)
+              }}
             ><Icon size={22} aria-hidden="true" /></button>
           ))}
         </div>
         <Suspense fallback={<div className="flex justify-center p-8"><span className="loading loading-spinner loading-lg" /></div>}>
-          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} showLoadEffect={showCodesLoadEffect} />}
+          {screen === 'codes' && <CodesScreen codes={codes} setCodes={setCodes} playDelete={sounds.playDelete} playOpen={sounds.playOpen} playToggle={sounds.playToggle} showLoadEffect={showCodesLoadEffect} />}
           {screen === 'scan' && <ScanScreen codes={codes} setCodes={setCodes} playScanSuccess={sounds.playScanSuccess} />}
-          {screen === 'add' && <AddCodeScreen codes={codes} setCodes={setCodes} onDone={() => setScreen('codes')} />}
+          {screen === 'add' && <AddCodeScreen codes={codes} setCodes={setCodes} onDone={() => setScreen('codes')} playSave={sounds.playSave} />}
           {screen === 'about' && <AboutScreen />}
         </Suspense>
       </article>

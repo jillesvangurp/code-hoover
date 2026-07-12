@@ -40,8 +40,8 @@ export function QrForm({ form, onChange, showTypeSelect = true }: QrFormProps) {
       />
       {showTypeSelect && (
         <select className="select select-bordered w-full" value={form.type} onChange={update('type')}>
-          {(['URL', 'TEXT', 'VCARD', 'WIFI'] as QrType[]).map((type) => (
-            <option key={type} value={type}>{t(`default-${type === 'VCARD' ? 'v-card' : type.toLowerCase()}`)}</option>
+          {(['URL', 'TEXT', 'VCARD', 'WIFI', 'EMAIL', 'PHONE', 'SMS', 'LOCATION', 'EVENT'] as QrType[]).map((type) => (
+            <option key={type} value={type}>{t(`default-${type === 'VCARD' ? 'v-card' : type === 'LOCATION' ? 'maps' : type.toLowerCase()}`)}</option>
           ))}
         </select>
       )}
@@ -51,6 +51,31 @@ export function QrForm({ form, onChange, showTypeSelect = true }: QrFormProps) {
         {input('ssid', 'default-ssid')}
         {input('password', 'default-password')}
         {input('encryption', 'default-encryption')}
+      </>}
+      {form.type === 'EMAIL' && <>
+        {input('email', 'default-email')}
+        {input('emailSubject', 'default-subject')}
+        {input('emailBody', 'default-body', 4)}
+      </>}
+      {form.type === 'PHONE' && input('phone', 'default-phone')}
+      {form.type === 'SMS' && <>
+        {input('smsPhone', 'default-phone')}
+        {input('smsMessage', 'default-message', 3)}
+      </>}
+      {form.type === 'LOCATION' && <>
+        {input('locationLabel', 'default-map-label')}
+        {input('locationQuery', 'default-map-query')}
+        <div className="grid gap-2 sm:grid-cols-2">
+          {input('locationLatitude', 'default-latitude')}
+          {input('locationLongitude', 'default-longitude')}
+        </div>
+      </>}
+      {form.type === 'EVENT' && <>
+        {input('eventTitle', 'default-event-title')}
+        {input('eventStart', 'default-start')}
+        {input('eventEnd', 'default-end')}
+        {input('eventLocation', 'default-location')}
+        {input('eventDescription', 'default-description', 3)}
       </>}
       {form.type === 'VCARD' && <>
         {input('vcardFullName', 'default-full-name')}
