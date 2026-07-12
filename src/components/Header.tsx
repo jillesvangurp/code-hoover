@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Cloud, Download, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
+import { Cloud, Download, Info, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
 import type { SavedQrCode } from '../domain/qr'
 import { parseSavedCodes } from '../domain/qr'
 import { LOCALES, useI18n } from '../i18n/context'
@@ -143,7 +143,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
 
   const menuItems = (
     <>
-      <li><button type="button" className="w-full text-left" onClick={() => { setScreen('about'); closeMenus() }}>{t('default-about')}</button></li>
+      <li><button type="button" className="w-full text-left" onClick={() => { setScreen('about'); closeMenus() }}><Info size={16} />{t('default-about')}</button></li>
       <li>
         <button type="button" className="w-full items-start gap-3 text-left" onClick={installCodeHoover}>
           <Download size={16} className="mt-0.5 shrink-0" />
