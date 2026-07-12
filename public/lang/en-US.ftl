@@ -1,4 +1,4 @@
-default-page-title=Code Hoover
+default-page-title=Code Hoover 2.0
 default-welcome-text=
     Point your camera at codes to scan and copy.
 default-scan=SCAN
@@ -118,11 +118,11 @@ default-type-label=Type: { $value }
 default-address-label=Address: { $value }
 default-note-label=Note: { $value }
 default-about=About
-default-install-app=Install Code Hoover
+default-install-app=Install Code Hoover 2.0
 default-install-app-description=Use it like an app and keep the scanner available offline.
-default-install-app-fallback=Use your browser menu to add Code Hoover to your home screen.
+default-install-app-fallback=Use your browser menu to add Code Hoover 2.0 to your home screen.
 default-about-intro=
-    Code Hoover lets you scan and generate QR codes directly in the browser. Suck up all the codes! And then add
+    Code Hoover 2.0 lets you scan and generate QR codes directly in the browser. Suck up all the codes! And then add
     them to your list of saved codes so you can show them to others. Great for wifi credentials, vcards, linkedin profile links, and many
     other things.
 default-github-repo=GitHub repository
@@ -135,6 +135,6 @@ default-original-code-hoover=original Code Hoover
 default-last-updated=Last updated: { $value }
 default-open-on-different-device=Open on another device
 default-migration-instructions=
-    Migration instructions: Simply open Code Hoover on another device with this QR code.
+    Migration instructions: Simply open Code Hoover 2.0 on another device with this QR code.
     Then go to the scan page to hoover up any codes you have from the codes screen here.
     And then save the ones you want to keep.

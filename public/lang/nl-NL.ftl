@@ -1,4 +1,4 @@
-default-page-title=Code Hoover
+default-page-title=Code Hoover 2.0
 default-welcome-text=
     Richt je camera op codes om te scannen en kopiëren.
 default-scan=SCAN
@@ -94,10 +94,10 @@ default-type-label=Type: { $value }
 default-address-label=Adres: { $value }
 default-note-label=Notitie: { $value }
 default-about=About
-default-install-app=Install Code Hoover
+default-install-app=Install Code Hoover 2.0
 default-install-app-description=Use it like an app and keep the scanner available offline.
-default-install-app-fallback=Use your browser menu to add Code Hoover to your home screen.
-default-about-intro=Code Hoover lets you scan and generate QR codes directly in the browser.
+default-install-app-fallback=Use your browser menu to add Code Hoover 2.0 to your home screen.
+default-about-intro=Code Hoover 2.0 lets you scan and generate QR codes directly in the browser.
 default-github-repo=GitHub repository
 default-veritasium-video=Veritasium video on QR codes
 default-open-source-statement=This project is free and open source.
@@ -107,4 +107,4 @@ default-project-based-on-middle=is based on the work of Jilles Van Gurp and the 
 default-original-code-hoover=original Code Hoover
 default-last-updated=Last updated: { $value }
 default-open-on-different-device=Open on another device
-default-migration-instructions=Migration instructions: Simply open Code Hoover on another device with this QR code and then go to the scan page to hoover up any codes you have on this device and save them.
+default-migration-instructions=Migration instructions: Simply open Code Hoover 2.0 on another device with this QR code and then go to the scan page to hoover up any codes you have on this device and save them.

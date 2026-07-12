@@ -1,6 +1,6 @@
 {
-  "name": "Code Hoover",
-  "short_name": "Code Hoover",
+  "name": "Code Hoover 2.0",
+  "short_name": "Code Hoover 2.0",
   "description": "Scan, create, and save QR codes in your browser.",
   "start_url": "/",
   "scope": "/",

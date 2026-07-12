@@ -30,7 +30,7 @@ export function HooverGraphic({ showBar = false, className = '' }: HooverGraphic
         <img className="code-hoover-logo loading-splash-logo" src="/favicon.svg" alt="" />
       </div>
       <div className="space-y-3">
-        <p className="m-0 text-2xl font-black uppercase tracking-[0.14em]">Code Hoover</p>
+        <p className="m-0 text-2xl font-black uppercase tracking-[0.14em]">Code Hoover 2.0</p>
         {showBar && <div className="loading-splash-bar" />}
       </div>
     </div>
