@@ -127,6 +127,7 @@ default-about-intro=
 default-github-repo=GitHub repository
 default-veritasium-video=Veritasium video on QR codes
 default-open-source-statement=This project is free and open source.
+default-last-updated=Last updated: { $value }
 default-open-on-different-device=Open on another device
 default-migration-instructions=
     Migration instructions: Simply open Code Hoover on another device with this QR code.
