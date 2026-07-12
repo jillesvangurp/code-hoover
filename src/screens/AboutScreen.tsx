@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n/context'
 import { CODE_HOOVER_APP_URL, CODE_HOOVER_REPOSITORY_URL } from '../constants/links'
+import { HooverGraphic } from '../components/HooverGraphic'
 import { QrIntroFrame } from '../components/QrIntroFrame'
 
 export function AboutScreen() {
@@ -7,6 +8,7 @@ export function AboutScreen() {
   return (
     <div className="flex flex-col items-start gap-4 text-left">
       <h2 className="text-xl font-bold">{t('default-about')}</h2>
+      <HooverGraphic className="self-center py-2" />
       <p>{t('default-about-intro')}</p>
       <p>{t('default-migration-instructions')}</p>
       <div className="flex w-full flex-col items-center gap-3 py-2">
