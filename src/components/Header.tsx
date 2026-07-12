@@ -8,6 +8,11 @@ import type { Screen } from '../App'
 import { CODE_HOOVER_APP_URL } from '../constants/links'
 import { FixedCodeModal } from './FixedCodeModal'
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
 interface HeaderProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
@@ -23,6 +28,7 @@ interface HeaderProps {
 export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled, setSoundEnabled, playSoundPreview, accountSync }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [openDeviceModal, setOpenDeviceModal] = useState(false)
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [accountEmail, setAccountEmail] = useState('')
   const [accountPassword, setAccountPassword] = useState('')
   const fileInput = useRef<HTMLInputElement>(null)
@@ -42,6 +48,16 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
 
     document.addEventListener('pointerdown', closeDesktopMenuOnOutsideClick)
     return () => document.removeEventListener('pointerdown', closeDesktopMenuOnOutsideClick)
+  }, [])
+
+  useEffect(() => {
+    const captureInstallPrompt = (event: Event) => {
+      event.preventDefault()
+      setInstallPrompt(event as BeforeInstallPromptEvent)
+    }
+
+    window.addEventListener('beforeinstallprompt', captureInstallPrompt)
+    return () => window.removeEventListener('beforeinstallprompt', captureInstallPrompt)
   }, [])
 
   const importCodes = (event: ChangeEvent<HTMLInputElement>) => {
@@ -110,11 +126,33 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
     closeMenus()
   }
 
+  const installCodeHoover = () => {
+    if (!installPrompt) {
+      window.alert(t('default-install-app-fallback'))
+      closeMenus()
+      return
+    }
+
+    void installPrompt.prompt().then(() => installPrompt.userChoice).finally(() => {
+      setInstallPrompt(null)
+      closeMenus()
+    })
+  }
+
   const accountBusy = accountSync.status.state === 'syncing'
 
   const menuItems = (
     <>
       <li><button type="button" className="w-full text-left" onClick={() => { setScreen('about'); closeMenus() }}>{t('default-about')}</button></li>
+      <li>
+        <button type="button" className="w-full items-start gap-3 text-left" onClick={installCodeHoover}>
+          <Download size={16} className="mt-0.5 shrink-0" />
+          <span className="flex min-w-0 flex-col gap-1">
+            <span className="font-semibold">{t('default-install-app')}</span>
+            <span className="text-xs leading-snug opacity-70">{t('default-install-app-description')}</span>
+          </span>
+        </button>
+      </li>
       <li><button type="button" className="w-full" onClick={() => { setOpenDeviceModal(true); closeMenus() }}><QrCode size={16} />{t('default-open-on-different-device')}</button></li>
       <li><button type="button" className="w-full" onClick={() => { fileInput.current?.click(); closeMenus() }}><Upload size={16} />{t('default-import-json')}</button></li>
       <li><button type="button" className="w-full" onClick={exportCodes}><Download size={16} />{t('default-export')}</button></li>

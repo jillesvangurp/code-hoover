@@ -5,6 +5,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
+    manifest: 'asset-manifest.json',
     sourcemap: true,
   },
   test: {

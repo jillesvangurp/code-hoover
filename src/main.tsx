@@ -9,3 +9,9 @@ createRoot(document.getElementById('root')!).render(
     <I18nProvider><App /></I18nProvider>
   </StrictMode>,
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    void navigator.serviceWorker.register('/service-worker.js').catch(() => undefined)
+  })
+}

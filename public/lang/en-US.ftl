@@ -117,6 +117,9 @@ default-type-label=Type: { $value }
 default-address-label=Address: { $value }
 default-note-label=Note: { $value }
 default-about=About
+default-install-app=Install Code Hoover
+default-install-app-description=Use it like an app and keep the scanner available offline.
+default-install-app-fallback=Use your browser menu to add Code Hoover to your home screen.
 default-about-intro=
     Code Hoover lets you scan and generate QR codes directly in the browser. Suck up all the codes! And then add
     them to your list of saved codes so you can show them to others. Great for wifi credentials, vcards, linkedin profile links, and many
