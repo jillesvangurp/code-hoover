@@ -163,16 +163,6 @@ function SortableCode({ id, code, viewMode, onClick }: { id: string; code: Saved
         <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <CodeTypeBadge data={code.data} />
           <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{codeFamilyLabel(code.data)}</span>
-          <a
-            className="inline-flex items-center gap-1 normal-case tracking-normal underline-offset-2 hover:underline"
-            href={CODE_TYPES_HELP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => event.stopPropagation()}
-          >
-            {t('default-code-types')}
-            <ExternalLink size={12} aria-hidden="true" />
-          </a>
         </div>
         <p className="m-0 truncate text-lg font-semibold leading-tight">{displayName}</p>
         {createdAt && <p className="m-0 mt-1 truncate text-xs opacity-60">{t('default-created')}: {createdAt}</p>}
@@ -194,13 +184,15 @@ function SortableCode({ id, code, viewMode, onClick }: { id: string; code: Saved
 }
 
 function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; setViewMode: (viewMode: CodesViewMode) => void }) {
+  const { t } = useI18n()
   const changeViewMode = (nextViewMode: CodesViewMode) => {
     if (viewMode === nextViewMode) return
     setViewMode(nextViewMode)
   }
 
   return (
-    <div className="grid w-full grid-cols-3" aria-label="Code view controls">
+    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2" aria-label="Code view controls">
+      <div />
       <div className="join justify-self-center">
         <button
           type="button"
@@ -221,6 +213,15 @@ function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; s
           Grid
         </button>
       </div>
+      <a
+        className="inline-flex min-w-0 items-center gap-1 justify-self-end truncate text-xs font-semibold underline-offset-2 opacity-70 hover:underline"
+        href={CODE_TYPES_HELP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        <span className="truncate">{t('default-code-types')}</span>
+        <ExternalLink size={12} className="shrink-0" aria-hidden="true" />
+      </a>
     </div>
   )
 }

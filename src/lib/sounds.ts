@@ -17,12 +17,6 @@ export class SoundEffects {
     this.createAudio('/sounds/soft-confirm.wav', 0.3),
     this.createAudio('/sounds/happy-pop.wav', 0.28),
   ]
-  private readonly codeLoads = [
-    this.createAudio('/sounds/code-load-1.wav', 0.11),
-    this.createAudio('/sounds/code-load-2.wav', 0.1),
-    this.createAudio('/sounds/code-load-3.wav', 0.1),
-    this.createAudio('/sounds/code-load-4.wav', 0.1),
-  ]
   private tapIndex = 0
   private successIndex = 0
   private completeIndex = 0
@@ -75,5 +69,5 @@ export class SoundEffects {
   }
   playSave = () => this.playFromPool(this.successes, 1)
   playDelete = () => this.play(this.remove)
-  playCodeLoad = (index: number) => this.playFromPool(this.codeLoads, index)
+  playCodeLoad = () => this.playFromPool(this.taps, 2)
 }
