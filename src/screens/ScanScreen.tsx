@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
-import { Check } from 'lucide-react'
+import { Check, X } from 'lucide-react'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
 import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseSavedCode, parseVCard, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -145,7 +145,10 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
       </section>
       {scans.length > 0 && (
         <>
-          <p className="mb-2 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
+          <div className="mb-2 flex w-full items-center justify-between gap-3">
+            <p className="m-0 font-semibold">{t('default-scanned-codes', { count: scans.length })}</p>
+            <button type="button" className="btn btn-ghost btn-xs" onClick={() => setScans([])}><X size={14} />{t('default-clear')}</button>
+          </div>
           <ul className="w-full space-y-2">
             {scans.map((scan) => (
               <li key={scan.text} className="flex w-full items-start gap-3 rounded-md bg-base-200 p-3">
