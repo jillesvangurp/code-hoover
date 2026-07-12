@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, Building2, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
+import { ArrowLeft, Building2, Check, Copy, Globe, Mail, MapPin, Phone, Trash2, UserRound } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, formatQrData, qrDataAsText, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -83,8 +83,40 @@ function BusinessCardPreview({ data, codeName }: { data: VCardData; codeName: st
   )
 }
 
+function detailRowsFor(data: VCardData, codeName: string) {
+  const address = [data.street, data.city, data.region, data.postalCode, data.country].filter(Boolean).join(', ')
+  return [
+    ['Card name', codeName],
+    ['Name', compactName(data, codeName)],
+    ['Title', data.title],
+    ['Organization', data.organization],
+    ['Email', data.email],
+    ['Phone', data.phone],
+    ['URL', data.url],
+    ['Address', address],
+    ['Nickname', data.nickname],
+    ['Note', data.note],
+  ].filter((row): row is [string, string] => Boolean(row[1]))
+}
+
+function VCardDetails({ data, codeName }: { data: VCardData; codeName: string }) {
+  const rows = detailRowsFor(data, codeName)
+
+  return (
+    <dl className="grid gap-3 sm:grid-cols-[9rem_minmax(0,1fr)]">
+      {rows.map(([label, value]) => (
+        <div key={label} className="grid gap-1 sm:contents">
+          <dt className="text-xs font-semibold uppercase opacity-60">{label}</dt>
+          <dd className="m-0 min-w-0 break-words text-sm">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  )
+}
+
 export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const [form, setForm] = useState<QrFormState>(() => dataToForm(code.name, code.data))
+  const [vcardPanel, setVcardPanel] = useState<'details' | 'fields' | 'raw'>('details')
   const { t } = useI18n()
   const close = useCallback(() => onClose(), [onClose])
   useModalHistory(true, close)
@@ -92,6 +124,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const barcodeData = code.data.type === QR_DATA_TYPES.barcode ? code.data : null
   const isVCard = data.type === QR_DATA_TYPES.vcard
   const copyText = barcodeData ? barcodeData.text : qrDataAsText(data)
+  const displayCodeName = form.name || code.name
   const deleteCode = () => {
     if (!window.confirm(t('default-delete-confirm'))) return
     onDelete()
@@ -116,16 +149,48 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
           </>
         ) : (
           <>
-            {isVCard && <BusinessCardPreview data={data} codeName={code.name} />}
-            <QrIntroFrame text={qrDataAsText(data)} size={500} className={`qr-detail-code-frame ${isVCard ? 'qr-detail-code-frame-vcard' : ''}`} label={code.name || code.text} />
-            <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
-            <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
-            <FormButtons
-              className="modal-action justify-center md:justify-end"
-              onCopy={() => void navigator.clipboard.writeText(copyText)}
-              onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
-              onDelete={deleteCode}
-            />
+            {isVCard ? (
+              <>
+                <BusinessCardPreview data={data} codeName={displayCodeName} />
+                <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
+                  <div className="rounded-md border border-base-300 bg-white p-2">
+                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="m-0 text-base font-semibold">Scan contact</h3>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
+                      <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
+                    </div>
+                  </div>
+                </section>
+                <section className="mx-auto w-full max-w-xl">
+                  <div role="tablist" className="tabs tabs-box w-full">
+                    <button type="button" role="tab" aria-selected={vcardPanel === 'details'} className={`tab flex-1 ${vcardPanel === 'details' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('details')}>Details</button>
+                    <button type="button" role="tab" aria-selected={vcardPanel === 'fields'} className={`tab flex-1 ${vcardPanel === 'fields' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('fields')}>Fields</button>
+                    <button type="button" role="tab" aria-selected={vcardPanel === 'raw'} className={`tab flex-1 ${vcardPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('raw')}>Raw vCard</button>
+                  </div>
+                  <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
+                    {vcardPanel === 'details' && <VCardDetails data={data} codeName={displayCodeName} />}
+                    {vcardPanel === 'fields' && <QrForm form={form} onChange={setForm} showTypeSelect={false} />}
+                    {vcardPanel === 'raw' && <pre className="m-0 max-h-80 overflow-auto whitespace-pre-wrap break-words text-left text-xs">{qrDataAsText(data)}</pre>}
+                  </div>
+                </section>
+              </>
+            ) : (
+              <>
+                <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} />
+                <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
+                <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
+                <FormButtons
+                  className="modal-action justify-center md:justify-end"
+                  onCopy={() => void navigator.clipboard.writeText(copyText)}
+                  onSave={() => { onSave(formToSavedCode(form)); onClose(); history.back() }}
+                  onDelete={deleteCode}
+                />
+              </>
+            )}
           </>
         )}
       </div>
