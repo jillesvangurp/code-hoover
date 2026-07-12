@@ -262,6 +262,10 @@
     aspect-ratio: 1 / 1;
     width: min(100%, 72vw, 28rem, 50vh);
     height: auto;
+    appearance: none;
+    border: 0;
+    padding: 0;
+    transition: width 180ms ease;
   }
 
   .qr-detail-code-frame-vcard {
@@ -270,6 +274,22 @@
 
   .qr-detail-code-frame-large {
     width: min(100%, 78vw, 32rem, 72vh);
+  }
+
+  .qr-detail-code-frame-expandable {
+    cursor: zoom-in;
+  }
+
+  .qr-detail-code-frame-expanded {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 9999;
+    width: min(88vw, 88dvh, 42rem);
+    max-width: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 0.3);
+    cursor: zoom-out;
   }
 
   .qr-detail-code-frame .qr-intro-finder {

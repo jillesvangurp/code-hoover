@@ -188,7 +188,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                 <BusinessCardPreview data={data} codeName={displayCodeName} />
                 <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
                   <div className="rounded-md border border-base-300 bg-white p-2">
-                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} />
+                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} expandable />
                   </div>
                   <div className="min-w-0">
                     <h3 className="m-0 text-base font-semibold">Scan contact</h3>
@@ -221,7 +221,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     </section>
                     <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
                       <div className="rounded-md border border-base-300 bg-white p-2">
-                        <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} />
+                        <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} expandable />
                       </div>
                       <div className="min-w-0">
                         <h3 className="m-0 text-base font-semibold">Open link</h3>
@@ -248,7 +248,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                   </>
                 ) : (
                   <>
-                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} />
+                    <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame" label={code.name || code.text} expandable />
                     <pre className="mx-auto max-w-sm whitespace-pre-wrap break-words text-left">{formatQrData(data, t)}</pre>
                     <div className="mx-auto flex w-full max-w-sm flex-col gap-2"><QrForm form={form} onChange={setForm} showTypeSelect={false} /></div>
                     <FormButtons
