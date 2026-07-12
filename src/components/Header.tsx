@@ -140,6 +140,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
   }
 
   const accountBusy = accountSync.status.state === 'syncing'
+  const selectedLocale = LOCALES.find(({ id }) => id === locale) ?? LOCALES[0]
 
   const menuItems = (
     <>
@@ -157,17 +158,20 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
       <li><button type="button" className="w-full" onClick={() => { fileInput.current?.click(); closeMenus() }}><Upload size={16} />{t('default-import-json')}</button></li>
       <li><button type="button" className="w-full" onClick={exportCodes}><Download size={16} />{t('default-export')}</button></li>
       <li>
-        <div className="flex flex-wrap justify-center gap-2">
-          {LOCALES.map(({ id, flag }) => (
-            <button
-              key={id}
-              type="button"
-              className={`btn btn-ghost btn-sm w-8 text-2xl filter hover:grayscale-0 ${locale === id ? 'grayscale-0' : 'grayscale'}`}
-              title={id}
-              aria-label={id}
-              onClick={() => { setLocale(id); closeMenus() }}
-            >{flag}</button>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-base-content">
+          <span className="text-sm font-medium">{t('default-language')}: {selectedLocale.name}</span>
+          <span className="flex flex-wrap justify-end gap-1">
+            {LOCALES.map(({ id, flag, name }) => (
+              <button
+                key={id}
+                type="button"
+                className={`btn btn-ghost btn-sm w-8 text-2xl filter hover:grayscale-0 ${locale === id ? 'grayscale-0' : 'grayscale'}`}
+                title={name}
+                aria-label={name}
+                onClick={() => { setLocale(id); closeMenus() }}
+              >{flag}</button>
+            ))}
+          </span>
         </div>
       </li>
       <li>

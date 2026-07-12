@@ -2,11 +2,11 @@ import type { FluentVariable } from '@fluent/bundle'
 import { createContext, useContext } from 'react'
 
 export const LOCALES = [
-  { id: 'en-US', flag: '🇺🇸' },
-  { id: 'de-DE', flag: '🇩🇪' },
-  { id: 'nl-NL', flag: '🇳🇱' },
-  { id: 'fr-FR', flag: '🇫🇷' },
-  { id: 'ja-JP', flag: '🇯🇵' },
+  { id: 'en-US', flag: '🇺🇸', name: 'English' },
+  { id: 'de-DE', flag: '🇩🇪', name: 'Deutsch' },
+  { id: 'nl-NL', flag: '🇳🇱', name: 'Nederlands' },
+  { id: 'fr-FR', flag: '🇫🇷', name: 'Français' },
+  { id: 'ja-JP', flag: '🇯🇵', name: '日本語' },
 ] as const
 
 export type Locale = (typeof LOCALES)[number]['id']

@@ -94,6 +94,7 @@ default-type-label=Typ: { $value }
 default-address-label=Adresse: { $value }
 default-note-label=Notiz: { $value }
 default-about=About
+default-language=Language
 default-install-app=Install Code Hoover 2.0
 default-install-app-description=Use it like an app and keep the scanner available offline.
 default-install-app-fallback=Use your browser menu to add Code Hoover 2.0 to your home screen.
