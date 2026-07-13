@@ -257,3 +257,5 @@ default-phone-number=電話番号
 default-sms-message=SMSメッセージ
 default-open-map=地図を開く
 default-add-event=予定を追加
+default-enlarge-code={ $name }を拡大
+default-shrink-code={ $name }を縮小

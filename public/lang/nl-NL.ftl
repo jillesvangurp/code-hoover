@@ -257,3 +257,5 @@ default-phone-number=telefoonnummer
 default-sms-message=Sms-bericht
 default-open-map=Kaart openen
 default-add-event=Gebeurtenis toevoegen
+default-enlarge-code={ $name } vergroten
+default-shrink-code={ $name } verkleinen

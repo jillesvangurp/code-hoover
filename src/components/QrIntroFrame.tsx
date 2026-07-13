@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
 import { useState } from 'react'
+import { useI18n } from '../i18n/context'
 import { QrCodeImage } from './QrCodeImage'
 
 interface QrIntroFrameProps {
@@ -12,6 +13,7 @@ interface QrIntroFrameProps {
 }
 
 export function QrIntroFrame({ text, label, size = 200, className = '', style, expandable = false }: QrIntroFrameProps) {
+  const { t } = useI18n()
   const [expanded, setExpanded] = useState(false)
   const toggleExpanded = () => {
     if (expandable) setExpanded((current) => !current)
@@ -40,7 +42,7 @@ export function QrIntroFrame({ text, label, size = 200, className = '', style, e
       type="button"
       className={frameClassName}
       style={style}
-      aria-label={expanded ? `Shrink ${label}` : `Enlarge ${label}`}
+      aria-label={t(expanded ? 'default-shrink-code' : 'default-enlarge-code', { name: label })}
       aria-pressed={expanded}
       onClick={toggleExpanded}
     >

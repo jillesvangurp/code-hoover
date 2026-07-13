@@ -207,7 +207,7 @@
   .barcode-intro-matrix {
     position: absolute;
     inset: -25% 0;
-    z-index: 1;
+    z-index: 3;
     width: 100%;
     height: 150%;
     object-fit: fill;
@@ -225,6 +225,34 @@
   .barcode-intro-frame-ready .barcode-intro-matrix {
     animation: barcode-matrix-echo 820ms steps(8, end) both;
     animation-delay: calc(var(--qr-card-index, 0) * 80ms);
+  }
+
+  .barcode-intro-frame-ready .barcode-intro-code {
+    animation: barcode-code-enter 720ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--qr-card-index, 0) * 80ms);
+  }
+
+  .barcode-detail-frame {
+    appearance: none;
+    border: 0;
+    transition: width 180ms ease, height 180ms ease;
+  }
+
+  .barcode-detail-frame-expandable {
+    cursor: zoom-in;
+  }
+
+  .barcode-detail-frame-expanded {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    z-index: 9999;
+    width: min(92vw, 60rem) !important;
+    height: min(70dvh, 26rem) !important;
+    max-width: none;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 1.5rem 4rem rgb(0 0 0 / 0.3);
+    cursor: zoom-out;
   }
 
   .qr-intro-code-frame {
@@ -362,7 +390,8 @@
     .qr-intro-code-frame::before,
     .qr-intro-code-frame::after,
     .qr-intro-code,
-    .barcode-intro-matrix {
+    .barcode-intro-matrix,
+    .barcode-intro-code {
       animation: none;
     }
 
@@ -452,6 +481,20 @@
   100% {
     opacity: 0;
     transform: translateY(4%) scaleY(1.08);
+  }
+}
+
+@keyframes barcode-code-enter {
+  0% {
+    opacity: 0.35;
+    clip-path: inset(0 100% 0 0);
+  }
+  65% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
   }
 }
 

@@ -262,3 +262,5 @@ default-phone-number=phone number
 default-sms-message=SMS message
 default-open-map=Open map
 default-add-event=Add event
+default-enlarge-code=Enlarge { $name }
+default-shrink-code=Shrink { $name }

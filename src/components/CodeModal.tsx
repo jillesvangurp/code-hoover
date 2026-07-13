@@ -522,9 +522,10 @@ function BarcodeSections({
             format={data.format}
             text={data.text}
             fallbackSize={500}
-            className="h-32 w-full"
+            className="barcode-detail-frame h-32 w-full"
             imageClassName="max-h-full max-w-full object-contain"
             alt={codeName}
+            expandable
           />
         </div>
         <div className="min-w-0">

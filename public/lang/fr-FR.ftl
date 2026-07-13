@@ -257,3 +257,5 @@ default-phone-number=numéro de téléphone
 default-sms-message=Message SMS
 default-open-map=Ouvrir la carte
 default-add-event=Ajouter l’événement
+default-enlarge-code=Agrandir { $name }
+default-shrink-code=Réduire { $name }
