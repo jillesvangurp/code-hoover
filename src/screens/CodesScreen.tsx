@@ -82,15 +82,15 @@ function codeTypeIcon(data: QrData) {
   }
 }
 
-function CodeTypeBadge({ data, compactGrid = false }: { data: QrData; compactGrid?: boolean }) {
+function CodeTypeBadge({ data }: { data: QrData }) {
   const TypeIcon = codeTypeIcon(data)
   const FamilyIcon = data.type === QR_DATA_TYPES.barcode ? Barcode : QrCode
   const label = codePayloadTypeLabel(data)
 
   return (
-    <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-base-300 bg-base-100 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-base-content shadow-sm" aria-label={compactGrid ? label : undefined} title={label}>
+    <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-base-300 bg-base-100 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-base-content shadow-sm">
       <TypeIcon size={15} className="shrink-0" aria-hidden="true" />
-      <span className={`truncate ${compactGrid ? 'lg:hidden' : ''}`}>{label}</span>
+      <span className="truncate">{label}</span>
       <FamilyIcon size={14} className="shrink-0 opacity-60" aria-hidden="true" />
     </span>
   )
@@ -182,7 +182,7 @@ function CodeCard({ code, sortableId, viewMode, onClick }: { code: SavedQrCode; 
       <div className={`min-w-0 ${isGrid ? 'order-2' : ''}`}>
         <div className="mb-2 flex min-w-0 items-start justify-between gap-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-            <CodeTypeBadge data={code.data} compactGrid={isGrid} />
+            <CodeTypeBadge data={code.data} />
             {!isGrid && <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{codeFamilyLabel(code.data)}</span>}
           </div>
           <button
@@ -334,7 +334,7 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={sortedCodes.map(({ id }) => id)} strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}>
-            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3' : 'flex w-full flex-col gap-4'}>
+            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
               {sortedCodes.map(({ code, originalIndex, id }) => <CodeCard key={id} sortableId={id} code={code} viewMode={viewMode} onClick={() => { playOpen?.(); setSelectedIndex(originalIndex) }} />)}
             </ul>
           </SortableContext>
