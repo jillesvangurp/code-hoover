@@ -150,9 +150,9 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
   const menuItems = (
     <>
       <li>
-        <div className="flex min-w-0 flex-col gap-2 rounded-md border border-base-300 bg-base-100 p-3 text-base-content">
+        <div className="!flex min-w-0 flex-col items-stretch gap-2 rounded-md border border-base-300 bg-base-100 p-3 text-base-content">
           <div className="flex items-center justify-between gap-2">
-            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Cloud size={18} />{t('default-account-sync')}</span>
+            <span className="flex min-w-0 items-center gap-2 text-sm font-medium"><Cloud size={18} />{t('default-account-sync')}</span>
             <span className={`badge badge-sm ${accountSync.signedIn ? 'badge-neutral' : 'badge-ghost'}`}>{accountSync.signedIn ? t('default-on') : t('default-off')}</span>
           </div>
           <p className="m-0 text-xs opacity-80">{t(accountSync.status.messageId)}</p>
@@ -191,7 +191,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </div>
       </li>
       <li>
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-base-content">
+        <div className="!flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-base-content">
           <span className="text-sm font-medium">{t('default-language')}: {selectedLocale.name}</span>
           <span className="flex flex-wrap justify-end gap-1">
             {LOCALES.map(({ id, flag, name }) => (
@@ -208,13 +208,13 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </div>
       </li>
       <li>
-        <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${dark ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
+        <label className={`!flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${dark ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
           <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
             {dark ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
             <span>{t('default-dark-mode')}</span>
           </span>
           <span className="flex shrink-0 items-center gap-2">
-            <span className={`badge badge-sm min-w-10 border-0 px-2 text-xs font-bold uppercase ${dark ? 'bg-neutral-content text-neutral' : 'bg-base-300 text-base-content'}`}>
+            <span className={`badge badge-sm min-w-10 border-0 px-2 text-xs font-medium uppercase ${dark ? 'bg-neutral-content text-neutral' : 'bg-base-300 text-base-content'}`}>
               {dark ? t('default-on') : t('default-off')}
             </span>
             <input type="checkbox" className="toggle toggle-sm" checked={dark} aria-label={t('default-dark-mode')} onChange={(event) => toggleTheme(event.target.checked)} />
@@ -222,13 +222,13 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </label>
       </li>
       <li>
-        <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${soundEnabled ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
+        <label className={`!flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${soundEnabled ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
           <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
             {soundEnabled ? <Volume2 size={18} aria-hidden="true" /> : <VolumeX size={18} aria-hidden="true" />}
             <span>{t('default-sound-effects')}</span>
           </span>
           <span className="flex shrink-0 items-center gap-2">
-            <span className={`badge badge-sm min-w-10 border-0 px-2 text-xs font-bold uppercase ${soundEnabled ? 'bg-neutral-content text-neutral' : 'bg-base-300 text-base-content'}`}>
+            <span className={`badge badge-sm min-w-10 border-0 px-2 text-xs font-medium uppercase ${soundEnabled ? 'bg-neutral-content text-neutral' : 'bg-base-300 text-base-content'}`}>
               {soundEnabled ? t('default-on') : t('default-off')}
             </span>
             <input type="checkbox" className="toggle toggle-sm" checked={soundEnabled} aria-label={t('default-sound-effects')} onChange={(event) => toggleSound(event.target.checked)} />
@@ -236,23 +236,19 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </label>
       </li>
       <li className="mt-2 border-t border-base-300 pt-2">
-        <a className="w-full" href={CODE_TYPES_HELP_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenus}>
-          <ExternalLink size={16} />{t('default-code-types')}
+        <a className="w-full text-sm font-normal text-base-content no-underline" href={CODE_TYPES_HELP_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenus}>
+          <ExternalLink size={18} />{t('default-code-types')}
         </a>
       </li>
-      <li><button type="button" className="w-full text-left" onClick={() => { playComplete(); setScreen('about'); closeMenus() }}><Info size={16} />{t('default-about')}</button></li>
       <li>
-        <button type="button" className="w-full items-start gap-3 text-left" onClick={installCodeHoover}>
-          <Download size={16} className="mt-0.5 shrink-0" />
-          <span className="flex min-w-0 flex-col gap-1">
-            <span className="font-semibold">{t('default-install-app')}</span>
-            <span className="text-xs leading-snug opacity-70">{t('default-install-app-description')}</span>
-          </span>
+        <button type="button" className="w-full text-left text-sm font-normal" onClick={installCodeHoover}>
+          <Download size={18} />{t('default-install-app')}
         </button>
       </li>
-      <li><button type="button" className="w-full" onClick={() => { setOpenDeviceModal(true); closeMenus() }}><QrCode size={16} />{t('default-open-on-different-device')}</button></li>
-      <li><button type="button" className="w-full" onClick={() => { fileInput.current?.click(); closeMenus() }}><Upload size={16} />{t('default-import-json')}</button></li>
-      <li><button type="button" className="w-full" onClick={exportCodes}><Download size={16} />{t('default-export')}</button></li>
+      <li><button type="button" className="w-full text-sm font-normal" onClick={() => { setOpenDeviceModal(true); closeMenus() }}><QrCode size={18} />{t('default-open-on-different-device')}</button></li>
+      <li><button type="button" className="w-full text-sm font-normal" onClick={() => { fileInput.current?.click(); closeMenus() }}><Upload size={18} />{t('default-import-json')}</button></li>
+      <li><button type="button" className="w-full text-sm font-normal" onClick={exportCodes}><Download size={18} />{t('default-export')}</button></li>
+      <li><button type="button" className="w-full text-left text-sm font-normal" onClick={() => { playComplete(); setScreen('about'); closeMenus() }}><Info size={18} />{t('default-about')}</button></li>
     </>
   )
 
@@ -267,7 +263,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         <button type="button" className="btn btn-ghost btn-circle lg:hidden" aria-label={t('default-open')} onClick={() => setMobileMenuOpen(true)}><Menu /></button>
         <details ref={desktopMenu} className="dropdown dropdown-end hidden lg:block">
           <summary className="btn btn-ghost btn-circle" aria-label={t('default-open')}><Menu /></summary>
-          <ul className="menu menu-sm dropdown-content z-50 mt-3 w-96 rounded-2xl bg-base-200 p-3 text-base-content shadow">{menuItems}</ul>
+          <ul className="menu menu-md dropdown-content z-50 mt-3 w-96 rounded-2xl bg-base-200 p-3 text-base-content shadow">{menuItems}</ul>
         </details>
       </div>
       {mobileMenuOpen && (
@@ -277,7 +273,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
               <button type="button" className="flex cursor-pointer items-center gap-3 rounded-md text-left transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current" onClick={() => navigateHome(true)} aria-label={t('default-page-title')}><img className="code-hoover-logo h-8 w-8" src="/favicon.svg" alt="" /><h2 className="m-0 text-lg font-semibold">{t('default-page-title')}</h2></button>
               <button type="button" className="btn btn-ghost btn-circle" aria-label={t('default-close')} onClick={closeMenus}><X /></button>
             </div>
-            <ul className="menu menu-lg min-h-0 w-full min-w-0 flex-1 flex-nowrap gap-2 overflow-x-hidden overflow-y-auto bg-base-100 p-4">{menuItems}</ul>
+            <ul className="menu menu-md min-h-0 w-full min-w-0 flex-1 flex-nowrap gap-2 overflow-x-hidden overflow-y-auto bg-base-100 p-4">{menuItems}</ul>
           </div>
         </div>
       )}
