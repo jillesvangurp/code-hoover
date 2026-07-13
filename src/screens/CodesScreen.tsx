@@ -10,6 +10,7 @@ import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
 import { QrCodeImage } from '../components/QrCodeImage'
+import { QrExamplesCarousel } from '../components/QrExamplesCarousel'
 import { QrIntroFrame } from '../components/QrIntroFrame'
 import { UrlPreview } from '../components/UrlPreview'
 
@@ -243,7 +244,7 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
           Email the Agent
         </button>
       </section>
-      <QrForm form={form} onChange={setForm} />
+      <QrForm form={form} onChange={setForm} afterTypeSelect={<QrExamplesCarousel onTry={setForm} />} />
       <FormButtons
         className="justify-center md:justify-start"
         onSave={() => { setCodes([...codes, formToSavedCode(form)]); playSave?.(); onDone() }}

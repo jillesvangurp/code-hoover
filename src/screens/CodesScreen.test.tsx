@@ -62,6 +62,21 @@ describe('CodesScreen', () => {
     expect(onDone).toHaveBeenCalledOnce()
   })
 
+  it('loads a swipeable WiFi example into the add form', async () => {
+    const user = userEvent.setup()
+    render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
+
+    expect(screen.getAllByRole('button', { name: /^show example$/i })).toHaveLength(8)
+    expect(screen.queryByRole('button', { name: /try example: email/i })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /try example: wifi/i }))
+
+    expect(screen.getByRole('combobox')).toHaveValue('WIFI')
+    expect(screen.getByDisplayValue('Guest Wi-Fi')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('FORMATION Guest')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('welcome2026')).toBeInTheDocument()
+  })
+
   it('cancels without changing saved codes', async () => {
     const user = userEvent.setup()
     const setCodes = vi.fn()
