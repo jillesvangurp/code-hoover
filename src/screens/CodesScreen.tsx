@@ -1,8 +1,5 @@
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react'
-import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
-import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { CSS } from '@dnd-kit/utilities'
-import { Barcode, CalendarDays, Contact, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowDownUp, Barcode, CalendarDays, Contact, FileText, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -16,6 +13,7 @@ import { UrlPreview } from '../components/UrlPreview'
 
 const EMPTY_STATE_SAMPLE_URL = 'https://tryformation.com'
 type CodesViewMode = 'list' | 'grid'
+type CodesSortOrder = 'newest' | 'oldest'
 
 interface CodesScreenProps {
   codes: SavedQrCode[]
@@ -130,35 +128,19 @@ function CodeThumbnail({ data, text, label }: { data: QrData; text: string; labe
   )
 }
 
-function SortableCode({ id, code, viewMode, onClick }: { id: string; code: SavedQrCode; viewMode: CodesViewMode; onClick: () => void }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
+function CodeCard({ code, viewMode, onClick }: { code: SavedQrCode; viewMode: CodesViewMode; onClick: () => void }) {
   const { locale, t } = useI18n()
   const displayName = code.name || code.text
   const previewLines = codePreviewLines(code)
   const createdAt = formatCreatedAt(code.createdAt, locale)
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    '--qr-card-index': id,
-  } as CSSProperties
 
   const isGrid = viewMode === 'grid'
 
   return (
     <li
-      ref={setNodeRef}
-      style={style}
-      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 p-4 text-left transition-colors hover:bg-base-300 ${isGrid ? 'grid min-h-72 grid-rows-[auto_1fr_auto] gap-3' : 'grid grid-cols-[1.75rem_minmax(0,1fr)_5rem] items-center gap-3'}`}
+      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 p-4 text-left transition-colors hover:bg-base-300 ${isGrid ? 'grid min-h-72 grid-rows-[1fr_auto] gap-3' : 'grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3'}`}
       onClick={onClick}
     >
-      <button
-        type="button"
-        className={`btn btn-ghost btn-xs btn-circle cursor-grab touch-none self-start ${isGrid ? 'justify-self-start' : ''}`}
-        aria-label={t('default-drag-to-reorder')}
-        onClick={(event) => event.stopPropagation()}
-        {...attributes}
-        {...listeners}
-      ><Grip size={16} /></button>
       <div className={`min-w-0 ${isGrid ? 'order-3' : ''}`}>
         <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <CodeTypeBadge data={code.data} />
@@ -183,15 +165,16 @@ function SortableCode({ id, code, viewMode, onClick }: { id: string; code: Saved
   )
 }
 
-function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; setViewMode: (viewMode: CodesViewMode) => void }) {
+function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { viewMode: CodesViewMode; setViewMode: (viewMode: CodesViewMode) => void; sortOrder: CodesSortOrder; setSortOrder: (sortOrder: CodesSortOrder) => void }) {
+  const { t } = useI18n()
   const changeViewMode = (nextViewMode: CodesViewMode) => {
     if (viewMode === nextViewMode) return
     setViewMode(nextViewMode)
   }
 
   return (
-    <div className="flex w-full justify-center" aria-label="Code view controls">
-      <div className="join">
+    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center" aria-label="Code view controls">
+      <div className="join col-start-2">
         <button
           type="button"
           className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-neutral' : 'btn-ghost'}`}
@@ -211,6 +194,15 @@ function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; s
           Grid
         </button>
       </div>
+      <button
+        type="button"
+        className="btn btn-ghost btn-sm btn-square col-start-3 justify-self-end"
+        aria-label={`${t('default-sort')}: ${t(sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')}`}
+        title={`${t('default-sort')}: ${t(sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')}`}
+        onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+      >
+        <ArrowDownUp size={18} aria-hidden="true" />
+      </button>
     </div>
   )
 }
@@ -248,11 +240,15 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
 export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, showLoadEffect = false }: CodesScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<CodesViewMode>('list')
+  const [sortOrder, setSortOrder] = useState<CodesSortOrder>('newest')
   const codeLoadKey = useMemo(() => codes.map((code) => `${code.text}:${code.createdAt ?? ''}`).join('|'), [codes])
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const sortedCodes = useMemo(() => codes.map((code, originalIndex) => ({ code, originalIndex })).sort((left, right) => {
+    const leftCreatedAt = left.code.createdAt ? Date.parse(left.code.createdAt) : Number.NaN
+    const rightCreatedAt = right.code.createdAt ? Date.parse(right.code.createdAt) : Number.NaN
+    const leftOrder = Number.isNaN(leftCreatedAt) ? left.originalIndex : leftCreatedAt
+    const rightOrder = Number.isNaN(rightCreatedAt) ? right.originalIndex : rightCreatedAt
+    return sortOrder === 'newest' ? rightOrder - leftOrder : leftOrder - rightOrder
+  }), [codes, sortOrder])
 
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
   useEffect(() => {
@@ -261,14 +257,9 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
     return () => timers.forEach(window.clearTimeout)
   }, [codeLoadKey, codes, playCodeLoad, showLoadEffect])
 
-  const onDragEnd = ({ active, over }: DragEndEvent) => {
-  if (!over || active.id === over.id) return
-    setCodes(arrayMove(codes, Number(active.id), Number(over.id)))
-  }
-
   return (
     <>
-      <CodesViewToggle viewMode={viewMode} setViewMode={(nextViewMode) => { playToggle?.(); setViewMode(nextViewMode) }} />
+      <CodesViewToggle viewMode={viewMode} setViewMode={(nextViewMode) => { playToggle?.(); setViewMode(nextViewMode) }} sortOrder={sortOrder} setSortOrder={setSortOrder} />
       {showLoadEffect ? (
         <section className="flex min-h-80 w-full items-center justify-center px-5 py-8" aria-label="Loading codes">
           <div className="loading-splash-bar" role="progressbar" aria-label="Loading codes" />
@@ -276,13 +267,9 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
       ) : codes.length === 0 ? (
         <EmptyCodesState />
       ) : (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <SortableContext items={codes.map((_, index) => String(index))} strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}>
-            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
-              {codes.map((code, index) => <SortableCode key={`${code.text}-${index}`} id={String(index)} code={code} viewMode={viewMode} onClick={() => { playOpen?.(); setSelectedIndex(index) }} />)}
-            </ul>
-          </SortableContext>
-        </DndContext>
+        <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
+          {sortedCodes.map(({ code, originalIndex }) => <CodeCard key={`${code.text}-${originalIndex}`} code={code} viewMode={viewMode} onClick={() => { playOpen?.(); setSelectedIndex(originalIndex) }} />)}
+        </ul>
       )}
       {selectedIndex !== null && codes[selectedIndex] && (
         <CodeModal

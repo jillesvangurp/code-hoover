@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { AddCodeScreen, CodesScreen } from './CodesScreen'
@@ -130,6 +130,29 @@ describe('CodesScreen', () => {
     expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'true')
     expect(playToggle).toHaveBeenCalledOnce()
+  })
+
+  it('shows newest codes first and can reverse the chronological order', async () => {
+    const user = userEvent.setup()
+    render(<CodesScreen codes={[
+      {
+        name: 'Old code',
+        text: 'https://old.example',
+        data: { type: 'qr.QrData.Url', url: 'https://old.example' },
+        createdAt: '2026-07-11T09:00:00.000Z',
+      },
+      {
+        name: 'New code',
+        text: 'https://new.example',
+        data: { type: 'qr.QrData.Url', url: 'https://new.example' },
+        createdAt: '2026-07-13T09:00:00.000Z',
+      },
+    ]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    expect(within(screen.getAllByRole('listitem')[0]).getByText('New code')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /sort: newest first/i }))
+    expect(within(screen.getAllByRole('listitem')[0]).getByText('Old code')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sort: oldest first/i })).toBeInTheDocument()
   })
 
   it('plays a staggered sound for each code loaded in the codes view', () => {
