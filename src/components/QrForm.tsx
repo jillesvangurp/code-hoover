@@ -1,4 +1,4 @@
-import type { ChangeEvent, ReactNode } from 'react'
+import type { ChangeEvent } from 'react'
 import { Check, Copy, Trash2, X } from 'lucide-react'
 import type { QrFormState } from '../domain/form'
 import type { QrType } from '../domain/qr'
@@ -8,12 +8,11 @@ interface QrFormProps {
   form: QrFormState
   onChange: (form: QrFormState) => void
   showTypeSelect?: boolean
-  afterTypeSelect?: ReactNode
 }
 
 type FieldName = keyof QrFormState
 
-export function QrForm({ form, onChange, showTypeSelect = true, afterTypeSelect }: QrFormProps) {
+export function QrForm({ form, onChange, showTypeSelect = true }: QrFormProps) {
   const { t } = useI18n()
   const update = (field: FieldName) => (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const value = event.target.value
@@ -46,7 +45,6 @@ export function QrForm({ form, onChange, showTypeSelect = true, afterTypeSelect 
           ))}
         </select>
       )}
-      {showTypeSelect && afterTypeSelect}
       {form.type === 'URL' && input('url', 'default-url')}
       {form.type === 'TEXT' && input('text', 'default-text', 4)}
       {form.type === 'WIFI' && <>

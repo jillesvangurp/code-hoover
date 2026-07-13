@@ -42,7 +42,7 @@ describe('CodesScreen', () => {
     const playSave = vi.fn()
     render(<AddCodeScreen codes={[]} setCodes={setCodes} onDone={onDone} playSave={playSave} />)
 
-    await user.click(screen.getByRole('button', { name: /email the agent/i }))
+    await user.click(screen.getByRole('button', { name: /try example: email/i }))
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     expect(setCodes).toHaveBeenCalledWith([
@@ -66,8 +66,8 @@ describe('CodesScreen', () => {
     const user = userEvent.setup()
     render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
 
-    expect(screen.getAllByRole('button', { name: /^show example$/i })).toHaveLength(8)
-    expect(screen.queryByRole('button', { name: /try example: email/i })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^show example$/i })).toHaveLength(9)
+    expect(screen.getByRole('button', { name: /try example: email/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /try example: wifi/i }))
 

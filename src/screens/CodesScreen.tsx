@@ -3,7 +3,7 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Barcode, CalendarDays, Contact, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
-import { emptyQrForm, formToSavedCode, mailFrontAgentForm, MAILFRONT_AGENT_EMAIL, type QrFormState } from '../domain/form'
+import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { BarcodeImage } from '../components/BarcodeImage'
@@ -234,17 +234,8 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
 
   return (
     <div className="flex w-full flex-col gap-4">
-      <section className="flex flex-col gap-3 rounded-lg border border-base-300 bg-base-100 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="min-w-0">
-          <p className="m-0 text-sm font-semibold">MailFront</p>
-          <p className="m-0 truncate text-xs opacity-70">{MAILFRONT_AGENT_EMAIL}</p>
-        </div>
-        <button type="button" className="btn btn-neutral btn-sm shrink-0" onClick={() => setForm(mailFrontAgentForm())}>
-          <Mail size={15} aria-hidden="true" />
-          Email the Agent
-        </button>
-      </section>
-      <QrForm form={form} onChange={setForm} afterTypeSelect={<QrExamplesCarousel onTry={setForm} />} />
+      <QrExamplesCarousel onTry={setForm} />
+      <QrForm form={form} onChange={setForm} />
       <FormButtons
         className="justify-center md:justify-start"
         onSave={() => { setCodes([...codes, formToSavedCode(form)]); playSave?.(); onDone() }}

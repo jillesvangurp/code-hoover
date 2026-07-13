@@ -1,10 +1,10 @@
 import { useRef, useState, type UIEvent } from 'react'
-import { CalendarDays, Contact, FileText, Link, MapPin, MessageSquare, Phone, Wifi } from 'lucide-react'
-import { emptyQrForm, type QrFormState } from '../domain/form'
+import { CalendarDays, Contact, FileText, Link, Mail, MapPin, MessageSquare, Phone, Wifi } from 'lucide-react'
+import { emptyQrForm, mailFrontAgentForm, MAILFRONT_AGENT_EMAIL, type QrFormState } from '../domain/form'
 import type { QrType } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 
-type ExampleType = Exclude<QrType, 'EMAIL'>
+type ExampleType = QrType
 
 interface QrExample {
   type: ExampleType
@@ -20,6 +20,12 @@ const exampleForm = (type: ExampleType, values: Partial<QrFormState>): QrFormSta
 })
 
 const EXAMPLES: QrExample[] = [
+  {
+    type: 'EMAIL',
+    name: 'Email the Agent',
+    preview: ['MailFront', MAILFRONT_AGENT_EMAIL],
+    form: mailFrontAgentForm(),
+  },
   {
     type: 'URL',
     name: 'FORMATION website',
@@ -98,6 +104,7 @@ const EXAMPLES: QrExample[] = [
 const ICONS = {
   URL: Link,
   TEXT: FileText,
+  EMAIL: Mail,
   WIFI: Wifi,
   PHONE: Phone,
   SMS: MessageSquare,
