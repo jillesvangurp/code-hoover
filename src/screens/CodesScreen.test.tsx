@@ -9,7 +9,16 @@ vi.mock('../components/QrCodeImage', () => ({
 }))
 
 vi.mock('../components/BarcodeIntroFrame', () => ({
-  BarcodeIntroFrame: ({ alt, format, text }: { alt: string; format: string; text: string }) => <div role="img" aria-label={alt} data-format={format} data-text={text} />,
+  BarcodeIntroFrame: ({ alt, className, expandable, format, text }: { alt: string; className?: string; expandable?: boolean; format: string; text: string }) => (
+    <div
+      role="img"
+      aria-label={alt}
+      className={className}
+      data-expandable={String(Boolean(expandable))}
+      data-format={format}
+      data-text={text}
+    />
+  ),
 }))
 
 describe('CodesScreen', () => {
@@ -133,7 +142,8 @@ describe('CodesScreen', () => {
     expect(screen.queryByRole('img', { name: /code hoover/i })).not.toBeInTheDocument()
   })
 
-  it('shows saved barcode entries as barcodes', () => {
+  it('runs the barcode frame on the code screen and makes it expandable in details', async () => {
+    const user = userEvent.setup()
     render(<CodesScreen codes={[{
       name: 'Product',
       text: '5901234123457',
@@ -142,7 +152,14 @@ describe('CodesScreen', () => {
 
     expect(screen.getByText('Barcode')).toBeInTheDocument()
     expect(screen.getAllByText('EAN_13').length).toBeGreaterThan(0)
-    expect(screen.getByRole('img', { name: 'Product' })).toHaveAttribute('data-format', 'EAN_13')
+    const codeScreenFrame = screen.getByRole('img', { name: 'Product' })
+    expect(codeScreenFrame).toHaveAttribute('data-format', 'EAN_13')
+    expect(codeScreenFrame).toHaveAttribute('data-expandable', 'false')
+
+    await user.click(screen.getByText('Product'))
+
+    const detailFrame = screen.getAllByRole('img', { name: 'Product' }).find((frame) => frame.getAttribute('data-expandable') === 'true')
+    expect(detailFrame).toHaveClass('barcode-detail-frame')
   })
 
   it('switches between list and grid views for saved codes', async () => {
