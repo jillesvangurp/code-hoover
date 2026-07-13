@@ -162,6 +162,7 @@ describe('CodesScreen', () => {
 
     expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('list')).toHaveClass('sm:grid-cols-2', 'lg:grid-cols-3')
     expect(screen.getByRole('listitem')).toHaveClass('grid-cols-[4.5rem_minmax(0,1fr)]', 'p-3')
     expect(screen.queryByText(/created:/i)).not.toBeInTheDocument()
     expect(screen.getByText('https://example.com')).toBeInTheDocument()
