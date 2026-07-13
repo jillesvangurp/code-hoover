@@ -263,7 +263,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         <button type="button" className="btn btn-ghost btn-circle btn-sm lg:hidden" aria-label={t('default-open')} onClick={() => setMobileMenuOpen(true)}><Menu size={22} /></button>
         <details ref={desktopMenu} className="dropdown dropdown-end hidden lg:block">
           <summary className="btn btn-ghost btn-circle" aria-label={t('default-open')}><Menu /></summary>
-          <ul className="menu menu-md dropdown-content z-50 mt-3 w-96 rounded-2xl bg-base-200 p-3 text-base-content shadow">{menuItems}</ul>
+          <ul className="menu menu-md dropdown-content z-50 mt-3 w-96 rounded-2xl border border-base-300 bg-base-200 p-3 text-base-content shadow-xl">{menuItems}</ul>
         </details>
       </div>
       {mobileMenuOpen && (
