@@ -32,6 +32,7 @@ export default function App() {
   const { t } = useI18n()
   soundEnabledRef.current = soundEnabled
   const sounds = useMemo(() => new SoundEffects(() => soundEnabledRef.current), [])
+  const isMainScreen = screen !== 'about'
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', dark ? 'qr-dark' : 'qr-light')
@@ -54,9 +55,9 @@ export default function App() {
   }, [sounds])
 
   return (
-    <main className="flex min-h-screen flex-col items-center px-4 py-6 text-base-content sm:py-10">
+    <main className={`flex min-h-dvh flex-col items-center text-base-content ${isMainScreen ? 'p-0 sm:px-4 sm:py-10' : 'px-4 py-6 sm:py-10'}`}>
       {showSplash && <LoadingSplash />}
-      <article className={`flex w-full max-w-xl flex-grow flex-col gap-6 rounded-3xl bg-base-100 p-6 shadow-xl sm:p-10 lg:max-w-3xl ${showSplash ? 'app-shell-loading' : ''}`}>
+      <article className={`flex w-full flex-grow flex-col gap-6 bg-base-100 ${isMainScreen ? 'min-h-dvh rounded-none p-4 shadow-none sm:min-h-0 sm:max-w-xl sm:rounded-3xl sm:p-10 sm:shadow-xl lg:max-w-3xl' : 'max-w-xl rounded-3xl p-6 shadow-xl sm:p-10 lg:max-w-3xl'} ${showSplash ? 'app-shell-loading' : ''}`}>
         <Header
           codes={codes}
           setCodes={setCodes}
