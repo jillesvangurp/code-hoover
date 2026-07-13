@@ -1,5 +1,5 @@
 import { useRef, useState, type UIEvent } from 'react'
-import { CalendarDays, Contact, FileText, Link, Mail, MapPin, MessageSquare, Phone, Wifi } from 'lucide-react'
+import { BadgeEuro, Barcode, CalendarDays, Contact, CreditCard, FileKey2, FileText, Link, Mail, MapPin, MessageCircle, MessageSquare, Phone, Smartphone, Wifi } from 'lucide-react'
 import { emptyQrForm, mailFrontAgentForm, MAILFRONT_AGENT_EMAIL, type QrFormState } from '../domain/form'
 import type { QrType } from '../domain/qr'
 import { useI18n } from '../i18n/context'
@@ -99,6 +99,48 @@ const EXAMPLES: QrExample[] = [
       vcardUrl: 'https://tryformation.com',
     }),
   },
+  {
+    type: 'BARCODE',
+    name: 'Loyalty card',
+    preview: ['CODE 128 · MEMBER-2026-1042', 'Add a membership number manually.'],
+    form: exampleForm('BARCODE', { name: 'Loyalty card', barcodeFormat: 'CODE_128', barcodeText: 'MEMBER-2026-1042' }),
+  },
+  {
+    type: 'SEPA',
+    name: 'Invoice payment',
+    preview: ['Example GmbH · EUR 49.90', 'SEPA bank-transfer details.'],
+    form: exampleForm('SEPA', {
+      name: 'Invoice payment', sepaRecipient: 'Example GmbH', sepaIban: 'DE89370400440532013000',
+      sepaBic: 'COBADEFFXXX', sepaAmount: '49.90', sepaReference: 'RF18539007547034',
+    }),
+  },
+  {
+    type: 'WHATSAPP',
+    name: 'Message FORMATION',
+    preview: ['+49 30 123456', 'Hi, I would like to know more.'],
+    form: exampleForm('WHATSAPP', { name: 'Message FORMATION', whatsappPhone: '+49 30 123456', whatsappMessage: 'Hi, I would like to know more.' }),
+  },
+  {
+    type: 'DEEPLINK',
+    name: 'Open in the app',
+    preview: ['formation://projects/demo', 'Open a specific screen or app.'],
+    form: exampleForm('DEEPLINK', { name: 'Open in the app', deepLinkLabel: 'Demo project', deepLinkUrl: 'formation://projects/demo' }),
+  },
+  {
+    type: 'PAYMENT',
+    name: 'PayPal payment',
+    preview: ['PayPal · EUR 25.00', 'Open a provider payment request.'],
+    form: exampleForm('PAYMENT', { name: 'PayPal payment', paymentProvider: 'PayPal', paymentTarget: 'your-paypal-name', paymentAmount: '25.00', paymentCurrency: 'EUR', paymentNote: 'Demo payment' }),
+  },
+  {
+    type: 'OTP',
+    name: 'Authenticator setup',
+    preview: ['Example · alice@example.com', 'Temporary and local-only.'],
+    form: exampleForm('OTP', {
+      name: 'Example authenticator', otpType: 'totp', otpIssuer: 'Example', otpAccount: 'alice@example.com',
+      otpSecret: 'JBSWY3DPEHPK3PXP', otpAlgorithm: 'SHA1', otpDigits: '6', otpPeriod: '30',
+    }),
+  },
 ]
 
 const ICONS = {
@@ -111,9 +153,15 @@ const ICONS = {
   LOCATION: MapPin,
   EVENT: CalendarDays,
   VCARD: Contact,
+  BARCODE: Barcode,
+  SEPA: BadgeEuro,
+  WHATSAPP: MessageCircle,
+  DEEPLINK: Smartphone,
+  PAYMENT: CreditCard,
+  OTP: FileKey2,
 } satisfies Record<ExampleType, typeof Link>
 
-const translationId = (type: ExampleType) => `default-${type === 'VCARD' ? 'v-card' : type === 'LOCATION' ? 'maps' : type.toLowerCase()}`
+const translationId = (type: ExampleType) => `default-${type === 'VCARD' ? 'v-card' : type === 'LOCATION' ? 'maps' : type === 'DEEPLINK' ? 'app-link' : type === 'OTP' ? 'authenticator' : type.toLowerCase()}`
 
 export function QrExamplesCarousel({ onTry }: { onTry: (form: QrFormState) => void }) {
   const [activeIndex, setActiveIndex] = useState(0)

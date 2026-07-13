@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { Plus, QrCode, ScanBarcode } from 'lucide-react'
 import { Header } from './components/Header'
 import { LoadingSplash } from './components/LoadingSplash'
-import { parseSavedCodes } from './domain/qr'
+import { parseSavedCodes, serializePersistentSavedCodes } from './domain/qr'
 import { useAccountSync } from './hooks/useAccountSync'
 import { useLocalStorage } from './hooks/useLocalStorage'
 import { useI18n } from './i18n/context'
@@ -24,7 +24,7 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(true)
   const [showCodesLoadEffect, setShowCodesLoadEffect] = useState(false)
   const [screen, setScreen] = useState<Screen>('codes')
-  const [codes, setCodes] = useLocalStorage('codes', [], parseSavedCodes)
+  const [codes, setCodes] = useLocalStorage('codes', [], parseSavedCodes, serializePersistentSavedCodes)
   const [soundEnabled, setSoundEnabled] = useLocalStorage('sound-enabled', true, (value) => value === 'true' || value === '"true"')
   const [dark, setDark] = useState(false)
   const accountSync = useAccountSync(codes, setCodes)

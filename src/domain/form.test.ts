@@ -91,4 +91,19 @@ describe('QR form conversion', () => {
       type: 'LOCATION', locationQuery: 'FORMATION Berlin',
     })
   })
+
+  it('creates manual barcodes and the new structured QR payloads', () => {
+    expect(formToSavedCode({ ...emptyQrForm(), type: 'BARCODE', barcodeFormat: 'CODE_128', barcodeText: 'MEMBER-42' }, null)).toMatchObject({
+      text: 'MEMBER-42', data: { type: QR_DATA_TYPES.barcode, format: 'CODE_128', text: 'MEMBER-42' },
+    })
+    expect(formToSavedCode({ ...emptyQrForm(), type: 'WHATSAPP', whatsappPhone: '+49 170 1234567', whatsappMessage: 'Hello' }, null)).toMatchObject({
+      text: 'https://wa.me/491701234567?text=Hello', data: { type: QR_DATA_TYPES.whatsapp },
+    })
+    expect(formToSavedCode({ ...emptyQrForm(), type: 'DEEPLINK', deepLinkLabel: 'Demo', deepLinkUrl: 'formation://projects/demo' }, null)).toMatchObject({
+      name: 'Demo', text: 'formation://projects/demo', data: { type: QR_DATA_TYPES.deepLink },
+    })
+    expect(formToSavedCode({ ...emptyQrForm(), type: 'PAYMENT', paymentProvider: 'PayPal', paymentTarget: 'example', paymentAmount: '25', paymentCurrency: 'EUR' }, null)).toMatchObject({
+      text: 'https://paypal.me/example/25EUR', data: { type: QR_DATA_TYPES.payment },
+    })
+  })
 })

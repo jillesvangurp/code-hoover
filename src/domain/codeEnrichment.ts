@@ -196,5 +196,30 @@ export function enrichCode(data: QrData, codeName: string): CodeEnrichment | nul
       return barcodeEnrichment(data)
     case QR_DATA_TYPES.text:
       return null
+    case QR_DATA_TYPES.sepa:
+      return data.recipient || data.iban ? {
+        summary: sentence(`A SEPA bank transfer${data.recipient ? ` to ${data.recipient}` : ''}`),
+        facts: [
+          ...(data.amount ? [{ label: 'Amount', value: `EUR ${data.amount}` }] : []),
+          ...(data.reference ? [{ label: 'Reference', value: data.reference }] : []),
+        ],
+      } : null
+    case QR_DATA_TYPES.whatsapp:
+      return data.phone ? { summary: sentence(`A WhatsApp message prepared for ${data.phone}`), facts: data.message ? [{ label: 'Prefilled message', value: `${data.message.length} characters` }] : [] } : null
+    case QR_DATA_TYPES.deepLink:
+      return { summary: sentence(`An app or deep link${data.label ? ` for ${data.label}` : ''}`), facts: [{ label: 'Destination', value: data.url }] }
+    case QR_DATA_TYPES.otp:
+      return {
+        summary: sentence(`An ${data.otpType.toUpperCase()} authenticator setup${data.issuer ? ` for ${data.issuer}` : ''}`),
+        facts: [{ label: 'Storage', value: 'Temporary and local-only' }, ...(data.account ? [{ label: 'Account', value: data.account }] : [])],
+      }
+    case QR_DATA_TYPES.payment:
+      return {
+        summary: sentence(`A ${data.provider || 'provider'} payment request`),
+        facts: [
+          ...(data.amount ? [{ label: 'Amount', value: `${data.amount} ${data.currency}`.trim() }] : []),
+          ...(data.target ? [{ label: 'Recipient', value: data.target }] : []),
+        ],
+      }
   }
 }

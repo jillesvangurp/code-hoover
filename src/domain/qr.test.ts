@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, type SavedQrCode, type VCardData } from './qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, serializePersistentSavedCodes, syncableSavedCodes, type SavedQrCode, type VCardData } from './qr'
 
 describe('saved code compatibility', () => {
   it('reads the legacy serialization format and restores blank names', () => {
@@ -117,6 +117,14 @@ describe('QR payloads', () => {
     expect(defaultDisplayName(wifi)).toBe('Guest')
   })
 
+  it('escapes WiFi delimiters and preserves hidden-network metadata', () => {
+    const wifi = { type: QR_DATA_TYPES.wifi, ssid: 'Cafe; HQ:North', password: 'p\\ass;word', encryption: 'WPA', hidden: true } as const
+    const encoded = qrDataAsText(wifi)
+
+    expect(encoded).toBe('WIFI:T:WPA;S:Cafe\\; HQ\\:North;P:p\\\\ass\\;word;H:true;;')
+    expect(parseQrPayload(encoded)).toEqual(wifi)
+  })
+
   it('preserves scanned barcode format metadata', () => {
     const codes = parseSavedCodes(JSON.stringify([
       {
@@ -182,5 +190,39 @@ describe('QR payloads', () => {
       location: 'Berlin',
       description: '',
     })
+  })
+
+  it('round-trips SEPA, WhatsApp, authenticator, and crypto payment payloads', () => {
+    const sepa = {
+      type: QR_DATA_TYPES.sepa, recipient: 'Example GmbH', iban: 'DE89 3704 0044 0532 0130 00', bic: 'COBADEFFXXX',
+      amount: '49.90', purpose: '', reference: 'RF18539007547034', information: '',
+    } as const
+    expect(parseQrPayload(qrDataAsText(sepa))).toEqual({ ...sepa, iban: 'DE89370400440532013000' })
+
+    const whatsapp = { type: QR_DATA_TYPES.whatsapp, phone: '+49 170 1234567', message: 'Hello there' } as const
+    expect(qrDataAsText(whatsapp)).toBe('https://wa.me/491701234567?text=Hello+there')
+    expect(parseQrPayload(qrDataAsText(whatsapp))).toEqual({ ...whatsapp, phone: '491701234567' })
+
+    const otp = {
+      type: QR_DATA_TYPES.otp, otpType: 'totp', issuer: 'Example', account: 'alice@example.com', secret: 'JBSWY3DPEHPK3PXP',
+      algorithm: 'SHA1', digits: '6', period: '30', counter: '0',
+    } as const
+    expect(parseQrPayload(qrDataAsText(otp))).toEqual({ ...otp, counter: '' })
+
+    const bitcoin = { type: QR_DATA_TYPES.payment, provider: 'Bitcoin', target: 'bc1qexample', amount: '0.01', currency: 'BTC', note: 'Coffee' } as const
+    expect(parseQrPayload(qrDataAsText(bitcoin))).toMatchObject({ type: QR_DATA_TYPES.payment, provider: 'Bitcoin', target: 'bc1qexample', amount: '0.01', note: 'Coffee' })
+  })
+
+  it('keeps authenticator setup codes out of persistence and sync', () => {
+    const codes: SavedQrCode[] = [
+      { name: 'Site', text: 'https://example.com', data: { type: QR_DATA_TYPES.url, url: 'https://example.com' } },
+      {
+        name: 'OTP', text: 'otpauth://totp/Example:alice',
+        data: { type: QR_DATA_TYPES.otp, otpType: 'totp', issuer: 'Example', account: 'alice', secret: 'SECRET', algorithm: 'SHA1', digits: '6', period: '30', counter: '' },
+      },
+    ]
+
+    expect(syncableSavedCodes(codes)).toEqual([codes[0]])
+    expect(JSON.parse(serializePersistentSavedCodes(codes))).toEqual([codes[0]])
   })
 })

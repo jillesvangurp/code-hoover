@@ -67,15 +67,46 @@ describe('CodesScreen', () => {
     const user = userEvent.setup()
     render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
 
-    expect(screen.getAllByRole('button', { name: /^show example$/i })).toHaveLength(9)
+    expect(screen.getAllByRole('button', { name: /^show example$/i })).toHaveLength(15)
     expect(screen.getByRole('button', { name: /try example: email/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /try example: wifi/i }))
 
-    expect(screen.getByRole('combobox')).toHaveValue('WIFI')
+    expect(screen.getAllByRole('combobox')[0]).toHaveValue('WIFI')
     expect(screen.getByDisplayValue('Guest Wi-Fi')).toBeInTheDocument()
     expect(screen.getByDisplayValue('FORMATION Guest')).toBeInTheDocument()
     expect(screen.getByDisplayValue('welcome2026')).toBeInTheDocument()
+  })
+
+  it('offers an example card for every new code type', () => {
+    render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
+
+    for (const type of ['barcode', 'sepa', 'whatsapp', 'app link', 'payment', 'authenticator']) {
+      expect(screen.getByRole('button', { name: new RegExp(`try example: ${type}`, 'i') })).toBeInTheDocument()
+    }
+  })
+
+  it('adds a manual barcode from its example card', async () => {
+    const user = userEvent.setup()
+    const setCodes = vi.fn()
+    render(<AddCodeScreen codes={[]} setCodes={setCodes} onDone={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: /try example: barcode/i }))
+    await user.click(screen.getByRole('button', { name: /save/i }))
+
+    expect(setCodes).toHaveBeenCalledWith([expect.objectContaining({
+      name: 'Loyalty card', text: 'MEMBER-2026-1042',
+      data: { type: 'qr.QrData.Barcode', format: 'CODE_128', text: 'MEMBER-2026-1042' },
+    })])
+  })
+
+  it('warns that authenticator setup codes are temporary and local-only', async () => {
+    const user = userEvent.setup()
+    render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: /try example: authenticator/i }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(/authenticator local only/i)
   })
 
   it('cancels without changing saved codes', async () => {

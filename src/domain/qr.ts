@@ -9,9 +9,14 @@ export const QR_DATA_TYPES = {
   location: 'qr.QrData.Location',
   event: 'qr.QrData.Event',
   barcode: 'qr.QrData.Barcode',
+  sepa: 'qr.QrData.Sepa',
+  whatsapp: 'qr.QrData.WhatsApp',
+  deepLink: 'qr.QrData.DeepLink',
+  otp: 'qr.QrData.Otp',
+  payment: 'qr.QrData.Payment',
 } as const
 
-export type QrType = 'URL' | 'TEXT' | 'VCARD' | 'WIFI' | 'EMAIL' | 'PHONE' | 'SMS' | 'LOCATION' | 'EVENT'
+export type QrType = 'URL' | 'TEXT' | 'VCARD' | 'WIFI' | 'EMAIL' | 'PHONE' | 'SMS' | 'LOCATION' | 'EVENT' | 'BARCODE' | 'SEPA' | 'WHATSAPP' | 'DEEPLINK' | 'OTP' | 'PAYMENT'
 
 export interface UrlData {
   type: typeof QR_DATA_TYPES.url
@@ -52,6 +57,7 @@ export interface WifiData {
   ssid: string
   password: string
   encryption: string
+  hidden?: boolean
 }
 
 export interface EmailData {
@@ -95,7 +101,51 @@ export interface BarcodeData {
   text: string
 }
 
-export type QrData = UrlData | TextData | VCardData | WifiData | EmailData | PhoneData | SmsData | LocationData | EventData | BarcodeData
+export interface SepaData {
+  type: typeof QR_DATA_TYPES.sepa
+  recipient: string
+  iban: string
+  bic: string
+  amount: string
+  purpose: string
+  reference: string
+  information: string
+}
+
+export interface WhatsAppData {
+  type: typeof QR_DATA_TYPES.whatsapp
+  phone: string
+  message: string
+}
+
+export interface DeepLinkData {
+  type: typeof QR_DATA_TYPES.deepLink
+  label: string
+  url: string
+}
+
+export interface OtpData {
+  type: typeof QR_DATA_TYPES.otp
+  otpType: string
+  issuer: string
+  account: string
+  secret: string
+  algorithm: string
+  digits: string
+  period: string
+  counter: string
+}
+
+export interface PaymentData {
+  type: typeof QR_DATA_TYPES.payment
+  provider: string
+  target: string
+  amount: string
+  currency: string
+  note: string
+}
+
+export type QrData = UrlData | TextData | VCardData | WifiData | EmailData | PhoneData | SmsData | LocationData | EventData | BarcodeData | SepaData | WhatsAppData | DeepLinkData | OtpData | PaymentData
 
 export interface SavedQrCode {
   name: string
@@ -134,6 +184,16 @@ export function codePayloadTypeLabel(data: QrData): string {
       return 'vCard'
     case QR_DATA_TYPES.barcode:
       return data.format || 'Barcode'
+    case QR_DATA_TYPES.sepa:
+      return 'SEPA payment'
+    case QR_DATA_TYPES.whatsapp:
+      return 'WhatsApp'
+    case QR_DATA_TYPES.deepLink:
+      return 'App link'
+    case QR_DATA_TYPES.otp:
+      return 'Authenticator'
+    case QR_DATA_TYPES.payment:
+      return data.provider || 'Payment'
   }
 }
 
@@ -158,6 +218,18 @@ export function mergeSavedCodes(primary: SavedQrCode[], secondary: SavedQrCode[]
   return merged
 }
 
+export function isSensitiveQrData(data: QrData): boolean {
+  return data.type === QR_DATA_TYPES.otp
+}
+
+export function syncableSavedCodes(codes: SavedQrCode[]): SavedQrCode[] {
+  return codes.filter((code) => !isSensitiveQrData(code.data))
+}
+
+export function serializePersistentSavedCodes(codes: SavedQrCode[]): string {
+  return JSON.stringify(syncableSavedCodes(codes))
+}
+
 export function normalizeQrData(value: unknown): QrData | null {
   if (!value || typeof value !== 'object') return null
   const candidate = value as Record<string, unknown>
@@ -176,6 +248,7 @@ export function normalizeQrData(value: unknown): QrData | null {
         ssid: stringValue(candidate.ssid),
         password: stringValue(candidate.password),
         encryption: stringValue(candidate.encryption) || 'WPA',
+        hidden: candidate.hidden === true || candidate.hidden === 'true',
       }
     case QR_DATA_TYPES.email:
     case 'EMAIL':
@@ -223,6 +296,33 @@ export function normalizeQrData(value: unknown): QrData | null {
         type: QR_DATA_TYPES.barcode,
         format: stringValue(candidate.format),
         text: stringValue(candidate.text),
+      }
+    case QR_DATA_TYPES.sepa:
+    case 'SEPA':
+      return {
+        type: QR_DATA_TYPES.sepa,
+        recipient: stringValue(candidate.recipient), iban: stringValue(candidate.iban), bic: stringValue(candidate.bic),
+        amount: stringValue(candidate.amount), purpose: stringValue(candidate.purpose), reference: stringValue(candidate.reference),
+        information: stringValue(candidate.information),
+      }
+    case QR_DATA_TYPES.whatsapp:
+    case 'WHATSAPP':
+      return { type: QR_DATA_TYPES.whatsapp, phone: stringValue(candidate.phone), message: stringValue(candidate.message) }
+    case QR_DATA_TYPES.deepLink:
+    case 'DEEPLINK':
+      return { type: QR_DATA_TYPES.deepLink, label: stringValue(candidate.label), url: stringValue(candidate.url) }
+    case QR_DATA_TYPES.otp:
+    case 'OTP':
+      return {
+        type: QR_DATA_TYPES.otp, otpType: stringValue(candidate.otpType) || 'totp', issuer: stringValue(candidate.issuer),
+        account: stringValue(candidate.account), secret: stringValue(candidate.secret), algorithm: stringValue(candidate.algorithm) || 'SHA1',
+        digits: stringValue(candidate.digits) || '6', period: stringValue(candidate.period) || '30', counter: stringValue(candidate.counter),
+      }
+    case QR_DATA_TYPES.payment:
+    case 'PAYMENT':
+      return {
+        type: QR_DATA_TYPES.payment, provider: stringValue(candidate.provider) || 'PayPal', target: stringValue(candidate.target),
+        amount: stringValue(candidate.amount), currency: stringValue(candidate.currency), note: stringValue(candidate.note),
       }
     case QR_DATA_TYPES.vcard:
     case 'VCARD':
@@ -374,6 +474,28 @@ function mapsSearchUrl(query: string): string {
   return appendQuery('https://www.google.com/maps/search/', [['api', '1'], ['query', query]])
 }
 
+function escapeWifiValue(value: string): string {
+  return value.replace(/([\\;,:"])/g, '\\$1')
+}
+
+function paymentTargetUrl(data: PaymentData): string {
+  const target = data.target.trim()
+  const provider = data.provider.toLowerCase()
+  if (provider === 'bitcoin') {
+    return appendQuery(`bitcoin:${target}`, [['amount', data.amount], ['label', data.note]])
+  }
+  if (provider === 'ethereum') {
+    return appendQuery(`ethereum:${target}`, [['value', data.amount]])
+  }
+  if (/^https?:\/\//i.test(target)) return target
+  if (provider === 'paypal') {
+    const amount = data.amount ? `/${encodeURIComponent(`${data.amount}${data.currency.toUpperCase()}`)}` : ''
+    return `https://paypal.me/${encodeURIComponent(target.replace(/^@/, ''))}${amount}`
+  }
+  if (provider === 'revolut') return `https://revolut.me/${encodeURIComponent(target.replace(/^@/, ''))}`
+  return target
+}
+
 export function qrDataAsText(data: QrData): string {
   switch (data.type) {
     case QR_DATA_TYPES.url:
@@ -381,7 +503,7 @@ export function qrDataAsText(data: QrData): string {
     case QR_DATA_TYPES.text:
       return data.text
     case QR_DATA_TYPES.wifi:
-      return `WIFI:T:${data.encryption};S:${data.ssid};P:${data.password};;`
+      return `WIFI:T:${escapeWifiValue(data.encryption)};S:${escapeWifiValue(data.ssid)};P:${escapeWifiValue(data.password)};${data.hidden ? 'H:true;' : ''};`
     case QR_DATA_TYPES.email:
       return appendQuery(`mailto:${data.email.trim()}`, [['subject', data.subject], ['body', data.body]])
     case QR_DATA_TYPES.phone:
@@ -408,6 +530,31 @@ export function qrDataAsText(data: QrData): string {
     }
     case QR_DATA_TYPES.barcode:
       return data.text
+    case QR_DATA_TYPES.sepa:
+      return [
+        'BCD', '002', '1', 'SCT', data.bic.replaceAll(' ', '').toUpperCase(), data.recipient,
+        data.iban.replaceAll(' ', '').toUpperCase(), data.amount ? `EUR${data.amount.replace(',', '.')}` : '',
+        data.purpose.toUpperCase(), data.reference, data.reference ? '' : data.information,
+      ].join('\n').replace(/\n+$/, '')
+    case QR_DATA_TYPES.whatsapp: {
+      const phone = data.phone.replace(/\D/g, '')
+      return appendQuery(`https://wa.me/${phone}`, [['text', data.message]])
+    }
+    case QR_DATA_TYPES.deepLink:
+      return data.url.trim()
+    case QR_DATA_TYPES.otp: {
+      const otpType = data.otpType.toLowerCase() === 'hotp' ? 'hotp' : 'totp'
+      const label = [data.issuer, data.account].filter(Boolean).map(encodeURIComponent).join(':')
+      const parameters: Array<[string, string]> = [
+        ['secret', data.secret.replaceAll(' ', '').toUpperCase()], ['issuer', data.issuer],
+        ['algorithm', data.algorithm.toUpperCase()], ['digits', data.digits],
+      ]
+      if (otpType === 'hotp') parameters.push(['counter', data.counter || '0'])
+      else parameters.push(['period', data.period || '30'])
+      return appendQuery(`otpauth://${otpType}/${label}`, parameters)
+    }
+    case QR_DATA_TYPES.payment:
+      return paymentTargetUrl(data)
     case QR_DATA_TYPES.vcard: {
       const lines = ['BEGIN:VCARD', 'VERSION:3.0']
       lines.push(`FN:${escapeVCard(bestVCardName(data) || 'vcard')}`)
@@ -439,6 +586,11 @@ export function defaultDisplayName(data: QrData): string {
   if (data.type === QR_DATA_TYPES.location) return data.label || data.query || [data.latitude, data.longitude].filter(Boolean).join(', ') || 'Maps'
   if (data.type === QR_DATA_TYPES.event) return data.title || 'Event'
   if (data.type === QR_DATA_TYPES.barcode) return data.text
+  if (data.type === QR_DATA_TYPES.sepa) return data.recipient || data.iban || 'SEPA payment'
+  if (data.type === QR_DATA_TYPES.whatsapp) return data.phone || 'WhatsApp'
+  if (data.type === QR_DATA_TYPES.deepLink) return data.label || data.url || 'App link'
+  if (data.type === QR_DATA_TYPES.otp) return [data.issuer, data.account].filter(Boolean).join(' · ') || 'Authenticator'
+  if (data.type === QR_DATA_TYPES.payment) return [data.provider, data.target].filter(Boolean).join(' · ') || 'Payment'
 
   const base = bestVCardName(data) || 'vcard'
   return base.toLowerCase().endsWith(' vcard') ? base : `${base} vcard`
@@ -618,9 +770,101 @@ function parseEventPayload(text: string): EventData | null {
   return hasField ? data : null
 }
 
+function splitEscaped(value: string, separator: string, preserveEscapes = false): string[] {
+  const parts: string[] = []
+  let current = ''
+  let escaped = false
+  for (const character of value) {
+    if (escaped) {
+      current += preserveEscapes ? `\\${character}` : character
+      escaped = false
+    } else if (character === '\\') {
+      escaped = true
+    } else if (character === separator) {
+      parts.push(current)
+      current = ''
+    } else {
+      current += character
+    }
+  }
+  parts.push(escaped ? `${current}\\` : current)
+  return parts
+}
+
+function parseWifiPayload(text: string): WifiData | null {
+  if (!/^WIFI:/i.test(text.trim())) return null
+  const fields = Object.fromEntries(splitEscaped(text.trim().slice(5), ';', true).map((part) => {
+    const separator = part.indexOf(':')
+    if (separator < 0) return ['', '']
+    return [part.slice(0, separator).toUpperCase(), splitEscaped(part.slice(separator + 1), ':').join(':')]
+  }).filter(([key]) => key))
+  return {
+    type: QR_DATA_TYPES.wifi,
+    ssid: fields.S ?? '', password: fields.P ?? '', encryption: fields.T ?? 'WPA', hidden: fields.H?.toLowerCase() === 'true',
+  }
+}
+
+function parseSepaPayload(text: string): SepaData | null {
+  const lines = text.trim().split(/\r?\n/)
+  if (lines[0] !== 'BCD' || lines[3] !== 'SCT') return null
+  return {
+    type: QR_DATA_TYPES.sepa,
+    bic: lines[4] ?? '', recipient: lines[5] ?? '', iban: lines[6] ?? '', amount: (lines[7] ?? '').replace(/^EUR/i, ''),
+    purpose: lines[8] ?? '', reference: lines[9] ?? '', information: lines[10] ?? '',
+  }
+}
+
+function parseWhatsAppPayload(text: string): WhatsAppData | null {
+  try {
+    const url = new URL(text.trim())
+    if (!/^(wa\.me|api\.whatsapp\.com)$/i.test(url.hostname)) return null
+    return {
+      type: QR_DATA_TYPES.whatsapp,
+      phone: url.hostname.toLowerCase() === 'wa.me' ? url.pathname.replace(/^\//, '') : url.searchParams.get('phone') ?? '',
+      message: url.searchParams.get('text') ?? '',
+    }
+  } catch {
+    return null
+  }
+}
+
+function parseOtpPayload(text: string): OtpData | null {
+  try {
+    const url = new URL(text.trim())
+    if (url.protocol !== 'otpauth:' || !['totp', 'hotp'].includes(url.hostname.toLowerCase())) return null
+    const label = decodeUriPathValue(url.pathname.replace(/^\//, ''))
+    const separator = label.indexOf(':')
+    const issuerFromLabel = separator >= 0 ? label.slice(0, separator).trim() : ''
+    const account = separator >= 0 ? label.slice(separator + 1).trim() : label
+    return {
+      type: QR_DATA_TYPES.otp, otpType: url.hostname.toLowerCase(), issuer: url.searchParams.get('issuer') ?? issuerFromLabel,
+      account, secret: url.searchParams.get('secret') ?? '', algorithm: url.searchParams.get('algorithm') ?? 'SHA1',
+      digits: url.searchParams.get('digits') ?? '6', period: url.searchParams.get('period') ?? '30', counter: url.searchParams.get('counter') ?? '',
+    }
+  } catch {
+    return null
+  }
+}
+
+function parsePaymentPayload(text: string): PaymentData | null {
+  const trimmed = text.trim()
+  const match = /^(bitcoin|ethereum):([^?]+)(?:\?(.*))?$/i.exec(trimmed)
+  if (!match) return null
+  const parameters = parseQueryString(match[3] ?? '')
+  return {
+    type: QR_DATA_TYPES.payment, provider: match[1][0].toUpperCase() + match[1].slice(1).toLowerCase(), target: decodeUriPathValue(match[2]),
+    amount: parameters.amount ?? parameters.value ?? '', currency: '', note: parameters.label ?? parameters.message ?? '',
+  }
+}
+
 export function parseQrPayload(text: string): QrData | null {
   return parseVCard(text)
     ?? parseEventPayload(text)
+    ?? parseWifiPayload(text)
+    ?? parseSepaPayload(text)
+    ?? parseOtpPayload(text)
+    ?? parseWhatsAppPayload(text)
+    ?? parsePaymentPayload(text)
     ?? parseMailto(text)
     ?? parsePhonePayload(text)
     ?? parseSmsPayload(text)
@@ -668,12 +912,28 @@ export function formatQrData(data: QrData, translate: Translate): string {
       data.text,
     ].join('\n')
   }
+  if (data.type === QR_DATA_TYPES.sepa) {
+    return [
+      `Recipient: ${data.recipient}`, `IBAN: ${data.iban}`, data.bic ? `BIC: ${data.bic}` : '',
+      data.amount ? `Amount: EUR ${data.amount}` : '', data.reference ? `Reference: ${data.reference}` : '',
+      data.information ? `Information: ${data.information}` : '',
+    ].filter(Boolean).join('\n')
+  }
+  if (data.type === QR_DATA_TYPES.whatsapp) return [data.phone, data.message].filter(Boolean).join('\n')
+  if (data.type === QR_DATA_TYPES.deepLink) return [data.label, data.url].filter(Boolean).join('\n')
+  if (data.type === QR_DATA_TYPES.otp) {
+    return [`Type: ${data.otpType.toUpperCase()}`, `Issuer: ${data.issuer}`, `Account: ${data.account}`, 'Secret: ••••••••'].filter(Boolean).join('\n')
+  }
+  if (data.type === QR_DATA_TYPES.payment) {
+    return [data.provider, data.target, data.amount ? `${data.amount} ${data.currency}`.trim() : '', data.note].filter(Boolean).join('\n')
+  }
   if (data.type === QR_DATA_TYPES.wifi) {
     return [
       translate('default-ssid-label', { value: data.ssid }),
       translate('default-password-label', { value: data.password }),
       translate('default-type-label', { value: data.encryption }),
-    ].join('\n')
+      data.hidden ? 'Hidden network: Yes' : '',
+    ].filter(Boolean).join('\n')
   }
 
   const rows: Array<[string, string]> = [

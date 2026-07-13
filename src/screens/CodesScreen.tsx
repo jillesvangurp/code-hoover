@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { rectSortingStrategy, sortableKeyboardCoordinates, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ArrowDownUp, Barcode, CalendarDays, Contact, FileText, GripVertical, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
+import { ArrowDownUp, BadgeEuro, Barcode, CalendarDays, Contact, CreditCard, FileKey2, FileText, GripVertical, Grid2X2, Link, List, Mail, MapPin, MessageCircle, MessageSquare, Phone, QrCode, Smartphone, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { reorderDisplayedCodes } from '../domain/codeOrder'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
@@ -69,6 +69,16 @@ function codeTypeIcon(data: QrData) {
       return Contact
     case QR_DATA_TYPES.barcode:
       return Barcode
+    case QR_DATA_TYPES.sepa:
+      return BadgeEuro
+    case QR_DATA_TYPES.whatsapp:
+      return MessageCircle
+    case QR_DATA_TYPES.deepLink:
+      return Smartphone
+    case QR_DATA_TYPES.otp:
+      return FileKey2
+    case QR_DATA_TYPES.payment:
+      return CreditCard
   }
 }
 
@@ -118,6 +128,16 @@ function codePreviewLines(code: SavedQrCode): string[] {
       ].filter(Boolean)
     case QR_DATA_TYPES.barcode:
       return [code.data.text]
+    case QR_DATA_TYPES.sepa:
+      return [code.data.recipient, code.data.iban, code.data.amount ? `EUR ${code.data.amount}` : ''].filter(Boolean)
+    case QR_DATA_TYPES.whatsapp:
+      return [code.data.phone, code.data.message].filter(Boolean)
+    case QR_DATA_TYPES.deepLink:
+      return [code.data.label, code.data.url].filter(Boolean)
+    case QR_DATA_TYPES.otp:
+      return [[code.data.issuer, code.data.account].filter(Boolean).join(' · '), 'Local-only · not synced'].filter(Boolean)
+    case QR_DATA_TYPES.payment:
+      return [code.data.provider, code.data.target, code.data.amount ? `${code.data.amount} ${code.data.currency}`.trim() : ''].filter(Boolean)
   }
 }
 

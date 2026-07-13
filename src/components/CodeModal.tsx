@@ -370,10 +370,25 @@ function detailRowsForPayload(data: QrData, codeName: string, createdAt: string)
       rows.push(['Title', data.title], ['Start', data.start], ['End', data.end], ['Location', data.location], ['Description', data.description])
       break
     case QR_DATA_TYPES.wifi:
-      rows.push(['SSID', data.ssid], ['Password', data.password], ['Encryption', data.encryption])
+      rows.push(['SSID', data.ssid], ['Password', data.password], ['Encryption', data.encryption], ['Hidden network', data.hidden ? 'Yes' : 'No'])
       break
     case QR_DATA_TYPES.text:
       rows.push(['Text', data.text])
+      break
+    case QR_DATA_TYPES.sepa:
+      rows.push(['Recipient', data.recipient], ['IBAN', data.iban], ['BIC', data.bic], ['Amount', data.amount ? `EUR ${data.amount}` : ''], ['Purpose', data.purpose], ['Reference', data.reference], ['Information', data.information])
+      break
+    case QR_DATA_TYPES.whatsapp:
+      rows.push(['Phone', data.phone], ['Message', data.message])
+      break
+    case QR_DATA_TYPES.deepLink:
+      rows.push(['Label', data.label], ['URL', data.url])
+      break
+    case QR_DATA_TYPES.otp:
+      rows.push(['Type', data.otpType.toUpperCase()], ['Issuer', data.issuer], ['Account', data.account], ['Secret', 'Hidden'], ['Algorithm', data.algorithm], ['Digits', data.digits], [data.otpType === 'hotp' ? 'Counter' : 'Period', data.otpType === 'hotp' ? data.counter : `${data.period} seconds`])
+      break
+    case QR_DATA_TYPES.payment:
+      rows.push(['Provider', data.provider], ['Target', data.target], ['Amount', data.amount], ['Currency', data.currency], ['Note', data.note])
       break
     default:
       rows.push(['Payload', qrDataAsText(data)])

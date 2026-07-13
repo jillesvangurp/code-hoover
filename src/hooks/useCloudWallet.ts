@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { SavedQrCode } from '../domain/qr'
+import { mergeSavedCodes, syncableSavedCodes, type SavedQrCode } from '../domain/qr'
 import { cloudWalletLabel, createCloudWalletKey, downloadCloudWallet, isCloudWalletKey, uploadCloudWallet } from '../lib/cloudWallet'
 import { useLocalStorage } from './useLocalStorage'
 
@@ -30,15 +30,16 @@ const parseStoredString = (value: string): string => {
 export function useCloudWallet(codes: SavedQrCode[], setCodes: (codes: SavedQrCode[]) => void): CloudWalletControls {
   const [walletKey, setWalletKey] = useLocalStorage('cloud-wallet-key', '', parseStoredString)
   const [status, setStatus] = useState<CloudSyncStatus>({ state: 'idle', messageId: 'default-cloud-sync-off' })
-  const lastUploadedJson = useRef(JSON.stringify(codes))
+  const lastUploadedJson = useRef(JSON.stringify(syncableSavedCodes(codes)))
   const walletKeyRef = useRef(walletKey)
   walletKeyRef.current = walletKey
 
   const upload = useCallback(async (key: string, nextCodes: SavedQrCode[], messageId = 'default-cloud-sync-saved') => {
     setStatus({ state: 'syncing', messageId: 'default-cloud-sync-saving' })
     try {
-      await uploadCloudWallet(key, nextCodes)
-      lastUploadedJson.current = JSON.stringify(nextCodes)
+      const safeCodes = syncableSavedCodes(nextCodes)
+      await uploadCloudWallet(key, safeCodes)
+      lastUploadedJson.current = JSON.stringify(safeCodes)
       setStatus({ state: 'synced', messageId })
     } catch {
       setStatus({ state: 'error', messageId: 'default-cloud-sync-error' })
@@ -63,14 +64,14 @@ export function useCloudWallet(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
     setStatus({ state: 'syncing', messageId: 'default-cloud-sync-restoring' })
     try {
       const restoredCodes = await downloadCloudWallet(walletKeyRef.current)
-      setCodes(restoredCodes)
+      setCodes(mergeSavedCodes(codes, restoredCodes))
       lastUploadedJson.current = JSON.stringify(restoredCodes)
       setStatus({ state: 'synced', messageId: 'default-cloud-sync-restored' })
     } catch {
       setStatus({ state: 'error', messageId: 'default-cloud-sync-error' })
       throw new Error('Cloud restore failed')
     }
-  }, [setCodes])
+  }, [codes, setCodes])
 
   const importKey = useCallback(async (nextWalletKey: string) => {
     if (!isCloudWalletKey(nextWalletKey)) throw new Error('Invalid cloud wallet key')
@@ -78,14 +79,14 @@ export function useCloudWallet(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
     setStatus({ state: 'syncing', messageId: 'default-cloud-sync-restoring' })
     try {
       const restoredCodes = await downloadCloudWallet(nextWalletKey.trim())
-      setCodes(restoredCodes)
+      setCodes(mergeSavedCodes(codes, restoredCodes))
       lastUploadedJson.current = JSON.stringify(restoredCodes)
       setStatus({ state: 'synced', messageId: 'default-cloud-sync-restored' })
     } catch {
       setStatus({ state: 'error', messageId: 'default-cloud-sync-error' })
       throw new Error('Cloud restore failed')
     }
-  }, [setCodes, setWalletKey])
+  }, [codes, setCodes, setWalletKey])
 
   const copyKey = useCallback(async () => {
     if (!walletKeyRef.current) return
@@ -100,10 +101,10 @@ export function useCloudWallet(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
 
   useEffect(() => {
     if (!walletKey) {
-      lastUploadedJson.current = JSON.stringify(codes)
+      lastUploadedJson.current = JSON.stringify(syncableSavedCodes(codes))
       return
     }
-    const nextJson = JSON.stringify(codes)
+    const nextJson = JSON.stringify(syncableSavedCodes(codes))
     if (nextJson === lastUploadedJson.current) return
     const timeout = window.setTimeout(() => {
       void upload(walletKey, codes).catch(() => undefined)
