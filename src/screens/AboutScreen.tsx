@@ -2,6 +2,7 @@ import { useI18n } from '../i18n/context'
 import { CODE_HOOVER_APP_URL, CODE_HOOVER_REPOSITORY_URL, ORIGINAL_CODE_HOOVER_REPOSITORY_URL } from '../constants/links'
 import { HooverGraphic } from '../components/HooverGraphic'
 import { QrIntroFrame } from '../components/QrIntroFrame'
+import { CodeImageActions } from '../components/CodeImageActions'
 
 export function AboutScreen() {
   const { locale, t } = useI18n()
@@ -18,6 +19,7 @@ export function AboutScreen() {
       <p>{t('default-migration-instructions')}</p>
       <div className="flex w-full flex-col items-center gap-3 py-2">
         <QrIntroFrame text={CODE_HOOVER_APP_URL} size={420} className="qr-detail-code-frame" label={t('default-open-on-different-device')} />
+        <CodeImageActions source={{ kind: 'qr', text: CODE_HOOVER_APP_URL }} name={t('default-open-on-different-device')} />
         <a className="link link-primary text-center text-sm" href={CODE_HOOVER_APP_URL} target="_blank" rel="noopener noreferrer">{t('default-open-on-different-device')}</a>
       </div>
       <hr className="divider" />

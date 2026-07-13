@@ -192,6 +192,8 @@ describe('CodesScreen', () => {
     await user.click(screen.getByText('Example'))
 
     expect(playOpen).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', { name: /share image/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /download image/i })).toBeInTheDocument()
   })
 
   it('confirms before deleting a saved code', async () => {

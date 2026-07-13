@@ -5,6 +5,7 @@ import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrD
 import { useI18n } from '../i18n/context'
 import { useModalHistory } from '../hooks/useModalHistory'
 import { BarcodeImage } from './BarcodeImage'
+import { CodeImageActions } from './CodeImageActions'
 import { QrForm } from './QrForm'
 import { QrIntroFrame } from './QrIntroFrame'
 import { UrlPreview } from './UrlPreview'
@@ -394,6 +395,7 @@ function PayloadSections({
             <button type="button" className="btn btn-secondary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>
             <button type="button" className="btn btn-error btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>
           </div>
+          <CodeImageActions className="mt-2" source={{ kind: 'qr', text: qrDataAsText(data) }} name={codeName || codeText} />
         </div>
       </section>
       <section className="mx-auto w-full max-w-xl">
@@ -474,6 +476,7 @@ function BarcodeSections({
             <button type="button" className="btn btn-primary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>
             <button type="button" className="btn btn-error btn-sm" onClick={onDelete}><Trash2 size={16} />{t('default-delete')}</button>
           </div>
+          <CodeImageActions className="mt-2" source={{ kind: 'barcode', format: data.format, text: data.text }} name={codeName} />
         </div>
       </section>
       <section className="mx-auto w-full max-w-xl">
@@ -543,6 +546,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
                       <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
                     </div>
+                    <CodeImageActions className="mt-2" source={{ kind: 'qr', text: qrDataAsText(data) }} name={displayCodeName || code.text} />
                   </div>
                 </section>
                 <section className="mx-auto w-full max-w-xl">
@@ -577,6 +581,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
                           <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
                         </div>
+                        <CodeImageActions className="mt-2" source={{ kind: 'qr', text: qrDataAsText(data) }} name={displayCodeName || code.text} />
                       </div>
                     </section>
                     <section className="mx-auto w-full max-w-xl">
