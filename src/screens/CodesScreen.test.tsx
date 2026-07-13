@@ -72,9 +72,10 @@ describe('CodesScreen', () => {
     expect(onDone).toHaveBeenCalledOnce()
   })
 
-  it('shows saved codes without an inline add button', () => {
+  it('keeps add and code-type help out of the codes screen', () => {
     render(<CodesScreen codes={[]} setCodes={vi.fn()} playDelete={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /add/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /code types/i })).not.toBeInTheDocument()
   })
 
   it('shows only a progress bar in the codes loading area', () => {

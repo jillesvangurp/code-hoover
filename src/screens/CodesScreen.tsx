@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'r
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { arrayMove, rectSortingStrategy, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Barcode, CalendarDays, Contact, ExternalLink, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
+import { Barcode, CalendarDays, Contact, FileText, Grip, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, mailFrontAgentForm, MAILFRONT_AGENT_EMAIL, type QrFormState } from '../domain/form'
-import { CODE_TYPES_HELP_URL, QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
@@ -183,16 +183,14 @@ function SortableCode({ id, code, viewMode, onClick }: { id: string; code: Saved
 }
 
 function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; setViewMode: (viewMode: CodesViewMode) => void }) {
-  const { t } = useI18n()
   const changeViewMode = (nextViewMode: CodesViewMode) => {
     if (viewMode === nextViewMode) return
     setViewMode(nextViewMode)
   }
 
   return (
-    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-2" aria-label="Code view controls">
-      <div />
-      <div className="join justify-self-center">
+    <div className="flex w-full justify-center" aria-label="Code view controls">
+      <div className="join">
         <button
           type="button"
           className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-neutral' : 'btn-ghost'}`}
@@ -212,15 +210,6 @@ function CodesViewToggle({ viewMode, setViewMode }: { viewMode: CodesViewMode; s
           Grid
         </button>
       </div>
-      <a
-        className="inline-flex min-w-0 items-center gap-1 justify-self-end truncate text-xs font-semibold underline-offset-2 opacity-70 hover:underline"
-        href={CODE_TYPES_HELP_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <span className="truncate">{t('default-code-types')}</span>
-        <ExternalLink size={12} className="shrink-0" aria-hidden="true" />
-      </a>
     </div>
   )
 }

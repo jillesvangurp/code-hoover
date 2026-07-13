@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { Cloud, Download, Info, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
+import { Cloud, Download, ExternalLink, Info, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
 import type { SavedQrCode } from '../domain/qr'
-import { parseSavedCodes } from '../domain/qr'
+import { CODE_TYPES_HELP_URL, parseSavedCodes } from '../domain/qr'
 import { LOCALES, useI18n } from '../i18n/context'
 import type { AccountSyncControls } from '../hooks/useAccountSync'
 import type { Screen } from '../App'
@@ -149,36 +149,6 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
 
   const menuItems = (
     <>
-      <li><button type="button" className="w-full text-left" onClick={() => { playComplete(); setScreen('about'); closeMenus() }}><Info size={16} />{t('default-about')}</button></li>
-      <li>
-        <button type="button" className="w-full items-start gap-3 text-left" onClick={installCodeHoover}>
-          <Download size={16} className="mt-0.5 shrink-0" />
-          <span className="flex min-w-0 flex-col gap-1">
-            <span className="font-semibold">{t('default-install-app')}</span>
-            <span className="text-xs leading-snug opacity-70">{t('default-install-app-description')}</span>
-          </span>
-        </button>
-      </li>
-      <li><button type="button" className="w-full" onClick={() => { setOpenDeviceModal(true); closeMenus() }}><QrCode size={16} />{t('default-open-on-different-device')}</button></li>
-      <li><button type="button" className="w-full" onClick={() => { fileInput.current?.click(); closeMenus() }}><Upload size={16} />{t('default-import-json')}</button></li>
-      <li><button type="button" className="w-full" onClick={exportCodes}><Download size={16} />{t('default-export')}</button></li>
-      <li>
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-base-content">
-          <span className="text-sm font-medium">{t('default-language')}: {selectedLocale.name}</span>
-          <span className="flex flex-wrap justify-end gap-1">
-            {LOCALES.map(({ id, flag, name }) => (
-              <button
-                key={id}
-                type="button"
-                className={`btn btn-ghost btn-sm w-8 text-2xl filter hover:grayscale-0 ${locale === id ? 'grayscale-0' : 'grayscale'}`}
-                title={name}
-                aria-label={name}
-                onClick={() => { setLocale(id); closeMenus() }}
-              >{flag}</button>
-            ))}
-          </span>
-        </div>
-      </li>
       <li>
         <div className="flex min-w-0 flex-col gap-2 rounded-md border border-base-300 bg-base-100 p-3 text-base-content">
           <div className="flex items-center justify-between gap-2">
@@ -221,6 +191,23 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </div>
       </li>
       <li>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-base-content">
+          <span className="text-sm font-medium">{t('default-language')}: {selectedLocale.name}</span>
+          <span className="flex flex-wrap justify-end gap-1">
+            {LOCALES.map(({ id, flag, name }) => (
+              <button
+                key={id}
+                type="button"
+                className={`btn btn-ghost btn-sm w-8 text-2xl filter hover:grayscale-0 ${locale === id ? 'grayscale-0' : 'grayscale'}`}
+                title={name}
+                aria-label={name}
+                onClick={() => { setLocale(id); closeMenus() }}
+              >{flag}</button>
+            ))}
+          </span>
+        </div>
+      </li>
+      <li>
         <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${dark ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
           <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
             {dark ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
@@ -248,6 +235,24 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
           </span>
         </label>
       </li>
+      <li className="mt-2 border-t border-base-300 pt-2">
+        <a className="w-full" href={CODE_TYPES_HELP_URL} target="_blank" rel="noopener noreferrer" onClick={closeMenus}>
+          <ExternalLink size={16} />{t('default-code-types')}
+        </a>
+      </li>
+      <li><button type="button" className="w-full text-left" onClick={() => { playComplete(); setScreen('about'); closeMenus() }}><Info size={16} />{t('default-about')}</button></li>
+      <li>
+        <button type="button" className="w-full items-start gap-3 text-left" onClick={installCodeHoover}>
+          <Download size={16} className="mt-0.5 shrink-0" />
+          <span className="flex min-w-0 flex-col gap-1">
+            <span className="font-semibold">{t('default-install-app')}</span>
+            <span className="text-xs leading-snug opacity-70">{t('default-install-app-description')}</span>
+          </span>
+        </button>
+      </li>
+      <li><button type="button" className="w-full" onClick={() => { setOpenDeviceModal(true); closeMenus() }}><QrCode size={16} />{t('default-open-on-different-device')}</button></li>
+      <li><button type="button" className="w-full" onClick={() => { fileInput.current?.click(); closeMenus() }}><Upload size={16} />{t('default-import-json')}</button></li>
+      <li><button type="button" className="w-full" onClick={exportCodes}><Download size={16} />{t('default-export')}</button></li>
     </>
   )
 
