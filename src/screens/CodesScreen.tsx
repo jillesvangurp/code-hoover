@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { ArrowDownUp, Barcode, CalendarDays, Contact, FileText, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
+import { closestCenter, DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { rectSortingStrategy, sortableKeyboardCoordinates, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { ArrowDownUp, Barcode, CalendarDays, Contact, FileText, GripVertical, Grid2X2, Link, List, Mail, MapPin, MessageSquare, Phone, QrCode, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
+import { reorderDisplayedCodes } from '../domain/codeOrder'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import { BarcodeImage } from '../components/BarcodeImage'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
@@ -13,7 +18,17 @@ import { UrlPreview } from '../components/UrlPreview'
 
 const EMPTY_STATE_SAMPLE_URL = 'https://tryformation.com'
 type CodesViewMode = 'list' | 'grid'
-type CodesSortOrder = 'newest' | 'oldest'
+type CodesSortOrder = 'manual' | 'newest' | 'oldest'
+
+function parseCodesSortOrder(value: string): CodesSortOrder {
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (parsed === 'manual' || parsed === 'newest' || parsed === 'oldest') return parsed
+  } catch {
+    if (value === 'manual' || value === 'newest' || value === 'oldest') return value
+  }
+  return 'newest'
+}
 
 interface CodesScreenProps {
   codes: SavedQrCode[]
@@ -113,13 +128,13 @@ function formatCreatedAt(createdAt: string | undefined, locale: string): string 
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function CodeThumbnail({ data, text, label }: { data: QrData; text: string; label: string }) {
+function CodeThumbnail({ data, text, label, compact = false }: { data: QrData; text: string; label: string; compact?: boolean }) {
   return data.type === QR_DATA_TYPES.barcode ? (
-    <span className="flex h-16 w-20 items-center justify-center overflow-hidden bg-white p-1">
+    <span className={`flex items-center justify-center overflow-hidden bg-white p-1 ${compact ? 'h-14 w-[4.5rem]' : 'h-16 w-20'}`}>
       <BarcodeImage format={data.format} text={data.text} fallbackSize={160} className="max-h-full max-w-full object-contain" alt={label} loading="lazy" />
     </span>
   ) : (
-    <span className="qr-intro-code-frame" style={{ width: '5rem', height: '5rem' }}>
+    <span className="qr-intro-code-frame" style={{ width: compact ? '4.5rem' : '5rem', height: compact ? '4.5rem' : '5rem' }}>
       <span className="qr-intro-finder qr-intro-finder-top-left" aria-hidden="true" />
       <span className="qr-intro-finder qr-intro-finder-top-right" aria-hidden="true" />
       <span className="qr-intro-finder qr-intro-finder-bottom-left" aria-hidden="true" />
@@ -128,8 +143,9 @@ function CodeThumbnail({ data, text, label }: { data: QrData; text: string; labe
   )
 }
 
-function CodeCard({ code, viewMode, onClick }: { code: SavedQrCode; viewMode: CodesViewMode; onClick: () => void }) {
+function CodeCard({ code, sortableId, viewMode, onClick }: { code: SavedQrCode; sortableId: string; viewMode: CodesViewMode; onClick: () => void }) {
   const { locale, t } = useI18n()
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const displayName = code.name || code.text
   const previewLines = codePreviewLines(code)
   const createdAt = formatCreatedAt(code.createdAt, locale)
@@ -138,28 +154,42 @@ function CodeCard({ code, viewMode, onClick }: { code: SavedQrCode; viewMode: Co
 
   return (
     <li
-      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 p-4 text-left transition-colors hover:bg-base-300 ${isGrid ? 'grid min-h-72 grid-rows-[1fr_auto] gap-3' : 'grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3'}`}
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 text-left transition-colors hover:bg-base-300 ${isDragging ? 'z-10 opacity-70 shadow-xl' : ''} ${isGrid ? 'grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 p-3' : 'grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3 p-4'}`}
       onClick={onClick}
     >
-      <div className={`min-w-0 ${isGrid ? 'order-3' : ''}`}>
-        <div className="mb-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <CodeTypeBadge data={code.data} />
-          <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{codeFamilyLabel(code.data)}</span>
+      <div className={`min-w-0 ${isGrid ? 'order-2' : ''}`}>
+        <div className="mb-2 flex min-w-0 items-start justify-between gap-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <CodeTypeBadge data={code.data} />
+            {!isGrid && <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{codeFamilyLabel(code.data)}</span>}
+          </div>
+          <button
+            type="button"
+            className="btn btn-ghost btn-xs btn-square -mr-1 shrink-0 cursor-grab touch-none active:cursor-grabbing"
+            aria-label={`${t('default-drag-to-reorder')}: ${displayName}`}
+            onClick={(event) => event.stopPropagation()}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical size={16} aria-hidden="true" />
+          </button>
         </div>
-        <p className="m-0 truncate text-lg font-semibold leading-tight">{displayName}</p>
-        {createdAt && <p className="m-0 mt-1 truncate text-xs opacity-60">{t('default-created')}: {createdAt}</p>}
+        <p className={`m-0 truncate font-semibold leading-tight ${isGrid ? 'text-base' : 'text-lg'}`}>{displayName}</p>
+        {createdAt && !isGrid && <p className="m-0 mt-1 truncate text-xs opacity-60">{t('default-created')}: {createdAt}</p>}
         {code.data.type === QR_DATA_TYPES.url ? (
-          <UrlPreview url={code.data.url} compact />
+          isGrid ? <p className="m-0 mt-1 truncate text-xs opacity-70">{code.data.url}</p> : <UrlPreview url={code.data.url} compact />
         ) : previewLines.length > 0 && (
           <div className="mt-2 space-y-1">
-            {previewLines.slice(0, 3).map((line) => (
+            {previewLines.slice(0, isGrid ? 1 : 3).map((line) => (
               <p key={line} className="m-0 truncate text-sm opacity-75">{line}</p>
             ))}
           </div>
         )}
       </div>
-      <div className={isGrid ? 'order-2 flex min-h-28 items-center justify-center' : ''}>
-        <CodeThumbnail data={code.data} text={code.text} label={displayName} />
+      <div className={isGrid ? 'order-1 flex items-center justify-center' : ''}>
+        <CodeThumbnail data={code.data} text={code.text} label={displayName} compact={isGrid} />
       </div>
     </li>
   )
@@ -171,6 +201,7 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
     if (viewMode === nextViewMode) return
     setViewMode(nextViewMode)
   }
+  const sortLabel = t(sortOrder === 'manual' ? 'default-manual-order' : sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')
 
   return (
     <div className="flex w-full items-center justify-between" aria-label="Code view controls">
@@ -197,9 +228,9 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
       <button
         type="button"
         className="btn btn-ghost btn-sm btn-square"
-        aria-label={`${t('default-sort')}: ${t(sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')}`}
-        title={`${t('default-sort')}: ${t(sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')}`}
-        onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
+        aria-label={`${t('default-sort')}: ${sortLabel}`}
+        title={`${t('default-sort')}: ${sortLabel}`}
+        onClick={() => setSortOrder(sortOrder === 'manual' ? 'newest' : sortOrder === 'newest' ? 'oldest' : 'manual')}
       >
         <ArrowDownUp size={18} aria-hidden="true" />
       </button>
@@ -240,15 +271,29 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
 export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, showLoadEffect = false }: CodesScreenProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<CodesViewMode>('list')
-  const [sortOrder, setSortOrder] = useState<CodesSortOrder>('newest')
+  const [sortOrder, setSortOrder] = useLocalStorage<CodesSortOrder>('codes-sort-order', 'newest', parseCodesSortOrder)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
   const codeLoadKey = useMemo(() => codes.map((code) => `${code.text}:${code.createdAt ?? ''}`).join('|'), [codes])
-  const sortedCodes = useMemo(() => codes.map((code, originalIndex) => ({ code, originalIndex })).sort((left, right) => {
+  const sortedCodes = useMemo(() => codes.map((code, originalIndex) => ({ code, originalIndex, id: `${code.createdAt ?? ''}:${code.text}:${originalIndex}` })).sort((left, right) => {
+    if (sortOrder === 'manual') return left.originalIndex - right.originalIndex
     const leftCreatedAt = left.code.createdAt ? Date.parse(left.code.createdAt) : Number.NaN
     const rightCreatedAt = right.code.createdAt ? Date.parse(right.code.createdAt) : Number.NaN
     const leftOrder = Number.isNaN(leftCreatedAt) ? left.originalIndex : leftCreatedAt
     const rightOrder = Number.isNaN(rightCreatedAt) ? right.originalIndex : rightCreatedAt
     return sortOrder === 'newest' ? rightOrder - leftOrder : leftOrder - rightOrder
   }), [codes, sortOrder])
+
+  const handleDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return
+    const reorderedCodes = reorderDisplayedCodes(sortedCodes, active.id, over.id)
+    if (!reorderedCodes) return
+    setCodes(reorderedCodes)
+    setSortOrder('manual')
+  }
 
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
   useEffect(() => {
@@ -267,9 +312,13 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
       ) : codes.length === 0 ? (
         <EmptyCodesState />
       ) : (
-        <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
-          {sortedCodes.map(({ code, originalIndex }) => <CodeCard key={`${code.text}-${originalIndex}`} code={code} viewMode={viewMode} onClick={() => { playOpen?.(); setSelectedIndex(originalIndex) }} />)}
-        </ul>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={sortedCodes.map(({ id }) => id)} strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}>
+            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
+              {sortedCodes.map(({ code, originalIndex, id }) => <CodeCard key={id} sortableId={id} code={code} viewMode={viewMode} onClick={() => { playOpen?.(); setSelectedIndex(originalIndex) }} />)}
+            </ul>
+          </SortableContext>
+        </DndContext>
       )}
       {selectedIndex !== null && codes[selectedIndex] && (
         <CodeModal

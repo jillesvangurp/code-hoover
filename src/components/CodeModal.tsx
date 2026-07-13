@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
-import { ArrowLeft, Barcode, Building2, CalendarDays, Check, Clock, Copy, ExternalLink, FileText, Globe, Mail, MapPin, MessageSquare, Navigation, Phone, Send, Trash2, UserRound, Wifi } from 'lucide-react'
+import { ArrowLeft, Barcode, Building2, CalendarDays, Check, Clock, Copy, ExternalLink, FileText, Globe, Info, Mail, MapPin, MessageSquare, Navigation, Phone, Send, Trash2, UserRound, Wifi } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
+import { enrichCode } from '../domain/codeEnrichment'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type LocationData, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { useModalHistory } from '../hooks/useModalHistory'
@@ -111,6 +112,36 @@ function DetailList({ rows }: { rows: Array<[string, string]> }) {
         </div>
       ))}
     </dl>
+  )
+}
+
+function CodeEnrichmentPanel({ data, codeName }: { data: QrData; codeName: string }) {
+  const enrichment = enrichCode(data, codeName)
+  if (!enrichment) return null
+
+  return (
+    <aside className="mx-auto w-full max-w-xl rounded-lg border border-base-300 bg-base-200 p-4" aria-label="About this code">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content">
+          <Info size={18} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide opacity-60">About this code</p>
+          <p className="m-0 mt-1 break-words text-sm font-medium leading-relaxed">{enrichment.summary}</p>
+          {enrichment.facts.length > 0 && (
+            <dl className="m-0 mt-3 grid gap-2 sm:grid-cols-2">
+              {enrichment.facts.map(({ label, value }) => (
+                <div key={label} className="min-w-0 rounded-md bg-base-100 px-3 py-2">
+                  <dt className="text-[0.6875rem] font-semibold uppercase opacity-60">{label}</dt>
+                  <dd className="m-0 mt-0.5 break-words text-sm">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <p className="m-0 mt-3 text-xs opacity-50">Derived from the information stored in the code.</p>
+        </div>
+      </div>
+    </aside>
   )
 }
 
@@ -383,6 +414,7 @@ function PayloadSections({
   return (
     <>
       <PayloadPreview data={data} codeName={codeName} createdAt={createdAt} />
+      <CodeEnrichmentPanel data={data} codeName={codeName} />
       <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
         <div className="rounded-md border border-base-300 bg-white p-2">
           <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={codeName || codeText} expandable />
@@ -465,6 +497,7 @@ function BarcodeSections({
   return (
     <>
       <BarcodePreview data={data} codeName={codeName} createdAt={createdAt} />
+      <CodeEnrichmentPanel data={data} codeName={codeName} />
       <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
         <div className="flex min-h-36 items-center justify-center rounded-md border border-base-300 bg-white p-3">
           <BarcodeImage format={data.format} text={data.text} fallbackSize={500} className="max-h-52 max-w-full object-contain" alt={codeName} />
@@ -535,6 +568,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
             {isVCard ? (
               <>
                 <BusinessCardPreview data={data} codeName={displayCodeName} />
+                <CodeEnrichmentPanel data={data} codeName={displayCodeName} />
                 <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
                   <div className="rounded-md border border-base-300 bg-white p-2">
                     <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} expandable />
@@ -569,6 +603,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     <section className="mx-auto w-full max-w-xl" aria-label={displayCodeName}>
                       <UrlPreview url={data.url} featured metadata={urlPreviewMetadata} />
                     </section>
+                    <CodeEnrichmentPanel data={data} codeName={displayCodeName} />
                     <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
                       <div className="rounded-md border border-base-300 bg-white p-2">
                         <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} expandable />

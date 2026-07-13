@@ -38,6 +38,7 @@ default-created=Created
 default-sort=並び順
 default-newest-first=新しい順
 default-oldest-first=古い順
+default-manual-order=手動の順序
 default-code-types=Code types
 default-examples=例
 default-examples-description=左右にスワイプして例を確認し、フォームに読み込めます。

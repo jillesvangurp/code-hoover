@@ -62,6 +62,7 @@ default-created=Created
 default-sort=Sort
 default-newest-first=Newest first
 default-oldest-first=Oldest first
+default-manual-order=Manual order
 default-code-types=Code types
 default-examples=Examples
 default-examples-description=Swipe to explore practical examples, then load one into the form.

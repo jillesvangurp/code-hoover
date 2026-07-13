@@ -1,6 +1,7 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { reorderDisplayedCodes } from '../domain/codeOrder'
 import { AddCodeScreen, CodesScreen } from './CodesScreen'
 
 vi.mock('../components/QrCodeImage', () => ({
@@ -120,6 +121,7 @@ describe('CodesScreen', () => {
       name: 'Example',
       text: 'https://example.com',
       data: { type: 'qr.QrData.Url', url: 'https://example.com' },
+      createdAt: '2026-07-13T09:00:00.000Z',
     }]} setCodes={vi.fn()} playDelete={vi.fn()} playToggle={playToggle} />)
 
     expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'true')
@@ -129,6 +131,9 @@ describe('CodesScreen', () => {
 
     expect(screen.getByRole('button', { name: /list/i })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('listitem')).toHaveClass('grid-cols-[4.5rem_minmax(0,1fr)]', 'p-3')
+    expect(screen.queryByText(/created:/i)).not.toBeInTheDocument()
+    expect(screen.getByText('https://example.com')).toBeInTheDocument()
     expect(playToggle).toHaveBeenCalledOnce()
   })
 
@@ -153,6 +158,68 @@ describe('CodesScreen', () => {
     await user.click(screen.getByRole('button', { name: /sort: newest first/i }))
     expect(within(screen.getAllByRole('listitem')[0]).getByText('Old code')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /sort: oldest first/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /sort: oldest first/i }))
+    expect(screen.getByRole('button', { name: /sort: manual order/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /sort: manual order/i }))
+    expect(within(screen.getAllByRole('listitem')[0]).getByText('New code')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sort: newest first/i })).toBeInTheDocument()
+  })
+
+  it('provides drag handles without opening the card when they are pressed', async () => {
+    const user = userEvent.setup()
+    const playOpen = vi.fn()
+    const oldCode = {
+      name: 'Old code',
+      text: 'https://old.example',
+      data: { type: 'qr.QrData.Url' as const, url: 'https://old.example' },
+      createdAt: '2026-07-11T09:00:00.000Z',
+    }
+    const newCode = {
+      name: 'New code',
+      text: 'https://new.example',
+      data: { type: 'qr.QrData.Url' as const, url: 'https://new.example' },
+      createdAt: '2026-07-13T09:00:00.000Z',
+    }
+    render(<CodesScreen codes={[oldCode, newCode]} setCodes={vi.fn()} playDelete={vi.fn()} playOpen={playOpen} />)
+
+    const handle = screen.getByRole('button', { name: /drag to reorder: new code/i })
+    await user.click(handle)
+
+    expect(playOpen).not.toHaveBeenCalled()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('persists the displayed order after a drag', () => {
+    const first = { name: 'First', text: 'first', data: { type: 'qr.QrData.Text' as const, text: 'first' } }
+    const second = { name: 'Second', text: 'second', data: { type: 'qr.QrData.Text' as const, text: 'second' } }
+
+    expect(reorderDisplayedCodes([
+      { id: 'first', code: first },
+      { id: 'second', code: second },
+    ], 'first', 'second')).toEqual([second, first])
+  })
+
+  it('restores a saved manual order when the codes screen returns', () => {
+    localStorage.setItem('codes-sort-order', JSON.stringify('manual'))
+    render(<CodesScreen codes={[
+      {
+        name: 'Older manual first',
+        text: 'https://old.example',
+        data: { type: 'qr.QrData.Url', url: 'https://old.example' },
+        createdAt: '2026-07-11T09:00:00.000Z',
+      },
+      {
+        name: 'Newer manual second',
+        text: 'https://new.example',
+        data: { type: 'qr.QrData.Url', url: 'https://new.example' },
+        createdAt: '2026-07-13T09:00:00.000Z',
+      },
+    ]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    expect(within(screen.getAllByRole('listitem')[0]).getByText('Older manual first')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /sort: manual order/i })).toBeInTheDocument()
   })
 
   it('plays a staggered sound for each code loaded in the codes view', () => {

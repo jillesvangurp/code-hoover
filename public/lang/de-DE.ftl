@@ -38,6 +38,7 @@ default-created=Created
 default-sort=Sortierung
 default-newest-first=Neueste zuerst
 default-oldest-first=Älteste zuerst
+default-manual-order=Manuelle Reihenfolge
 default-code-types=Code types
 default-examples=Beispiele
 default-examples-description=Wische durch praktische Beispiele und lade eines in das Formular.
