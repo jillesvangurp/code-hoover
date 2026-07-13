@@ -8,8 +8,8 @@ vi.mock('../components/QrCodeImage', () => ({
   QrCodeImage: ({ alt }: { alt: string }) => <div role="img" aria-label={alt} />,
 }))
 
-vi.mock('../components/BarcodeImage', () => ({
-  BarcodeImage: ({ alt, format, text }: { alt: string; format: string; text: string }) => <div role="img" aria-label={alt} data-format={format} data-text={text} />,
+vi.mock('../components/BarcodeIntroFrame', () => ({
+  BarcodeIntroFrame: ({ alt, format, text }: { alt: string; format: string; text: string }) => <div role="img" aria-label={alt} data-format={format} data-text={text} />,
 }))
 
 describe('CodesScreen', () => {

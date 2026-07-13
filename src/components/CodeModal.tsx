@@ -5,7 +5,7 @@ import { enrichCode } from '../domain/codeEnrichment'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type LocationData, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { useModalHistory } from '../hooks/useModalHistory'
-import { BarcodeImage } from './BarcodeImage'
+import { BarcodeIntroFrame } from './BarcodeIntroFrame'
 import { CodeImageActions } from './CodeImageActions'
 import { QrForm } from './QrForm'
 import { QrIntroFrame } from './QrIntroFrame'
@@ -515,7 +515,14 @@ function BarcodeSections({
       <CodeEnrichmentPanel data={data} codeName={codeName} />
       <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
         <div className="flex min-h-36 items-center justify-center rounded-md border border-base-300 bg-white p-3">
-          <BarcodeImage format={data.format} text={data.text} fallbackSize={500} className="max-h-52 max-w-full object-contain" alt={codeName} />
+          <BarcodeIntroFrame
+            format={data.format}
+            text={data.text}
+            fallbackSize={500}
+            className="h-32 w-full"
+            imageClassName="max-h-full max-w-full object-contain"
+            alt={codeName}
+          />
         </div>
         <div className="min-w-0">
           <h3 className="m-0 text-base font-semibold">Scan barcode</h3>

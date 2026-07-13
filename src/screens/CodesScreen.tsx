@@ -8,7 +8,7 @@ import { reorderDisplayedCodes } from '../domain/codeOrder'
 import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { BarcodeImage } from '../components/BarcodeImage'
+import { BarcodeIntroFrame } from '../components/BarcodeIntroFrame'
 import { CodeModal } from '../components/CodeModal'
 import { FormButtons, QrForm } from '../components/QrForm'
 import { QrCodeImage } from '../components/QrCodeImage'
@@ -150,9 +150,15 @@ function formatCreatedAt(createdAt: string | undefined, locale: string): string 
 
 function CodeThumbnail({ data, text, label, compact = false }: { data: QrData; text: string; label: string; compact?: boolean }) {
   return data.type === QR_DATA_TYPES.barcode ? (
-    <span className={`flex items-center justify-center overflow-hidden bg-white p-1 ${compact ? 'h-14 w-[4.5rem]' : 'h-16 w-20'}`}>
-      <BarcodeImage format={data.format} text={data.text} fallbackSize={160} className="max-h-full max-w-full object-contain" alt={label} loading="lazy" />
-    </span>
+    <BarcodeIntroFrame
+      format={data.format}
+      text={data.text}
+      fallbackSize={160}
+      className={compact ? 'h-14 w-[4.5rem]' : 'h-16 w-20'}
+      imageClassName="max-h-full max-w-full object-contain"
+      alt={label}
+      loading="lazy"
+    />
   ) : (
     <span className="qr-intro-code-frame" style={{ width: compact ? '4.5rem' : '5rem', height: compact ? '4.5rem' : '5rem' }}>
       <span className="qr-intro-finder qr-intro-finder-top-left" aria-hidden="true" />
