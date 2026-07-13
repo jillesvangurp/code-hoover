@@ -253,14 +253,14 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
   )
 
   return (
-    <header className="flex w-full flex-wrap items-center gap-4">
+    <header className="flex w-full flex-nowrap items-center gap-2 sm:gap-4">
       <input ref={fileInput} className="hidden" type="file" accept=".json,application/json" onChange={importCodes} />
-      <button type="button" className="flex min-w-0 cursor-pointer items-center gap-3 rounded-md text-left transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current" onClick={() => navigateHome(true)} aria-label={t('default-page-title')}>
-        <img className="code-hoover-logo h-10 w-10" src="/favicon.svg" alt="Code Hoover 2.0 logo" />
-        <h1 className="m-0 p-0 text-2xl font-bold text-primary sm:text-3xl">{t('default-page-title')}</h1>
+      <button type="button" className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md text-left transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current sm:gap-3" onClick={() => navigateHome(true)} aria-label={t('default-page-title')}>
+        <img className="code-hoover-logo h-8 w-8 shrink-0 sm:h-10 sm:w-10" src="/favicon.svg" alt="Code Hoover 2.0 logo" />
+        <h1 className="m-0 whitespace-nowrap p-0 text-lg font-bold leading-none text-primary min-[360px]:text-xl sm:text-3xl">{t('default-page-title')}</h1>
       </button>
-      <div className="ms-auto flex items-center gap-2">
-        <button type="button" className="btn btn-ghost btn-circle lg:hidden" aria-label={t('default-open')} onClick={() => setMobileMenuOpen(true)}><Menu /></button>
+      <div className="ms-auto flex shrink-0 items-center gap-2">
+        <button type="button" className="btn btn-ghost btn-circle btn-sm lg:hidden" aria-label={t('default-open')} onClick={() => setMobileMenuOpen(true)}><Menu size={22} /></button>
         <details ref={desktopMenu} className="dropdown dropdown-end hidden lg:block">
           <summary className="btn btn-ghost btn-circle" aria-label={t('default-open')}><Menu /></summary>
           <ul className="menu menu-md dropdown-content z-50 mt-3 w-96 rounded-2xl bg-base-200 p-3 text-base-content shadow">{menuItems}</ul>
