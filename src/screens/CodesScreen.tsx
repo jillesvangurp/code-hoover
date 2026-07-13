@@ -5,8 +5,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { ArrowDownUp, BadgeEuro, Barcode, CalendarDays, Contact, CreditCard, FileKey2, FileText, GripVertical, Grid2X2, Link, List, Mail, MapPin, MessageCircle, MessageSquare, Phone, QrCode, Smartphone, Wifi } from 'lucide-react'
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { reorderDisplayedCodes } from '../domain/codeOrder'
-import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, type QrData, type SavedQrCode } from '../domain/qr'
+import { formatEventRange } from '../domain/eventDate'
+import { QR_DATA_TYPES, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
+import { localizedCodeFamilyLabel, localizedCodePayloadTypeLabel } from '../i18n/labels'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { BarcodeIntroFrame } from '../components/BarcodeIntroFrame'
 import { CodeModal } from '../components/CodeModal'
@@ -83,9 +85,10 @@ function codeTypeIcon(data: QrData) {
 }
 
 function CodeTypeBadge({ data }: { data: QrData }) {
+  const { t } = useI18n()
   const TypeIcon = codeTypeIcon(data)
   const FamilyIcon = data.type === QR_DATA_TYPES.barcode ? Barcode : QrCode
-  const label = codePayloadTypeLabel(data)
+  const label = localizedCodePayloadTypeLabel(data, t)
 
   return (
     <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-base-300 bg-base-100 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-base-content shadow-sm">
@@ -96,7 +99,7 @@ function CodeTypeBadge({ data }: { data: QrData }) {
   )
 }
 
-function codePreviewLines(code: SavedQrCode): string[] {
+function codePreviewLines(code: SavedQrCode, t: ReturnType<typeof useI18n>['t'], locale: string): string[] {
   switch (code.data.type) {
     case QR_DATA_TYPES.url:
       return [code.data.url]
@@ -104,8 +107,8 @@ function codePreviewLines(code: SavedQrCode): string[] {
       return [code.data.text]
     case QR_DATA_TYPES.wifi:
       return [
-        code.data.ssid || 'Unnamed network',
-        code.data.encryption ? `${code.data.encryption} security` : '',
+        code.data.ssid || t('default-unnamed-network'),
+        code.data.encryption ? t('default-security-value', { value: code.data.encryption }) : '',
       ].filter(Boolean)
     case QR_DATA_TYPES.email:
       return [code.data.email, code.data.subject].filter(Boolean)
@@ -119,7 +122,7 @@ function codePreviewLines(code: SavedQrCode): string[] {
         [code.data.latitude, code.data.longitude].filter(Boolean).join(', '),
       ].filter(Boolean)
     case QR_DATA_TYPES.event:
-      return [code.data.start, code.data.location, code.data.description].filter(Boolean)
+      return [formatEventRange(code.data.start, code.data.end, locale), code.data.location, code.data.description].filter(Boolean)
     case QR_DATA_TYPES.vcard:
       return [
         [code.data.title, code.data.organization].filter(Boolean).join(' · '),
@@ -135,7 +138,7 @@ function codePreviewLines(code: SavedQrCode): string[] {
     case QR_DATA_TYPES.deepLink:
       return [code.data.label, code.data.url].filter(Boolean)
     case QR_DATA_TYPES.otp:
-      return [[code.data.issuer, code.data.account].filter(Boolean).join(' · '), 'Local-only · not synced'].filter(Boolean)
+      return [[code.data.issuer, code.data.account].filter(Boolean).join(' · '), t('default-local-only-not-synced')].filter(Boolean)
     case QR_DATA_TYPES.payment:
       return [code.data.provider, code.data.target, code.data.amount ? `${code.data.amount} ${code.data.currency}`.trim() : ''].filter(Boolean)
   }
@@ -173,7 +176,7 @@ function CodeCard({ code, sortableId, viewMode, onClick }: { code: SavedQrCode; 
   const { locale, t } = useI18n()
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: sortableId })
   const displayName = code.name || code.text
-  const previewLines = codePreviewLines(code)
+  const previewLines = codePreviewLines(code, t, locale)
   const createdAt = formatCreatedAt(code.createdAt, locale)
 
   const isGrid = viewMode === 'grid'
@@ -189,7 +192,7 @@ function CodeCard({ code, sortableId, viewMode, onClick }: { code: SavedQrCode; 
         <div className="mb-2 flex min-w-0 items-start justify-between gap-1">
           <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
             <CodeTypeBadge data={code.data} />
-            {!isGrid && <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{codeFamilyLabel(code.data)}</span>}
+            {!isGrid && <span className="inline-flex items-center rounded-md border border-transparent px-1.5 py-1 text-xs font-semibold uppercase tracking-wide opacity-60">{localizedCodeFamilyLabel(code.data, t)}</span>}
           </div>
           <button
             type="button"
@@ -230,7 +233,7 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
   const sortLabel = t(sortOrder === 'manual' ? 'default-manual-order' : sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')
 
   return (
-    <div className="flex w-full items-center justify-between" aria-label="Code view controls">
+    <div className="flex w-full items-center justify-between" aria-label={t('default-code-view-controls')}>
       <div className="join">
         <button
           type="button"
@@ -239,7 +242,7 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
           onClick={() => changeViewMode('list')}
         >
           <List size={16} aria-hidden="true" />
-          List
+          {t('default-list')}
         </button>
         <button
           type="button"
@@ -248,7 +251,7 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
           onClick={() => changeViewMode('grid')}
         >
           <Grid2X2 size={16} aria-hidden="true" />
-          Grid
+          {t('default-grid')}
         </button>
       </div>
       <button
@@ -295,6 +298,7 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
 }
 
 export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, showLoadEffect = false }: CodesScreenProps) {
+  const { t } = useI18n()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<CodesViewMode>('list')
   const [sortOrder, setSortOrder] = useLocalStorage<CodesSortOrder>('codes-sort-order', 'newest', parseCodesSortOrder)
@@ -332,8 +336,8 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
     <>
       <CodesViewToggle viewMode={viewMode} setViewMode={(nextViewMode) => { playToggle?.(); setViewMode(nextViewMode) }} sortOrder={sortOrder} setSortOrder={setSortOrder} />
       {showLoadEffect ? (
-        <section className="flex min-h-80 w-full items-center justify-center px-5 py-8" aria-label="Loading codes">
-          <div className="loading-splash-bar" role="progressbar" aria-label="Loading codes" />
+        <section className="flex min-h-80 w-full items-center justify-center px-5 py-8" aria-label={t('default-loading-codes')}>
+          <div className="loading-splash-bar" role="progressbar" aria-label={t('default-loading-codes')} />
         </section>
       ) : codes.length === 0 ? (
         <EmptyCodesState />

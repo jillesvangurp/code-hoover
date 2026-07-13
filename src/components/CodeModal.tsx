@@ -2,8 +2,10 @@ import { useCallback, useState } from 'react'
 import { ArrowLeft, Barcode, Building2, CalendarDays, Check, Clock, Copy, ExternalLink, FileText, Globe, Info, Mail, MapPin, MessageSquare, Navigation, Phone, Send, Trash2, UserRound, Wifi } from 'lucide-react'
 import { dataToForm, formToQrData, formToSavedCode, type QrFormState } from '../domain/form'
 import { enrichCode } from '../domain/codeEnrichment'
-import { QR_DATA_TYPES, codeFamilyLabel, codePayloadTypeLabel, formatQrData, qrDataAsText, type LocationData, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
+import { compactEventDate, formatEventRange } from '../domain/eventDate'
+import { QR_DATA_TYPES, formatQrData, qrDataAsText, type LocationData, type QrData, type SavedQrCode, type VCardData } from '../domain/qr'
 import { useI18n } from '../i18n/context'
+import { localizedCodeFamilyLabel, localizedCodePayloadTypeLabel } from '../i18n/labels'
 import { useModalHistory } from '../hooks/useModalHistory'
 import { BarcodeIntroFrame } from './BarcodeIntroFrame'
 import { CodeImageActions } from './CodeImageActions'
@@ -93,12 +95,14 @@ function formatCreatedAt(createdAt: string | undefined, locale: string): string 
   return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(date)
 }
 
-function metadataRowsFor(data: QrData, codeName: string, createdAt: string) {
+type Translate = ReturnType<typeof useI18n>['t']
+
+function metadataRowsFor(data: QrData, codeName: string, createdAt: string, t: Translate) {
   return [
-    ['Card name', codeName],
-    ['Code family', codeFamilyLabel(data)],
-    ['Code type', codePayloadTypeLabel(data)],
-    ['Created', createdAt],
+    [t('default-card-name'), codeName],
+    [t('default-code-family'), localizedCodeFamilyLabel(data, t)],
+    [t('default-code-type'), localizedCodePayloadTypeLabel(data, t)],
+    [t('default-created'), createdAt],
   ].filter((row): row is [string, string] => Boolean(row[1]))
 }
 
@@ -116,21 +120,24 @@ function DetailList({ rows }: { rows: Array<[string, string]> }) {
 }
 
 function CodeEnrichmentPanel({ data, codeName }: { data: QrData; codeName: string }) {
+  const { locale, t } = useI18n()
   const enrichment = enrichCode(data, codeName)
   if (!enrichment) return null
+  const summary = locale === 'en-US' ? enrichment.summary : formatQrData(data, t)
+  const facts = locale === 'en-US' ? enrichment.facts : []
 
   return (
-    <aside className="mx-auto w-full max-w-xl rounded-lg border border-base-300 bg-base-200 p-4" aria-label="About this code">
+    <aside className="mx-auto w-full max-w-xl rounded-lg border border-base-300 bg-base-200 p-4" aria-label={t('default-about-this-code')}>
       <div className="flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content">
           <Info size={18} aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="m-0 text-xs font-semibold uppercase tracking-wide opacity-60">About this code</p>
-          <p className="m-0 mt-1 break-words text-sm font-medium leading-relaxed">{enrichment.summary}</p>
-          {enrichment.facts.length > 0 && (
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide opacity-60">{t('default-about-this-code')}</p>
+          <p className="m-0 mt-1 break-words text-sm font-medium leading-relaxed">{summary}</p>
+          {facts.length > 0 && (
             <dl className="m-0 mt-3 grid gap-2 sm:grid-cols-2">
-              {enrichment.facts.map(({ label, value }) => (
+              {facts.map(({ label, value }) => (
                 <div key={label} className="min-w-0 rounded-md bg-base-100 px-3 py-2">
                   <dt className="text-[0.6875rem] font-semibold uppercase opacity-60">{label}</dt>
                   <dd className="m-0 mt-0.5 break-words text-sm">{value}</dd>
@@ -138,17 +145,17 @@ function CodeEnrichmentPanel({ data, codeName }: { data: QrData; codeName: strin
               ))}
             </dl>
           )}
-          <p className="m-0 mt-3 text-xs opacity-50">Derived from the information stored in the code.</p>
+          <p className="m-0 mt-3 text-xs opacity-50">{t('default-derived-code-information')}</p>
         </div>
       </div>
     </aside>
   )
 }
 
-function detailRowsFor(data: VCardData, codeName: string, createdAt: string) {
+function detailRowsFor(data: VCardData, codeName: string, createdAt: string, t: Translate) {
   const address = [data.street, data.city, data.region, data.postalCode, data.country].filter(Boolean).join(', ')
   return [
-    ...metadataRowsFor(data, codeName, createdAt),
+    ...metadataRowsFor(data, codeName, createdAt, t),
     ['Name', compactName(data, codeName)],
     ['Title', data.title],
     ['Organization', data.organization],
@@ -162,11 +169,12 @@ function detailRowsFor(data: VCardData, codeName: string, createdAt: string) {
 }
 
 function VCardDetails({ data, codeName, createdAt }: { data: VCardData; codeName: string; createdAt: string }) {
-  const rows = detailRowsFor(data, codeName, createdAt)
+  const { t } = useI18n()
+  const rows = detailRowsFor(data, codeName, createdAt, t)
   return <DetailList rows={rows} />
 }
 
-function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt: string) {
+function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt: string, t: Translate) {
   let parsed: URL | null = null
   try {
     parsed = new URL(/^[a-z][a-z\d+.-]*:/i.test(url.trim()) ? url : `https://${url.trim()}`)
@@ -175,7 +183,7 @@ function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt
   }
 
   return [
-    ...metadataRowsFor(data, codeName, createdAt),
+    ...metadataRowsFor(data, codeName, createdAt, t),
     ['URL', url],
     ['Site', parsed?.hostname.replace(/^www\./, '')],
     ['Path', parsed ? `${parsed.pathname}${parsed.search}` : ''],
@@ -184,7 +192,8 @@ function detailRowsForUrl(data: QrData, url: string, codeName: string, createdAt
 }
 
 function UrlDetails({ data, url, codeName, createdAt }: { data: QrData; url: string; codeName: string; createdAt: string }) {
-  const rows = detailRowsForUrl(data, url, codeName, createdAt)
+  const { t } = useI18n()
+  const rows = detailRowsForUrl(data, url, codeName, createdAt, t)
   return <DetailList rows={rows} />
 }
 
@@ -196,17 +205,9 @@ function eventDataUrl(data: QrData): string {
   return `data:text/calendar;charset=utf-8,${encodeURIComponent(qrDataAsText(data))}`
 }
 
-function compactEventDate(value: string): { month: string; day: string; time: string } {
-  const match = /^(\d{4})-?(\d{2})-?(\d{2})(?:T?(\d{2}):?(\d{2}))?/.exec(value)
-  if (!match) return { month: 'EVENT', day: '•', time: value }
-  const [, year, month, day, hour, minute] = match
-  const date = new Date(Number(year), Number(month) - 1, Number(day))
-  const monthLabel = Number.isNaN(date.getTime()) ? 'EVENT' : new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date).toUpperCase()
-  return { month: monthLabel, day, time: hour && minute ? `${hour}:${minute}` : '' }
-}
-
 function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName: string; createdAt: string }) {
-  const previewBase = "mx-auto w-full max-w-xl overflow-hidden rounded-lg border border-base-300 bg-base-100 text-base-content shadow-xl"
+  const { locale, t } = useI18n()
+  const previewBase = "mx-auto w-full max-w-xl shrink-0 overflow-hidden rounded-lg border border-base-300 bg-base-100 text-base-content shadow-xl"
 
   if (data.type === QR_DATA_TYPES.email) {
     const emailHref = qrDataAsText(data)
@@ -214,8 +215,8 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
       <section className={previewBase} aria-label={codeName}>
         <div className="border-b border-base-300 bg-base-200 px-4 py-3">
           <div className="flex items-center justify-between gap-3">
-            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Mail size={18} aria-hidden="true" />New message</span>
-            <a className="btn btn-neutral btn-xs shrink-0" href={emailHref}><Send size={13} aria-hidden="true" />Compose</a>
+            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Mail size={18} aria-hidden="true" />{t('default-new-message')}</span>
+            <a className="btn btn-neutral btn-xs shrink-0" href={emailHref}><Send size={13} aria-hidden="true" />{t('default-compose')}</a>
           </div>
         </div>
         <div className="space-y-3 p-5">
@@ -301,21 +302,21 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
   }
 
   if (data.type === QR_DATA_TYPES.event) {
-    const eventDate = compactEventDate(data.start)
+    const eventDate = compactEventDate(data.start, locale)
     return (
       <section className={previewBase} aria-label={codeName}>
-        <div className="grid grid-cols-[5.5rem_minmax(0,1fr)]">
-          <div className="flex min-h-48 flex-col items-center justify-center bg-neutral text-neutral-content">
+        <div className="grid min-h-56 grid-cols-[5.5rem_minmax(0,1fr)] items-stretch">
+          <div className="flex flex-col items-center justify-center bg-neutral text-neutral-content">
             <span className="text-xs font-bold uppercase opacity-80">{eventDate.month}</span>
             <span className="text-3xl font-black leading-none">{eventDate.day}</span>
             <CalendarDays className="mt-3" size={24} aria-hidden="true" />
           </div>
           <div className="min-w-0 p-5">
             <h2 className="m-0 break-words text-2xl font-bold">{data.title || codeName}</h2>
-            {data.start && <p className="m-0 mt-3 flex items-center gap-2 text-sm font-semibold"><Clock size={15} aria-hidden="true" />{eventDate.time || data.start}{data.end ? ` - ${data.end}` : ''}</p>}
+            {data.start && <p className="m-0 mt-3 flex min-w-0 items-center gap-2 text-sm font-semibold"><Clock className="shrink-0" size={15} aria-hidden="true" /><span className="min-w-0 break-words">{formatEventRange(data.start, data.end, locale)}</span></p>}
             {data.location && <p className="m-0 mt-2 flex items-center gap-2 text-sm opacity-75"><MapPin size={15} aria-hidden="true" />{data.location}</p>}
             {data.description && <p className="m-0 mt-3 line-clamp-3 whitespace-pre-wrap break-words text-sm opacity-75">{data.description}</p>}
-            <a className="btn btn-neutral btn-sm mt-4" href={eventDataUrl(data)} download={`${(data.title || codeName || 'event').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'event'}.ics`}><CalendarDays size={16} aria-hidden="true" />Add event</a>
+            <a className="btn btn-neutral btn-sm mt-4" href={eventDataUrl(data)} download={`${(data.title || codeName || 'event').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'event'}.ics`}><CalendarDays size={16} aria-hidden="true" />{t('default-add-event')}</a>
           </div>
         </div>
       </section>
@@ -342,7 +343,7 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
       <div className="flex min-h-36 items-center gap-4 p-5">
         <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-neutral text-neutral-content"><FileText size={28} aria-hidden="true" /></span>
         <div className="min-w-0">
-          <p className="m-0 text-xs font-semibold uppercase opacity-60">{codePayloadTypeLabel(data)}</p>
+          <p className="m-0 text-xs font-semibold uppercase opacity-60">{localizedCodePayloadTypeLabel(data, t)}</p>
           <h2 className="m-0 break-words text-xl font-bold">{codeName}</h2>
           {'text' in data && <p className="m-0 mt-2 line-clamp-3 break-words text-sm opacity-70">{data.text}</p>}
         </div>
@@ -351,53 +352,54 @@ function PayloadPreview({ data, codeName, createdAt }: { data: QrData; codeName:
   )
 }
 
-function detailRowsForPayload(data: QrData, codeName: string, createdAt: string) {
-  const rows: Array<[string, string]> = metadataRowsFor(data, codeName, createdAt)
+function detailRowsForPayload(data: QrData, codeName: string, createdAt: string, t: Translate) {
+  const rows: Array<[string, string]> = metadataRowsFor(data, codeName, createdAt, t)
   switch (data.type) {
     case QR_DATA_TYPES.email:
-      rows.push(['Email', data.email], ['Subject', data.subject], ['Body', data.body])
+      rows.push([t('default-email'), data.email], [t('default-subject'), data.subject], [t('default-body'), data.body])
       break
     case QR_DATA_TYPES.phone:
-      rows.push(['Phone', data.phone])
+      rows.push([t('default-phone'), data.phone])
       break
     case QR_DATA_TYPES.sms:
-      rows.push(['Phone', data.phone], ['Message', data.message])
+      rows.push([t('default-phone'), data.phone], [t('default-message'), data.message])
       break
     case QR_DATA_TYPES.location:
-      rows.push(['Label', data.label], ['Address or place', data.query], ['Coordinates', [data.latitude, data.longitude].filter(Boolean).join(', ')])
+      rows.push([t('default-label'), data.label], [t('default-map-query'), data.query], [t('default-coordinates'), [data.latitude, data.longitude].filter(Boolean).join(', ')])
       break
     case QR_DATA_TYPES.event:
-      rows.push(['Title', data.title], ['Start', data.start], ['End', data.end], ['Location', data.location], ['Description', data.description])
+      rows.push([t('default-event-title'), data.title], [t('default-start'), data.start], [t('default-end'), data.end], [t('default-location'), data.location], [t('default-description'), data.description])
       break
     case QR_DATA_TYPES.wifi:
-      rows.push(['SSID', data.ssid], ['Password', data.password], ['Encryption', data.encryption], ['Hidden network', data.hidden ? 'Yes' : 'No'])
+      rows.push([t('default-ssid'), data.ssid], [t('default-password'), data.password], [t('default-encryption'), data.encryption], [t('default-hidden-network'), data.hidden ? t('default-yes') : t('default-no')])
       break
     case QR_DATA_TYPES.text:
-      rows.push(['Text', data.text])
+      rows.push([t('default-text'), data.text])
       break
     case QR_DATA_TYPES.sepa:
-      rows.push(['Recipient', data.recipient], ['IBAN', data.iban], ['BIC', data.bic], ['Amount', data.amount ? `EUR ${data.amount}` : ''], ['Purpose', data.purpose], ['Reference', data.reference], ['Information', data.information])
+      rows.push([t('default-recipient'), data.recipient], [t('default-iban'), data.iban], [t('default-bic'), data.bic], [t('default-amount'), data.amount ? `EUR ${data.amount}` : ''], [t('default-purpose'), data.purpose], [t('default-reference'), data.reference], [t('default-information'), data.information])
       break
     case QR_DATA_TYPES.whatsapp:
-      rows.push(['Phone', data.phone], ['Message', data.message])
+      rows.push([t('default-phone'), data.phone], [t('default-message'), data.message])
       break
     case QR_DATA_TYPES.deepLink:
-      rows.push(['Label', data.label], ['URL', data.url])
+      rows.push([t('default-label'), data.label], [t('default-url'), data.url])
       break
     case QR_DATA_TYPES.otp:
-      rows.push(['Type', data.otpType.toUpperCase()], ['Issuer', data.issuer], ['Account', data.account], ['Secret', 'Hidden'], ['Algorithm', data.algorithm], ['Digits', data.digits], [data.otpType === 'hotp' ? 'Counter' : 'Period', data.otpType === 'hotp' ? data.counter : `${data.period} seconds`])
+      rows.push([t('default-code-type'), data.otpType.toUpperCase()], [t('default-issuer'), data.issuer], [t('default-account'), data.account], [t('default-secret'), t('default-hidden')], [t('default-algorithm'), data.algorithm], [t('default-digits'), data.digits], [data.otpType === 'hotp' ? t('default-counter') : t('default-period'), data.otpType === 'hotp' ? data.counter : t('default-seconds-value', { value: data.period })])
       break
     case QR_DATA_TYPES.payment:
-      rows.push(['Provider', data.provider], ['Target', data.target], ['Amount', data.amount], ['Currency', data.currency], ['Note', data.note])
+      rows.push([t('default-provider'), data.provider], [t('default-target'), data.target], [t('default-amount'), data.amount], [t('default-currency'), data.currency], [t('default-note'), data.note])
       break
     default:
-      rows.push(['Payload', qrDataAsText(data)])
+      rows.push([t('default-payload'), qrDataAsText(data)])
   }
   return rows.filter((row): row is [string, string] => Boolean(row[1]))
 }
 
 function PayloadDetails({ data, codeName, createdAt }: { data: QrData; codeName: string; createdAt: string }) {
-  return <DetailList rows={detailRowsForPayload(data, codeName, createdAt)} />
+  const { t } = useI18n()
+  return <DetailList rows={detailRowsForPayload(data, codeName, createdAt, t)} />
 }
 
 function PayloadSections({
@@ -430,12 +432,12 @@ function PayloadSections({
     <>
       <PayloadPreview data={data} codeName={codeName} createdAt={createdAt} />
       <CodeEnrichmentPanel data={data} codeName={codeName} />
-      <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
+      <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[10rem_minmax(0,1fr)] sm:items-center" aria-label={t('default-scan-and-actions')}>
         <div className="rounded-md border border-base-300 bg-white p-2">
           <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={codeName || codeText} expandable />
         </div>
         <div className="min-w-0">
-          <h3 className="m-0 text-base font-semibold">{codePayloadTypeLabel(data)} code</h3>
+          <h3 className="m-0 text-base font-semibold">{t('default-code-label', { type: localizedCodePayloadTypeLabel(data, t) })}</h3>
           <p className="m-0 mt-1 break-words text-sm opacity-70">{formatQrData(data, t)}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" className="btn btn-primary btn-sm" onClick={onSave}><Check size={16} />{t('default-save')}</button>
@@ -447,9 +449,9 @@ function PayloadSections({
       </section>
       <section className="mx-auto w-full max-w-xl">
         <div role="tablist" className="tabs tabs-box w-full">
-          <button type="button" role="tab" aria-selected={panel === 'details'} className={`tab flex-1 ${panel === 'details' ? 'tab-active' : ''}`} onClick={() => setPanel('details')}>Details</button>
-          <button type="button" role="tab" aria-selected={panel === 'fields'} className={`tab flex-1 ${panel === 'fields' ? 'tab-active' : ''}`} onClick={() => setPanel('fields')}>Fields</button>
-          <button type="button" role="tab" aria-selected={panel === 'raw'} className={`tab flex-1 ${panel === 'raw' ? 'tab-active' : ''}`} onClick={() => setPanel('raw')}>Raw</button>
+          <button type="button" role="tab" aria-selected={panel === 'details'} className={`tab flex-1 ${panel === 'details' ? 'tab-active' : ''}`} onClick={() => setPanel('details')}>{t('default-details')}</button>
+          <button type="button" role="tab" aria-selected={panel === 'fields'} className={`tab flex-1 ${panel === 'fields' ? 'tab-active' : ''}`} onClick={() => setPanel('fields')}>{t('default-fields')}</button>
+          <button type="button" role="tab" aria-selected={panel === 'raw'} className={`tab flex-1 ${panel === 'raw' ? 'tab-active' : ''}`} onClick={() => setPanel('raw')}>{t('default-raw')}</button>
         </div>
         <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
           {panel === 'details' && <PayloadDetails data={data} codeName={codeName} createdAt={createdAt} />}
@@ -478,16 +480,17 @@ function BarcodePreview({ data, codeName, createdAt }: { data: QrData & { type: 
   )
 }
 
-function detailRowsForBarcode(data: QrData & { type: typeof QR_DATA_TYPES.barcode }, codeName: string, createdAt: string) {
+function detailRowsForBarcode(data: QrData & { type: typeof QR_DATA_TYPES.barcode }, codeName: string, createdAt: string, t: Translate) {
   return [
-    ...metadataRowsFor(data, codeName, createdAt),
-    ['Format', data.format],
-    ['Value', data.text],
+    ...metadataRowsFor(data, codeName, createdAt, t),
+    [t('default-format'), data.format],
+    [t('default-value'), data.text],
   ].filter((row): row is [string, string] => Boolean(row[1]))
 }
 
 function BarcodeDetails({ data, codeName, createdAt }: { data: QrData & { type: typeof QR_DATA_TYPES.barcode }; codeName: string; createdAt: string }) {
-  return <DetailList rows={detailRowsForBarcode(data, codeName, createdAt)} />
+  const { t } = useI18n()
+  return <DetailList rows={detailRowsForBarcode(data, codeName, createdAt, t)} />
 }
 
 function BarcodeSections({
@@ -513,7 +516,7 @@ function BarcodeSections({
     <>
       <BarcodePreview data={data} codeName={codeName} createdAt={createdAt} />
       <CodeEnrichmentPanel data={data} codeName={codeName} />
-      <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,1fr)] sm:items-center" aria-label="Scan and actions">
+      <section className="mx-auto grid w-full max-w-xl gap-4 rounded-lg border border-base-300 bg-base-200 p-4 sm:grid-cols-[minmax(11rem,1fr)_minmax(0,1fr)] sm:items-center" aria-label={t('default-scan-and-actions')}>
         <div className="flex min-h-36 items-center justify-center rounded-md border border-base-300 bg-white p-3">
           <BarcodeIntroFrame
             format={data.format}
@@ -525,7 +528,7 @@ function BarcodeSections({
           />
         </div>
         <div className="min-w-0">
-          <h3 className="m-0 text-base font-semibold">Scan barcode</h3>
+          <h3 className="m-0 text-base font-semibold">{t('default-scan-barcode')}</h3>
           <p className="m-0 mt-1 break-words font-mono text-sm opacity-70">{data.text}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" className="btn btn-primary btn-sm" onClick={onCopy}><Copy size={16} />{t('default-copy')}</button>
@@ -536,8 +539,8 @@ function BarcodeSections({
       </section>
       <section className="mx-auto w-full max-w-xl">
         <div role="tablist" className="tabs tabs-box w-full">
-          <button type="button" role="tab" aria-selected={panel === 'details'} className={`tab flex-1 ${panel === 'details' ? 'tab-active' : ''}`} onClick={() => setPanel('details')}>Details</button>
-          <button type="button" role="tab" aria-selected={panel === 'raw'} className={`tab flex-1 ${panel === 'raw' ? 'tab-active' : ''}`} onClick={() => setPanel('raw')}>Raw barcode</button>
+          <button type="button" role="tab" aria-selected={panel === 'details'} className={`tab flex-1 ${panel === 'details' ? 'tab-active' : ''}`} onClick={() => setPanel('details')}>{t('default-details')}</button>
+          <button type="button" role="tab" aria-selected={panel === 'raw'} className={`tab flex-1 ${panel === 'raw' ? 'tab-active' : ''}`} onClick={() => setPanel('raw')}>{t('default-raw-barcode')}</button>
         </div>
         <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
           {panel === 'details' && <BarcodeDetails data={data} codeName={codeName} createdAt={createdAt} />}
@@ -563,7 +566,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
   const copyText = barcodeData ? barcodeData.text : qrDataAsText(data)
   const displayCodeName = form.name || code.name
   const createdAt = formatCreatedAt(code.createdAt, locale)
-  const urlPreviewMetadata = [codeFamilyLabel(data), codePayloadTypeLabel(data), createdAt].filter(Boolean)
+  const urlPreviewMetadata = [localizedCodeFamilyLabel(data, t), localizedCodePayloadTypeLabel(data, t), createdAt].filter(Boolean)
   const deleteCode = () => {
     if (!window.confirm(t('default-delete-confirm'))) return
     onDelete()
@@ -596,7 +599,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} expandable />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="m-0 text-base font-semibold">Scan contact</h3>
+                    <h3 className="m-0 text-base font-semibold">{t('default-scan-contact')}</h3>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
@@ -607,9 +610,9 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                 </section>
                 <section className="mx-auto w-full max-w-xl">
                   <div role="tablist" className="tabs tabs-box w-full">
-                    <button type="button" role="tab" aria-selected={vcardPanel === 'details'} className={`tab flex-1 ${vcardPanel === 'details' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('details')}>Details</button>
-                    <button type="button" role="tab" aria-selected={vcardPanel === 'fields'} className={`tab flex-1 ${vcardPanel === 'fields' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('fields')}>Fields</button>
-                    <button type="button" role="tab" aria-selected={vcardPanel === 'raw'} className={`tab flex-1 ${vcardPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('raw')}>Raw vCard</button>
+                    <button type="button" role="tab" aria-selected={vcardPanel === 'details'} className={`tab flex-1 ${vcardPanel === 'details' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('details')}>{t('default-details')}</button>
+                    <button type="button" role="tab" aria-selected={vcardPanel === 'fields'} className={`tab flex-1 ${vcardPanel === 'fields' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('fields')}>{t('default-fields')}</button>
+                    <button type="button" role="tab" aria-selected={vcardPanel === 'raw'} className={`tab flex-1 ${vcardPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setVcardPanel('raw')}>{t('default-raw-vcard')}</button>
                   </div>
                   <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
                     {vcardPanel === 'details' && <VCardDetails data={data} codeName={displayCodeName} createdAt={createdAt} />}
@@ -631,7 +634,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                         <QrIntroFrame text={qrDataAsText(data)} size={500} className="qr-detail-code-frame qr-detail-code-frame-share" label={displayCodeName || code.text} expandable />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="m-0 text-base font-semibold">Open link</h3>
+                        <h3 className="m-0 text-base font-semibold">{t('default-open-link')}</h3>
                         <p className="m-0 mt-1 break-words text-sm opacity-70">{data.url}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
                           <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
@@ -643,9 +646,9 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     </section>
                     <section className="mx-auto w-full max-w-xl">
                       <div role="tablist" className="tabs tabs-box w-full">
-                        <button type="button" role="tab" aria-selected={urlPanel === 'details'} className={`tab flex-1 ${urlPanel === 'details' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('details')}>Details</button>
-                        <button type="button" role="tab" aria-selected={urlPanel === 'fields'} className={`tab flex-1 ${urlPanel === 'fields' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('fields')}>Fields</button>
-                        <button type="button" role="tab" aria-selected={urlPanel === 'raw'} className={`tab flex-1 ${urlPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('raw')}>Raw URL</button>
+                        <button type="button" role="tab" aria-selected={urlPanel === 'details'} className={`tab flex-1 ${urlPanel === 'details' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('details')}>{t('default-details')}</button>
+                        <button type="button" role="tab" aria-selected={urlPanel === 'fields'} className={`tab flex-1 ${urlPanel === 'fields' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('fields')}>{t('default-fields')}</button>
+                        <button type="button" role="tab" aria-selected={urlPanel === 'raw'} className={`tab flex-1 ${urlPanel === 'raw' ? 'tab-active' : ''}`} onClick={() => setUrlPanel('raw')}>{t('default-raw-url')}</button>
                       </div>
                       <div className="mt-4 rounded-lg border border-base-300 bg-base-100 p-4">
                         {urlPanel === 'details' && <UrlDetails data={data} url={data.url} codeName={displayCodeName} createdAt={createdAt} />}
