@@ -180,6 +180,47 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
         </div>
       </li>
       <li>
+        <div className="flex min-w-0 flex-col gap-2 rounded-md border border-base-300 bg-base-100 p-3 text-base-content">
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Cloud size={18} />{t('default-account-sync')}</span>
+            <span className={`badge badge-sm ${accountSync.signedIn ? 'badge-neutral' : 'badge-ghost'}`}>{accountSync.signedIn ? t('default-on') : t('default-off')}</span>
+          </div>
+          <p className="m-0 text-xs opacity-80">{t(accountSync.status.messageId)}</p>
+          {accountSync.signedIn && <p className="m-0 truncate text-xs font-medium opacity-80">{accountSync.email}</p>}
+          {accountSync.signedIn ? (
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" className="btn btn-xs" disabled={accountBusy} onClick={() => runCloudAction(accountSync.signOut)}><LogOut size={14} />{t('default-account-sync-sign-out')}</button>
+              <button type="button" className="btn btn-xs btn-error" disabled={accountBusy} onClick={deleteAccount}><Trash2 size={14} />{t('default-account-sync-delete')}</button>
+            </div>
+          ) : (
+            <form className="flex min-w-0 flex-col gap-2" onSubmit={(event) => { event.preventDefault(); signIn() }}>
+              <input
+                className="input input-sm input-bordered min-w-0 w-full"
+                value={accountEmail}
+                type="email"
+                autoComplete="email"
+                placeholder={t('default-account-email')}
+                aria-label={t('default-account-email')}
+                onChange={(event) => setAccountEmail(event.target.value)}
+              />
+              <input
+                className="input input-sm input-bordered min-w-0 w-full"
+                value={accountPassword}
+                type="password"
+                autoComplete="current-password"
+                placeholder={t('default-account-password')}
+                aria-label={t('default-account-password')}
+                onChange={(event) => setAccountPassword(event.target.value)}
+              />
+              <div className="grid min-w-0 grid-cols-2 gap-2">
+                <button type="submit" className="btn btn-sm btn-neutral min-w-0" disabled={accountBusy || !accountEmail.trim() || accountPassword.length < 8}><LogIn size={14} />{t('default-account-sign-in')}</button>
+                <button type="button" className="btn btn-sm min-w-0" disabled={accountBusy || !accountEmail.trim() || accountPassword.length < 8} onClick={createAccount}><UserPlus size={14} />{t('default-account-create')}</button>
+              </div>
+            </form>
+          )}
+        </div>
+      </li>
+      <li>
         <label className={`flex cursor-pointer items-center justify-between gap-3 rounded-md border px-3 py-2 ${dark ? 'border-neutral bg-neutral text-neutral-content' : 'border-base-300 bg-base-100 text-base-content'}`}>
           <span className="flex min-w-0 items-center gap-2 text-sm font-medium">
             {dark ? <Moon size={18} aria-hidden="true" /> : <Sun size={18} aria-hidden="true" />}
@@ -207,47 +248,6 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
           </span>
         </label>
       </li>
-      <li>
-        <div className="flex flex-col gap-2 rounded-md border border-base-300 bg-base-100 p-3 text-base-content">
-          <div className="flex items-center justify-between gap-2">
-            <span className="flex min-w-0 items-center gap-2 text-sm font-semibold"><Cloud size={18} />{t('default-account-sync')}</span>
-            <span className={`badge badge-sm ${accountSync.signedIn ? 'badge-neutral' : 'badge-ghost'}`}>{accountSync.signedIn ? t('default-on') : t('default-off')}</span>
-          </div>
-          <p className="m-0 text-xs opacity-80">{t(accountSync.status.messageId)}</p>
-          {accountSync.signedIn && <p className="m-0 truncate text-xs font-medium opacity-80">{accountSync.email}</p>}
-          {accountSync.signedIn ? (
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="btn btn-xs" disabled={accountBusy} onClick={() => runCloudAction(accountSync.signOut)}><LogOut size={14} />{t('default-account-sync-sign-out')}</button>
-              <button type="button" className="btn btn-xs btn-error" disabled={accountBusy} onClick={deleteAccount}><Trash2 size={14} />{t('default-account-sync-delete')}</button>
-            </div>
-          ) : (
-            <form className="flex flex-col gap-2" onSubmit={(event) => { event.preventDefault(); signIn() }}>
-              <input
-                className="input input-sm input-bordered w-full"
-                value={accountEmail}
-                type="email"
-                autoComplete="email"
-                placeholder={t('default-account-email')}
-                aria-label={t('default-account-email')}
-                onChange={(event) => setAccountEmail(event.target.value)}
-              />
-              <input
-                className="input input-sm input-bordered w-full"
-                value={accountPassword}
-                type="password"
-                autoComplete="current-password"
-                placeholder={t('default-account-password')}
-                aria-label={t('default-account-password')}
-                onChange={(event) => setAccountPassword(event.target.value)}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <button type="submit" className="btn btn-sm btn-neutral" disabled={accountBusy || !accountEmail.trim() || accountPassword.length < 8}><LogIn size={14} />{t('default-account-sign-in')}</button>
-                <button type="button" className="btn btn-sm" disabled={accountBusy || !accountEmail.trim() || accountPassword.length < 8} onClick={createAccount}><UserPlus size={14} />{t('default-account-create')}</button>
-              </div>
-            </form>
-          )}
-        </div>
-      </li>
     </>
   )
 
@@ -268,11 +268,11 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-[100] bg-base-100 text-base-content lg:hidden" role="dialog" aria-modal="true" onClick={closeMenus}>
           <div className="flex h-full w-full flex-col bg-base-100" onClick={(event) => event.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-base-300 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-base-300 px-4 py-3">
               <button type="button" className="flex cursor-pointer items-center gap-3 rounded-md text-left transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-current" onClick={() => navigateHome(true)} aria-label={t('default-page-title')}><img className="code-hoover-logo h-8 w-8" src="/favicon.svg" alt="" /><h2 className="m-0 text-lg font-semibold">{t('default-page-title')}</h2></button>
               <button type="button" className="btn btn-ghost btn-circle" aria-label={t('default-close')} onClick={closeMenus}><X /></button>
             </div>
-            <ul className="menu menu-lg flex-1 gap-2 overflow-y-auto bg-base-100 p-4">{menuItems}</ul>
+            <ul className="menu menu-lg min-h-0 w-full min-w-0 flex-1 flex-nowrap gap-2 overflow-x-hidden overflow-y-auto bg-base-100 p-4">{menuItems}</ul>
           </div>
         </div>
       )}
