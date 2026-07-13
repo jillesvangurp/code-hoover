@@ -3,6 +3,7 @@ import { BadgeEuro, Barcode, CalendarDays, Contact, CreditCard, FileKey2, FileTe
 import { emptyQrForm, mailFrontAgentForm, MAILFRONT_AGENT_EMAIL, type QrFormState } from '../domain/form'
 import type { QrType } from '../domain/qr'
 import { useI18n } from '../i18n/context'
+import { activeExampleIndex } from './carouselActiveIndex'
 
 type ExampleType = QrType
 
@@ -170,15 +171,8 @@ export function QrExamplesCarousel({ onTry }: { onTry: (form: QrFormState) => vo
 
   const updateActiveExample = (event: UIEvent<HTMLDivElement>) => {
     const track = event.currentTarget
-    const center = track.scrollLeft + track.clientWidth / 2
     const cards = Array.from(track.children) as HTMLElement[]
-    const nextIndex = cards.reduce((bestIndex, card, index) => {
-      const cardCenter = card.offsetLeft + card.offsetWidth / 2
-      const bestCard = cards[bestIndex]
-      const bestCenter = bestCard.offsetLeft + bestCard.offsetWidth / 2
-      return Math.abs(cardCenter - center) < Math.abs(bestCenter - center) ? index : bestIndex
-    }, 0)
-    setActiveIndex(nextIndex)
+    setActiveIndex(activeExampleIndex(track.scrollLeft, track.clientWidth, track.scrollWidth, cards))
   }
 
   const showExample = (index: number) => {
