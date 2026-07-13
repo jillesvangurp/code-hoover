@@ -173,8 +173,8 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
   }
 
   return (
-    <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center" aria-label="Code view controls">
-      <div className="join col-start-2">
+    <div className="flex w-full items-center justify-between" aria-label="Code view controls">
+      <div className="join">
         <button
           type="button"
           className={`btn btn-sm join-item ${viewMode === 'list' ? 'btn-neutral' : 'btn-ghost'}`}
@@ -196,7 +196,7 @@ function CodesViewToggle({ viewMode, setViewMode, sortOrder, setSortOrder }: { v
       </div>
       <button
         type="button"
-        className="btn btn-ghost btn-sm btn-square col-start-3 justify-self-end"
+        className="btn btn-ghost btn-sm btn-square"
         aria-label={`${t('default-sort')}: ${t(sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')}`}
         title={`${t('default-sort')}: ${t(sortOrder === 'newest' ? 'default-newest-first' : 'default-oldest-first')}`}
         onClick={() => setSortOrder(sortOrder === 'newest' ? 'oldest' : 'newest')}
