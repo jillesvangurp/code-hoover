@@ -89,6 +89,16 @@ describe('CodesScreen', () => {
     expect(screen.getByDisplayValue('welcome2026')).toBeInTheDocument()
   })
 
+  it('loads an example when the card content is clicked', async () => {
+    const user = userEvent.setup()
+    render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
+
+    await user.click(screen.getByRole('heading', { name: 'FORMATION website' }))
+
+    expect(screen.getAllByRole('combobox')[0]).toHaveValue('URL')
+    expect(screen.getByDisplayValue('https://tryformation.com')).toBeInTheDocument()
+  })
+
   it('offers an example card for every new code type', () => {
     render(<AddCodeScreen codes={[]} setCodes={vi.fn()} onDone={vi.fn()} />)
 

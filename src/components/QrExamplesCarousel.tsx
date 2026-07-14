@@ -199,30 +199,32 @@ export function QrExamplesCarousel({ onTry }: { onTry: (form: QrFormState) => vo
           const Icon = ICONS[example.type]
           const typeLabel = t(translationId(example.type))
           return (
-            <article
+            <div
               key={example.type}
-              className="card min-w-[85%] snap-center gap-3 border border-base-300 bg-base-200 p-4 sm:min-w-80"
+              className="min-w-[85%] snap-center sm:min-w-80"
               role="group"
               aria-roledescription="slide"
               aria-label={`${index + 1} / ${EXAMPLES.length}: ${typeLabel}`}
             >
-              <div className="flex items-center gap-2">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-100"><Icon size={18} aria-hidden="true" /></span>
-                <div className="min-w-0">
-                  <p className="m-0 text-xs font-medium uppercase tracking-wide opacity-60">{typeLabel}</p>
-                  <h3 className="m-0 truncate text-base font-semibold">{example.name}</h3>
-                </div>
-              </div>
-              <div className="min-h-11">
-                {example.preview.map((line) => <p key={line} className="m-0 truncate text-sm opacity-75">{line}</p>)}
-              </div>
               <button
                 type="button"
-                className="btn btn-sm btn-neutral self-start"
+                className="card h-full w-full cursor-pointer gap-3 border border-base-300 bg-base-200 p-4 text-left transition-colors hover:border-base-content/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-base-content"
                 aria-label={`${t('default-try-example')}: ${typeLabel}`}
                 onClick={() => onTry(example.form)}
-              >{t('default-try-example')}</button>
-            </article>
+              >
+                <div className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-base-100"><Icon size={18} aria-hidden="true" /></span>
+                  <div className="min-w-0">
+                    <p className="m-0 text-xs font-medium uppercase tracking-wide opacity-60">{typeLabel}</p>
+                    <h3 className="m-0 truncate text-base font-semibold">{example.name}</h3>
+                  </div>
+                </div>
+                <div className="min-h-11">
+                  {example.preview.map((line) => <p key={line} className="m-0 truncate text-sm opacity-75">{line}</p>)}
+                </div>
+                <span className="btn btn-sm btn-neutral pointer-events-none self-start" aria-hidden="true">{t('default-try-example')}</span>
+              </button>
+            </div>
           )
         })}
       </div>
