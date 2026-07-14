@@ -42,7 +42,7 @@ function context(kv: MemoryKv, route: string, body: unknown, authorization?: str
 }
 
 describe('account API ciphertext boundary', () => {
-  it('stores only a validated version 2 envelope and rejects plaintext wallet writes', async () => {
+  it('stores only a validated version 3 envelope and rejects plaintext wallet writes', async () => {
     const kv = new MemoryKv()
     const password = 'correct horse battery staple'
     const email = 'user@example.com'
@@ -55,7 +55,7 @@ describe('account API ciphertext boundary', () => {
     expect(registration.status).toBe(200)
     const response = await registration.json() as { sessionToken: string }
     const storedWallet = [...kv.values.entries()].find(([key]) => key.startsWith('account-wallet:'))?.[1]
-    expect(storedWallet).toContain('"version":2')
+    expect(storedWallet).toContain('"version":3')
     expect(storedWallet).not.toContain('server must never see this')
 
     const plaintextWrite = await onRequestPut(context(
@@ -65,5 +65,13 @@ describe('account API ciphertext boundary', () => {
       `Bearer ${response.sessionToken}`,
     ))
     expect(plaintextWrite.status).toBe(400)
+
+    const downgradeWrite = await onRequestPut(context(
+      kv,
+      'wallet',
+      { wallet: { ...wallet, version: 2 } },
+      `Bearer ${response.sessionToken}`,
+    ))
+    expect(downgradeWrite.status).toBe(409)
   })
 })

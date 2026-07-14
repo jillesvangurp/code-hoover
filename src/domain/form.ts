@@ -1,4 +1,4 @@
-import { QR_DATA_TYPES, type QrData, type QrType, type SavedQrCode, defaultDisplayName, parseQrPayload, qrDataAsText } from './qr'
+import { QR_DATA_TYPES, createSavedCodeRecord, type QrData, type QrType, type SavedQrCode, defaultDisplayName, parseQrPayload, qrDataAsText } from './qr'
 
 export interface QrFormState {
   name: string
@@ -224,8 +224,17 @@ export function dataToForm(name: string, data: QrData): QrFormState {
   }
 }
 
-export function formToSavedCode(form: QrFormState, createdAt: string | null | undefined = new Date().toISOString()): SavedQrCode {
+export function formToSavedCode(form: QrFormState, createdAt: string | null | undefined = new Date().toISOString(), previous?: SavedQrCode): SavedQrCode {
   const data = formToQrData(form)
   const savedCode = { name: form.name.trim() || defaultDisplayName(data), text: qrDataAsText(data), data }
-  return createdAt ? { ...savedCode, createdAt } : savedCode
+  const candidate = createdAt ? { ...savedCode, createdAt } : savedCode
+  if (previous) {
+    return {
+      ...candidate,
+      id: previous.id,
+      revision: previous.revision,
+      updatedAt: previous.updatedAt,
+    }
+  }
+  return createSavedCodeRecord(candidate)
 }

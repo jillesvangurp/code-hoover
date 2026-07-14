@@ -602,7 +602,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                   <div className="min-w-0">
                     <h3 className="m-0 text-base font-semibold">{t('default-scan-contact')}</h3>
                     <div className="mt-4 flex flex-wrap gap-2">
-                      <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null, code)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
                       <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
                     </div>
@@ -638,7 +638,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                         <h3 className="m-0 text-base font-semibold">{t('default-open-link')}</h3>
                         <p className="m-0 mt-1 break-words text-sm opacity-70">{data.url}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
-                          <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
+                          <button type="button" className="btn btn-primary btn-sm" onClick={() => { onSave(formToSavedCode(form, code.createdAt ?? null, code)); onClose(); history.back() }}><Check size={16} />{t('default-save')}</button>
                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => void navigator.clipboard.writeText(copyText)}><Copy size={16} />{t('default-copy')}</button>
                           <button type="button" className="btn btn-error btn-sm" onClick={deleteCode}><Trash2 size={16} />{t('default-delete')}</button>
                         </div>
@@ -669,7 +669,7 @@ export function CodeModal({ code, onSave, onDelete, onClose }: CodeModalProps) {
                     panel={payloadPanel}
                     setPanel={setPayloadPanel}
                     onCopy={() => void navigator.clipboard.writeText(copyText)}
-                    onSave={() => { onSave(formToSavedCode(form, code.createdAt ?? null)); onClose(); history.back() }}
+                    onSave={() => { onSave(formToSavedCode(form, code.createdAt ?? null, code)); onClose(); history.back() }}
                     onDelete={deleteCode}
                   />
                 )}

@@ -3,7 +3,7 @@ import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { Check, X } from 'lucide-react'
 import { ScanReticuleOverlay, type ScanDetection, type ScanDetectionStatus } from '../components/ScanReticuleOverlay'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCode, qrDataAsText, savedCodeMatchesPayload, type QrData, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, createSavedCodeRecord, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCode, qrDataAsText, savedCodeMatchesPayload, type QrData, type SavedQrCode } from '../domain/qr'
 import { detectionPolygon, type ScanPoint, type ScanRect } from '../domain/scanOverlay'
 import { useI18n } from '../i18n/context'
 
@@ -23,12 +23,14 @@ interface ScanScreenProps {
 function savedCodeFromText(text: string): SavedQrCode {
   const data: QrData = parseQrPayload(text) ?? { type: QR_DATA_TYPES.text, text }
   const normalized = qrDataAsText(data)
-  return { name: defaultDisplayName(data) || normalized, text: normalized, data, createdAt: new Date().toISOString() }
+  const createdAt = new Date().toISOString()
+  return createSavedCodeRecord({ name: defaultDisplayName(data) || normalized, text: normalized, data, createdAt }, createdAt)
 }
 
 function savedCodeFromBarcode(text: string, format: string): SavedQrCode {
   const data: QrData = { type: QR_DATA_TYPES.barcode, format, text }
-  return { name: defaultDisplayName(data) || text, text, data, createdAt: new Date().toISOString() }
+  const createdAt = new Date().toISOString()
+  return createSavedCodeRecord({ name: defaultDisplayName(data) || text, text, data, createdAt }, createdAt)
 }
 
 function savedCodeFromScan(text: string, format: number): SavedQrCode {

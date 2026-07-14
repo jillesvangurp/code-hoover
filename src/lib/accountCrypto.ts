@@ -17,7 +17,7 @@ export interface AccountWalletKdf {
 }
 
 export interface EncryptedAccountWallet {
-  version: 2
+  version: 2 | 3
   kdf: AccountWalletKdf
   cipher: {
     name: 'AES-GCM'
@@ -71,14 +71,14 @@ export function parseEncryptedAccountWallet(value: unknown): EncryptedAccountWal
   if (!value || typeof value !== 'object') throw new Error('Invalid encrypted wallet')
   const candidate = value as Record<string, unknown>
   const cipher = candidate.cipher as Record<string, unknown> | undefined
-  if (candidate.version !== 2 || !cipher || cipher.name !== 'AES-GCM') throw new Error('Invalid encrypted wallet')
+  if ((candidate.version !== 2 && candidate.version !== 3) || !cipher || cipher.name !== 'AES-GCM') throw new Error('Invalid encrypted wallet')
   if (typeof cipher.iv !== 'string' || base64UrlDecode(cipher.iv).byteLength !== IV_BYTES) throw new Error('Invalid encrypted wallet')
   if (typeof candidate.ciphertext !== 'string' || candidate.ciphertext.length < 22 || candidate.ciphertext.length > 500_000) {
     throw new Error('Invalid encrypted wallet')
   }
   base64UrlDecode(candidate.ciphertext)
   return {
-    version: 2,
+    version: candidate.version,
     kdf: parseKdf(candidate.kdf),
     cipher: { name: 'AES-GCM', iv: cipher.iv },
     ciphertext: candidate.ciphertext,
@@ -120,7 +120,7 @@ async function encryptWithKey(codes: SavedQrCode[], key: CryptoKey, kdf: Account
     plaintext,
   )
   return {
-    version: 2,
+    version: 3,
     kdf,
     cipher: { name: 'AES-GCM', iv: base64UrlEncode(iv) },
     ciphertext: base64UrlEncode(new Uint8Array(encrypted)),

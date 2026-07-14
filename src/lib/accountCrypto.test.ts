@@ -13,9 +13,20 @@ describe('account wallet encryption', () => {
     const { wallet } = await encryptAccountWallet('correct horse battery staple', codes)
 
     expect(JSON.stringify(wallet)).not.toContain('very-secret')
-    expect(wallet.version).toBe(2)
+    expect(wallet.version).toBe(3)
     expect(wallet.kdf.iterations).toBeGreaterThanOrEqual(600_000)
     await expect(decryptAccountWallet('correct horse battery staple', wallet)).resolves.toMatchObject({ codes })
+  })
+
+  it('encrypts and restores deletion tombstones without exposing their payload', async () => {
+    const records: SavedQrCode[] = [{
+      ...codes[0], id: 'deleted-code', revision: 2,
+      updatedAt: '2026-07-12T10:00:00.000Z', deletedAt: '2026-07-12T10:00:00.000Z',
+    }]
+    const { wallet } = await encryptAccountWallet('correct horse battery staple', records)
+
+    expect(JSON.stringify(wallet)).not.toContain('very-secret')
+    await expect(decryptAccountWallet('correct horse battery staple', wallet)).resolves.toMatchObject({ codes: records })
   })
 
   it('rejects a wrong password and tampered ciphertext', async () => {
@@ -27,6 +38,11 @@ describe('account wallet encryption', () => {
       ...wallet,
       ciphertext: `${wallet.ciphertext.slice(0, -1)}${last}`,
     })).rejects.toThrow()
+  })
+
+  it('reads existing version 2 ciphertext before rewriting it as version 3', async () => {
+    const { wallet } = await encryptAccountWallet('correct horse battery staple', codes)
+    await expect(decryptAccountWallet('correct horse battery staple', { ...wallet, version: 2 })).resolves.toMatchObject({ codes })
   })
 
   it('derives deterministic, email-bound authentication credentials without exposing the password', async () => {

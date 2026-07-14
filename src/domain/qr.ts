@@ -152,6 +152,10 @@ export interface SavedQrCode {
   text: string
   data: QrData
   createdAt?: string
+  id?: string
+  revision?: number
+  updatedAt?: string
+  deletedAt?: string
 }
 
 export const CODE_TYPES_HELP_URL = 'https://en.wikipedia.org/wiki/Barcode#Types_of_barcodes'
@@ -202,6 +206,90 @@ export function savedCodeIdentity(code: SavedQrCode): string {
   return `${code.data.type}\n${qrDataAsText(code.data)}`
 }
 
+const LEGACY_RECORD_TIME = '1970-01-01T00:00:00.000Z'
+
+function stableHash(value: string): string {
+  let first = 0x811c9dc5
+  let second = 0x9e3779b9
+  for (let index = 0; index < value.length; index += 1) {
+    const code = value.charCodeAt(index)
+    first = Math.imul(first ^ code, 0x01000193)
+    second = Math.imul(second ^ code, 0x85ebca6b)
+  }
+  return `${(first >>> 0).toString(36)}${(second >>> 0).toString(36)}`
+}
+
+function validRecordId(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{8,128}$/.test(value)
+}
+
+function validRevision(value: unknown): value is number {
+  return Number.isSafeInteger(value) && Number(value) >= 1
+}
+
+function validRecordTime(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0 && !Number.isNaN(Date.parse(value))
+}
+
+function randomRecordId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') return globalThis.crypto.randomUUID()
+  const bytes = new Uint8Array(16)
+  globalThis.crypto.getRandomValues(bytes)
+  return `code-${Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('')}`
+}
+
+export function savedCodeRecordId(code: SavedQrCode): string {
+  return validRecordId(code.id) ? code.id : `legacy-${stableHash(savedCodeIdentity(code))}`
+}
+
+export function normalizeSavedCodeRecord(code: SavedQrCode): SavedQrCode {
+  const createdAt = validRecordTime(code.createdAt) ? code.createdAt : undefined
+  const updatedAt = validRecordTime(code.updatedAt) ? code.updatedAt : createdAt ?? LEGACY_RECORD_TIME
+  const deletedAt = validRecordTime(code.deletedAt) ? code.deletedAt : undefined
+  return {
+    name: code.name,
+    text: code.text,
+    data: code.data,
+    ...(createdAt ? { createdAt } : {}),
+    id: savedCodeRecordId(code),
+    revision: validRevision(code.revision) ? code.revision : 1,
+    updatedAt,
+    ...(deletedAt ? { deletedAt } : {}),
+  }
+}
+
+export function createSavedCodeRecord(code: SavedQrCode, now = new Date().toISOString()): SavedQrCode {
+  return {
+    ...code,
+    id: validRecordId(code.id) ? code.id : randomRecordId(),
+    revision: validRevision(code.revision) ? code.revision : 1,
+    updatedAt: validRecordTime(code.updatedAt) ? code.updatedAt : now,
+  }
+}
+
+function savedCodeContent(code: SavedQrCode): string {
+  return JSON.stringify({ name: code.name, text: code.text, data: code.data })
+}
+
+function recordTime(code: SavedQrCode): number {
+  const value = Date.parse(code.updatedAt ?? '')
+  return Number.isNaN(value) ? 0 : value
+}
+
+export function resolveSavedCodeConflict(leftValue: SavedQrCode, rightValue: SavedQrCode): SavedQrCode {
+  const left = normalizeSavedCodeRecord(leftValue)
+  const right = normalizeSavedCodeRecord(rightValue)
+  if (left.id !== right.id) throw new Error('Cannot resolve different saved code records')
+  const leftRevision = left.revision ?? 1
+  const rightRevision = right.revision ?? 1
+  if (leftRevision !== rightRevision) return leftRevision > rightRevision ? left : right
+  if (Boolean(left.deletedAt) !== Boolean(right.deletedAt)) return left.deletedAt ? left : right
+  const leftTime = recordTime(left)
+  const rightTime = recordTime(right)
+  if (leftTime !== rightTime) return leftTime > rightTime ? left : right
+  return JSON.stringify(left) >= JSON.stringify(right) ? left : right
+}
+
 export function savedCodeMatchesPayload(existing: SavedQrCode, candidate: SavedQrCode): boolean {
   if (savedCodeIdentity(existing) === savedCodeIdentity(candidate)) return true
   if (existing.data.type === QR_DATA_TYPES.barcode || candidate.data.type === QR_DATA_TYPES.barcode) return false
@@ -209,19 +297,74 @@ export function savedCodeMatchesPayload(existing: SavedQrCode, candidate: SavedQ
 }
 
 export function mergeSavedCodes(primary: SavedQrCode[], secondary: SavedQrCode[]): SavedQrCode[] {
-  const seen = new Set<string>()
   const merged: SavedQrCode[] = []
-  for (const code of [...primary, ...secondary]) {
-    const identity = savedCodeIdentity(code)
-    if (seen.has(identity)) {
-      const existing = merged.find((savedCode) => savedCodeIdentity(savedCode) === identity)
-      if (existing && !existing.createdAt && code.createdAt) existing.createdAt = code.createdAt
+  const positions = new Map<string, number>()
+  for (const value of [...primary, ...secondary]) {
+    const code = normalizeSavedCodeRecord(value)
+    const position = positions.get(code.id as string)
+    if (position === undefined) {
+      positions.set(code.id as string, merged.length)
+      merged.push(code)
       continue
     }
-    seen.add(identity)
-    merged.push(code)
+    merged[position] = resolveSavedCodeConflict(merged[position], code)
   }
   return merged
+}
+
+export function activeSavedCodes(codes: SavedQrCode[]): SavedQrCode[] {
+  return mergeSavedCodes(codes, []).filter((code) => !code.deletedAt)
+}
+
+export function reconcileSavedCodes(currentValues: SavedQrCode[], nextActiveValues: SavedQrCode[], now = new Date().toISOString()): SavedQrCode[] {
+  const current = mergeSavedCodes(currentValues, [])
+  const currentById = new Map(current.map((code) => [code.id as string, code]))
+  const next: SavedQrCode[] = []
+  const retainedIds = new Set<string>()
+
+  for (const value of nextActiveValues) {
+    const candidate = normalizeSavedCodeRecord(value)
+    const id = candidate.id as string
+    if (retainedIds.has(id)) continue
+    retainedIds.add(id)
+    const previous = currentById.get(id)
+    if (!previous) {
+      next.push(createSavedCodeRecord(value, now))
+      continue
+    }
+    if (!previous.deletedAt && savedCodeContent(previous) === savedCodeContent(candidate)) {
+      next.push(previous)
+      continue
+    }
+    next.push({
+      ...candidate,
+      id,
+      revision: (previous.revision ?? 1) + 1,
+      updatedAt: now,
+      ...(previous.createdAt && !candidate.createdAt ? { createdAt: previous.createdAt } : {}),
+      deletedAt: undefined,
+    })
+  }
+
+  for (const previous of current) {
+    const id = previous.id as string
+    if (retainedIds.has(id)) continue
+    if (previous.deletedAt) {
+      next.push(previous)
+      continue
+    }
+    if (isSensitiveQrData(previous.data)) continue
+    next.push({
+      name: '',
+      text: '',
+      data: { type: QR_DATA_TYPES.text, text: '' },
+      id,
+      revision: (previous.revision ?? 1) + 1,
+      updatedAt: now,
+      deletedAt: now,
+    })
+  }
+  return next
 }
 
 export function isSensitiveQrData(data: QrData): boolean {
@@ -233,7 +376,7 @@ export function syncableSavedCodes(codes: SavedQrCode[]): SavedQrCode[] {
 }
 
 export function serializePersistentSavedCodes(codes: SavedQrCode[]): string {
-  return JSON.stringify(syncableSavedCodes(codes))
+  return JSON.stringify(syncableSavedCodes(codes).map(normalizeSavedCodeRecord))
 }
 
 export function normalizeQrData(value: unknown): QrData | null {
@@ -363,7 +506,7 @@ export function normalizeQrData(value: unknown): QrData | null {
 export function parseSavedCodes(json: string): SavedQrCode[] {
   const parsed: unknown = JSON.parse(json)
   if (!Array.isArray(parsed)) throw new Error('Expected an array')
-  return parsed.map(parseSavedCode)
+  return mergeSavedCodes(parsed.map(parseSavedCode), [])
 }
 
 export function parseSavedCode(item: unknown): SavedQrCode {
@@ -373,7 +516,16 @@ export function parseSavedCode(item: unknown): SavedQrCode {
   if (!data || typeof candidate.text !== 'string') throw new Error('Invalid saved code')
   const name = stringValue(candidate.name).trim() || candidate.text
   const createdAt = typeof candidate.createdAt === 'string' && candidate.createdAt.trim() ? candidate.createdAt : undefined
-  return { name, text: candidate.text, data, ...(createdAt ? { createdAt } : {}) }
+  return normalizeSavedCodeRecord({
+    name,
+    text: candidate.text,
+    data,
+    ...(createdAt ? { createdAt } : {}),
+    ...(validRecordId(candidate.id) ? { id: candidate.id } : {}),
+    ...(validRevision(candidate.revision) ? { revision: candidate.revision } : {}),
+    ...(validRecordTime(candidate.updatedAt) ? { updatedAt: candidate.updatedAt } : {}),
+    ...(validRecordTime(candidate.deletedAt) ? { deletedAt: candidate.deletedAt } : {}),
+  })
 }
 
 function escapeVCard(value: string): string {

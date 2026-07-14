@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, savedCodeMatchesPayload, serializePersistentSavedCodes, syncableSavedCodes, type SavedQrCode, type VCardData } from './qr'
+import { QR_DATA_TYPES, activeSavedCodes, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, reconcileSavedCodes, savedCodeMatchesPayload, serializePersistentSavedCodes, syncableSavedCodes, type SavedQrCode, type VCardData } from './qr'
 
 describe('saved code compatibility', () => {
   it('reads the legacy serialization format and restores blank names', () => {
@@ -11,13 +11,14 @@ describe('saved code compatibility', () => {
       },
     ]))
 
-    expect(codes).toEqual([
-      {
-        name: 'https://example.com',
-        text: 'https://example.com',
-        data: { type: QR_DATA_TYPES.url, url: 'https://example.com' },
-      },
-    ])
+    expect(codes[0]).toMatchObject({
+      name: 'https://example.com',
+      text: 'https://example.com',
+      data: { type: QR_DATA_TYPES.url, url: 'https://example.com' },
+      id: expect.stringMatching(/^legacy-/),
+      revision: 1,
+      updatedAt: '1970-01-01T00:00:00.000Z',
+    })
   })
 
   it('rejects malformed imports instead of partially replacing the stash', () => {
@@ -38,30 +39,50 @@ describe('saved code compatibility', () => {
     expect(codes[0].createdAt).toBe('2026-07-12T09:00:00.000Z')
   })
 
-  it('merges account sync lists by payload without dropping either device', () => {
-    const laptop: SavedQrCode[] = [
-      { name: 'Laptop', text: 'https://laptop.example', data: { type: QR_DATA_TYPES.url, url: 'https://laptop.example' } },
-      { name: 'Renamed shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } },
-    ]
-    const mobile: SavedQrCode[] = [
-      { name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } },
-      { name: 'Mobile', text: '5901234123457', data: { type: QR_DATA_TYPES.barcode, format: 'EAN_13', text: '5901234123457' } },
-    ]
-
-    expect(mergeSavedCodes(laptop, mobile)).toEqual([
-      laptop[0],
-      laptop[1],
-      mobile[1],
-    ])
+  it('migrates the same legacy payload to the same stable record ID on every device', () => {
+    const serialized = JSON.stringify([{ name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }])
+    expect(parseSavedCodes(serialized)[0].id).toBe(parseSavedCodes(serialized)[0].id)
   })
 
-  it('keeps creation metadata from a duplicate sync copy when the local copy lacks it', () => {
-    const merged = mergeSavedCodes(
-      [{ name: 'Local', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }],
-      [{ name: 'Remote', text: 'shared', createdAt: '2026-07-12T09:00:00.000Z', data: { type: QR_DATA_TYPES.text, text: 'shared' } }],
-    )
+  it('keeps edits and additions from two devices without duplicating the edited record', () => {
+    const base = parseSavedCodes(JSON.stringify([{ name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }]))
+    const laptop = reconcileSavedCodes(base, [{ ...base[0], name: 'Renamed shared' }], '2026-07-12T10:00:00.000Z')
+    const mobile = reconcileSavedCodes(base, [...base, {
+      name: 'Mobile', text: '5901234123457', data: { type: QR_DATA_TYPES.barcode, format: 'EAN_13', text: '5901234123457' },
+    }], '2026-07-12T11:00:00.000Z')
 
-    expect(merged[0].createdAt).toBe('2026-07-12T09:00:00.000Z')
+    const merged = mergeSavedCodes(laptop, mobile)
+    expect(activeSavedCodes(merged)).toHaveLength(2)
+    expect(activeSavedCodes(merged).map(({ name }) => name)).toEqual(['Renamed shared', 'Mobile'])
+    expect(merged[0]).toMatchObject({ revision: 2, updatedAt: '2026-07-12T10:00:00.000Z' })
+  })
+
+  it('propagates a deletion tombstone instead of resurrecting a stale device copy', () => {
+    const base = parseSavedCodes(JSON.stringify([{ name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }]))
+    const deleted = reconcileSavedCodes(base, [], '2026-07-12T10:00:00.000Z')
+    const merged = mergeSavedCodes(base, deleted)
+
+    expect(activeSavedCodes(merged)).toEqual([])
+    expect(merged[0]).toMatchObject({ revision: 2, deletedAt: '2026-07-12T10:00:00.000Z' })
+    const serialized = serializePersistentSavedCodes(merged)
+    expect(serialized).not.toContain('shared')
+    expect(parseSavedCodes(serialized)[0].deletedAt).toBe('2026-07-12T10:00:00.000Z')
+  })
+
+  it('lets deletion win an equal-revision edit/delete conflict across two devices', () => {
+    const base = parseSavedCodes(JSON.stringify([{ name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }]))
+    const edited = reconcileSavedCodes(base, [{ ...base[0], name: 'Edited offline' }], '2026-07-12T11:00:00.000Z')
+    const deleted = reconcileSavedCodes(base, [], '2026-07-12T10:00:00.000Z')
+
+    expect(activeSavedCodes(mergeSavedCodes(edited, deleted))).toEqual([])
+  })
+
+  it('resolves concurrent edits by revision, then modification time', () => {
+    const base = parseSavedCodes(JSON.stringify([{ name: 'Shared', text: 'shared', data: { type: QR_DATA_TYPES.text, text: 'shared' } }]))
+    const earlier = reconcileSavedCodes(base, [{ ...base[0], name: 'Earlier edit' }], '2026-07-12T10:00:00.000Z')
+    const later = reconcileSavedCodes(base, [{ ...base[0], name: 'Later edit' }], '2026-07-12T11:00:00.000Z')
+
+    expect(activeSavedCodes(mergeSavedCodes(earlier, later))[0].name).toBe('Later edit')
   })
 
   it('matches the same raw QR payload even when it was saved under a different non-barcode type', () => {
@@ -148,7 +169,7 @@ describe('QR payloads', () => {
       },
     ]))
 
-    expect(codes[0]).toEqual({
+    expect(codes[0]).toMatchObject({
       name: '5901234123457',
       text: '5901234123457',
       data: { type: QR_DATA_TYPES.barcode, format: 'EAN_13', text: '5901234123457' },
@@ -237,6 +258,6 @@ describe('QR payloads', () => {
     ]
 
     expect(syncableSavedCodes(codes)).toEqual([codes[0]])
-    expect(JSON.parse(serializePersistentSavedCodes(codes))).toEqual([codes[0]])
+    expect(JSON.parse(serializePersistentSavedCodes(codes))).toEqual([expect.objectContaining(codes[0])])
   })
 })

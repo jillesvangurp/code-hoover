@@ -36,12 +36,12 @@ describe('CodesScreen', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     expect(setCodes).toHaveBeenCalledWith([
-      {
+      expect.objectContaining({
         name: 'https://example.com',
         text: 'https://example.com',
         data: { type: 'qr.QrData.Url', url: 'https://example.com' },
         createdAt: expect.any(String),
-      },
+      }),
     ])
     expect(playSave).toHaveBeenCalledOnce()
     expect(onDone).toHaveBeenCalledOnce()
@@ -58,7 +58,7 @@ describe('CodesScreen', () => {
     await user.click(screen.getByRole('button', { name: /save/i }))
 
     expect(setCodes).toHaveBeenCalledWith([
-      {
+      expect.objectContaining({
         name: 'Email the Agent',
         text: 'mailto:mail-agent@formationxyz.com?subject=Demo+question+for+MailFront&body=Hi+MailFront%2C%0A%0AWhat+can+you+answer+from+your+knowledge+base%3F%0A%0AThanks.',
         data: {
@@ -68,7 +68,7 @@ describe('CodesScreen', () => {
           body: 'Hi MailFront,\n\nWhat can you answer from your knowledge base?\n\nThanks.',
         },
         createdAt: expect.any(String),
-      },
+      }),
     ])
     expect(playSave).toHaveBeenCalledOnce()
     expect(onDone).toHaveBeenCalledOnce()

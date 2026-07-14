@@ -37,7 +37,7 @@ interface LegacyWalletRecord {
 }
 
 interface EncryptedWalletRecord {
-  version: 2
+  version: 2 | 3
   kdf: {
     name: 'PBKDF2'
     hash: 'SHA-256'
@@ -112,14 +112,14 @@ function parseEncryptedWallet(value: unknown): EncryptedWalletRecord | null {
   const candidate = value as Record<string, unknown>
   const kdf = candidate.kdf as Record<string, unknown> | undefined
   const cipher = candidate.cipher as Record<string, unknown> | undefined
-  if (candidate.version !== 2 || !kdf || !cipher) return null
+  if ((candidate.version !== 2 && candidate.version !== 3) || !kdf || !cipher) return null
   if (kdf.name !== 'PBKDF2' || kdf.hash !== 'SHA-256' || !Number.isInteger(kdf.iterations)) return null
   const iterations = Number(kdf.iterations)
   if (iterations < 100_000 || iterations > 1_000_000 || !validBase64Url(kdf.salt, 16)) return null
   if (cipher.name !== 'AES-GCM' || !validBase64Url(cipher.iv, 12)) return null
   if (!validBase64Url(candidate.ciphertext) || candidate.ciphertext.length < 22 || candidate.ciphertext.length > 500_000) return null
   return {
-    version: 2,
+    version: candidate.version,
     kdf: { name: 'PBKDF2', hash: 'SHA-256', iterations, salt: kdf.salt },
     cipher: { name: 'AES-GCM', iv: cipher.iv },
     ciphertext: candidate.ciphertext,
@@ -319,6 +319,8 @@ async function putWallet(context: PagesContext): Promise<Response> {
   const body = await readJsonBody(context.request) as Record<string, unknown>
   const wallet = parseEncryptedWallet(body.wallet)
   if (!wallet) return jsonResponse({ error: 'invalid_encrypted_wallet' }, 400)
+  const current = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(auth.account.userId), 'json')
+  if (current?.version === 3 && wallet.version === 2) return jsonResponse({ error: 'wallet_upgrade_required' }, 409)
   await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify(wallet))
   return jsonResponse({ ok: true })
 }

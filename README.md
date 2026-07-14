@@ -52,4 +52,6 @@ The React implementation preserves the existing `localStorage` keys and legacy `
 
 Account sync is opt-in and end-to-end encrypted. The browser derives separate authentication and encryption material from the account password, encrypts codes with AES-256-GCM using Web Crypto, and uploads only a versioned ciphertext envelope. The password and decryption key never leave the device. The server stores a one-way verifier for authentication and cannot merge, inspect, or decrypt wallet contents.
 
+Encrypted wallet version 3 gives each saved code a stable record ID, revision, and modification timestamp. Deletions are synchronized as payload-free tombstones, so a stale device cannot bring a deleted code back. Concurrent changes are resolved deterministically by revision, then deletion status, then modification time; deletion wins an equal-revision edit/delete conflict. Every client downloads and merges the encrypted record set before uploading its next encrypted snapshot.
+
 Accounts created before encrypted account sync are migrated after the next successful password sign-in: the browser proves the password using the account's existing one-way verifier, downloads the legacy wallet once, encrypts it locally, and replaces it with ciphertext before normal syncing resumes. The plaintext password is not sent during migration.

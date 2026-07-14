@@ -6,7 +6,7 @@ import { ArrowDownUp, BadgeEuro, Barcode, CalendarDays, Contact, CreditCard, Fil
 import { emptyQrForm, formToSavedCode, type QrFormState } from '../domain/form'
 import { reorderDisplayedCodes } from '../domain/codeOrder'
 import { formatEventRange } from '../domain/eventDate'
-import { QR_DATA_TYPES, type QrData, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, savedCodeRecordId, type QrData, type SavedQrCode } from '../domain/qr'
 import { useI18n } from '../i18n/context'
 import { localizedCodeFamilyLabel, localizedCodePayloadTypeLabel } from '../i18n/labels'
 import { useLocalStorage } from '../hooks/useLocalStorage'
@@ -333,10 +333,10 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
-  const codeLoadKey = useMemo(() => codes.map((code) => `${code.text}:${code.createdAt ?? ''}`).join('|'), [codes])
+  const codeLoadKey = useMemo(() => codes.map((code) => `${savedCodeRecordId(code)}:${code.revision ?? 1}`).join('|'), [codes])
   const displayedCodes = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase(locale)
-    return codes.map((code, originalIndex) => ({ code, originalIndex, id: `${code.createdAt ?? ''}:${code.text}:${originalIndex}` })).filter(({ code }) => (
+    return codes.map((code, originalIndex) => ({ code, originalIndex, id: savedCodeRecordId(code) })).filter(({ code }) => (
       !normalizedQuery || searchableCodeText(code, t, locale).includes(normalizedQuery)
     )).sort((left, right) => {
       if (sortOrder === 'manual') return left.originalIndex - right.originalIndex

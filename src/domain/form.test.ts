@@ -5,7 +5,7 @@ import { QR_DATA_TYPES } from './qr'
 describe('QR form conversion', () => {
   it('creates a saved URL with its value as the default name', () => {
     const saved = formToSavedCode({ ...emptyQrForm(), url: 'https://example.com' }, '2026-07-12T09:00:00.000Z')
-    expect(saved).toEqual({
+    expect(saved).toMatchObject({
       name: 'https://example.com',
       text: 'https://example.com',
       data: { type: QR_DATA_TYPES.url, url: 'https://example.com' },
@@ -71,7 +71,7 @@ describe('QR form conversion', () => {
   })
 
   it('creates the MailFront email-agent onboarding QR preset', () => {
-    expect(formToSavedCode(mailFrontAgentForm(), null)).toEqual({
+    expect(formToSavedCode(mailFrontAgentForm(), null)).toMatchObject({
       name: 'Email the Agent',
       text: 'mailto:mail-agent@formationxyz.com?subject=Demo+question+for+MailFront&body=Hi+MailFront%2C%0A%0AWhat+can+you+answer+from+your+knowledge+base%3F%0A%0AThanks.',
       data: {

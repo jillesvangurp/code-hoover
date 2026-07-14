@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Cloud, Download, ExternalLink, Info, LogIn, LogOut, Menu, Moon, QrCode, Sun, Trash2, Upload, UserPlus, Volume2, VolumeX, X } from 'lucide-react'
 import type { SavedQrCode } from '../domain/qr'
-import { CODE_TYPES_HELP_URL, parseSavedCodes } from '../domain/qr'
+import { activeSavedCodes, CODE_TYPES_HELP_URL, parseSavedCodes } from '../domain/qr'
 import { LOCALES, useI18n } from '../i18n/context'
 import type { AccountSyncControls } from '../hooks/useAccountSync'
 import type { Screen } from '../App'
@@ -67,7 +67,7 @@ export function Header({ codes, setCodes, setScreen, dark, setDark, soundEnabled
     if (!file) return
     void file.text().then((text) => {
       try {
-        setCodes(parseSavedCodes(text))
+        setCodes(activeSavedCodes(parseSavedCodes(text)))
       } catch {
         window.alert(t('default-invalid-json'))
       }

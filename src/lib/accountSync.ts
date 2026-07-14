@@ -86,7 +86,7 @@ async function legacySignIn(email: string, password: string, credential: string,
   const session = sessionFromResponse(legacyValue)
   const legacyWallet = legacyValue.wallet as { version?: unknown, codes?: unknown } | undefined
   if (!legacyWallet) throw new Error('Legacy account migration failed')
-  const encrypted = legacyWallet.version === 2
+  const encrypted = legacyWallet.version === 2 || legacyWallet.version === 3
     ? await decryptAccountWallet(password, legacyWallet)
     : null
   const codes = encrypted?.codes ?? (legacyWallet.version === 1
