@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+:root {
+  --scan-positive: #22c55e;
+}
+
 /* enable themes */
 @plugin "daisyui" {
     themes: qr-light --default, qr-dark --prefersdark;
@@ -121,8 +125,8 @@
   }
 
   .scan-reticule-captured {
-    fill: color-mix(in srgb, var(--color-success) 10%, transparent);
-    stroke: var(--color-success);
+    fill: color-mix(in srgb, var(--scan-positive) 10%, transparent);
+    stroke: var(--scan-positive);
     animation: scan-reticule-lock 420ms ease-out both;
   }
 
@@ -153,7 +157,7 @@
   }
 
   .scan-reticule-label-captured {
-    background: var(--color-success);
+    background: var(--scan-positive);
   }
 
   .scan-reticule-label-saved {
@@ -485,7 +489,7 @@
   }
   100% {
     opacity: 1;
-    stroke: var(--color-success);
+    stroke: var(--scan-positive);
     stroke-width: 3;
   }
 }
