@@ -402,6 +402,16 @@
     cursor: zoom-in;
   }
 
+  .qr-detail-code-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    appearance: none;
+    border: 0;
+    background: rgb(0 0 0 / 0.4);
+    cursor: zoom-out;
+  }
+
   .qr-detail-code-frame-expanded {
     position: fixed;
     left: 50%;

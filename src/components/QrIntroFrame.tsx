@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useI18n } from '../i18n/context'
 import { QrCodeImage } from './QrCodeImage'
 
@@ -19,6 +19,15 @@ export function QrIntroFrame({ text, label, size = 200, className = '', style, e
   const toggleExpanded = () => {
     if (expandable) setExpanded((current) => !current)
   }
+
+  useEffect(() => {
+    if (!expanded) return
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpanded(false)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [expanded])
   const frameClassName = `qr-intro-code-frame ${expanded ? 'qr-detail-code-frame-expanded' : ''} ${expandable ? 'qr-detail-code-frame-expandable' : ''} ${className}`
 
   const content = (
@@ -39,15 +48,25 @@ export function QrIntroFrame({ text, label, size = 200, className = '', style, e
   }
 
   return (
-    <button
-      type="button"
-      className={frameClassName}
-      style={style}
-      aria-label={t(expanded ? 'default-shrink-code' : 'default-enlarge-code', { name: label })}
-      aria-pressed={expanded}
-      onClick={toggleExpanded}
-    >
-      {content}
-    </button>
+    <>
+      {expanded && (
+        <button
+          type="button"
+          className="qr-detail-code-backdrop"
+          aria-label={`${t('default-close')}: ${label}`}
+          onClick={() => setExpanded(false)}
+        />
+      )}
+      <button
+        type="button"
+        className={frameClassName}
+        style={style}
+        aria-label={t(expanded ? 'default-shrink-code' : 'default-enlarge-code', { name: label })}
+        aria-pressed={expanded}
+        onClick={toggleExpanded}
+      >
+        {content}
+      </button>
+    </>
   )
 }

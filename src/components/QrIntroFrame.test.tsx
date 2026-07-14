@@ -21,4 +21,25 @@ describe('QrIntroFrame quiet zone', () => {
     render(<QrIntroFrame text="https://example.com" label="Example" quietZone />)
     expect(screen.getByRole('img', { name: 'Example' })).toHaveAttribute('data-margin', '4')
   })
+
+  it('closes an enlarged QR code when the surrounding backdrop is clicked', async () => {
+    const user = userEvent.setup()
+    render(<QrIntroFrame text="https://example.com" label="Example" expandable />)
+
+    await user.click(screen.getByRole('button', { name: /enlarge/i }))
+    await user.click(screen.getByRole('button', { name: 'Close: Example' }))
+
+    expect(screen.getByRole('button', { name: /enlarge/i })).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('img', { name: 'Example' })).toHaveAttribute('data-margin', '0')
+  })
+
+  it('closes an enlarged QR code with Escape', async () => {
+    const user = userEvent.setup()
+    render(<QrIntroFrame text="https://example.com" label="Example" expandable />)
+
+    await user.click(screen.getByRole('button', { name: /enlarge/i }))
+    await user.keyboard('{Escape}')
+
+    expect(screen.getByRole('button', { name: /enlarge/i })).toHaveAttribute('aria-pressed', 'false')
+  })
 })
