@@ -185,7 +185,7 @@ describe('CodesScreen', () => {
     expect(playToggle).toHaveBeenCalledOnce()
   })
 
-  it('shows newest codes first and can reverse the chronological order', async () => {
+  it('shows newest codes first and can change the sort order', async () => {
     const user = userEvent.setup()
     render(<CodesScreen codes={[
       {
@@ -202,17 +202,63 @@ describe('CodesScreen', () => {
       },
     ]} setCodes={vi.fn()} playDelete={vi.fn()} />)
 
+    const sort = screen.getByRole('combobox', { name: /sort/i })
     expect(within(screen.getAllByRole('listitem')[0]).getByText('New code')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: /sort: newest first/i }))
+    expect(sort).toHaveValue('newest')
+
+    await user.selectOptions(sort, 'oldest')
     expect(within(screen.getAllByRole('listitem')[0]).getByText('Old code')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /sort: oldest first/i })).toBeInTheDocument()
+    expect(sort).toHaveValue('oldest')
 
-    await user.click(screen.getByRole('button', { name: /sort: oldest first/i }))
-    expect(screen.getByRole('button', { name: /sort: manual order/i })).toBeInTheDocument()
+    await user.selectOptions(sort, 'manual')
+    expect(within(screen.getAllByRole('listitem')[0]).getByText('Old code')).toBeInTheDocument()
+    expect(sort).toHaveValue('manual')
+  })
 
-    await user.click(screen.getByRole('button', { name: /sort: manual order/i }))
-    expect(within(screen.getAllByRole('listitem')[0]).getByText('New code')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /sort: newest first/i })).toBeInTheDocument()
+  it('groups saved codes by their large payload type', async () => {
+    const user = userEvent.setup()
+    render(<CodesScreen codes={[
+      {
+        name: 'Office location', text: 'geo:52.5,13.4',
+        data: { type: 'qr.QrData.Location', label: 'Office', query: '', latitude: '52.5', longitude: '13.4' },
+        createdAt: '2026-07-12T09:00:00.000Z',
+      },
+      {
+        name: 'Summer meetup', text: 'event',
+        data: { type: 'qr.QrData.Event', title: 'Summer meetup', start: '2026-07-20T10:00', end: '', location: 'Berlin', description: '' },
+        createdAt: '2026-07-13T09:00:00.000Z',
+      },
+      {
+        name: 'Ian Contact', text: 'vcard',
+        data: { type: 'qr.QrData.VCard', name: 'Ian', firstName: 'Ian', lastName: '', additionalNames: '', prefix: '', suffix: '', nickname: '', title: '', organization: 'FORMATION', email: 'ian@example.com', emailType: '', phone: '', phoneType: '', url: '', street: '', city: '', region: '', postalCode: '', country: '', note: '' },
+        createdAt: '2026-07-11T09:00:00.000Z',
+      },
+    ]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    await user.selectOptions(screen.getByRole('combobox', { name: /sort/i }), 'type')
+
+    expect(screen.getByRole('heading', { name: 'Event' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Maps' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /v card/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /drag to reorder/i })).not.toBeInTheDocument()
+  })
+
+  it('searches code names, payloads, and type labels', async () => {
+    const user = userEvent.setup()
+    render(<CodesScreen codes={[
+      { name: 'FORMATION site', text: 'https://tryformation.com', data: { type: 'qr.QrData.Url', url: 'https://tryformation.com' } },
+      { name: 'Office Wi-Fi', text: 'wifi', data: { type: 'qr.QrData.Wifi', ssid: 'Guest Network', password: 'welcome', encryption: 'WPA' } },
+    ]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    const search = screen.getByRole('searchbox', { name: /search codes/i })
+    await user.type(search, 'guest')
+    expect(screen.getByText('Office Wi-Fi')).toBeInTheDocument()
+    expect(screen.queryByText('FORMATION site')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /drag to reorder/i })).not.toBeInTheDocument()
+
+    await user.clear(search)
+    await user.type(search, 'maps')
+    expect(screen.getByText(/no matching codes/i)).toBeInTheDocument()
   })
 
   it('provides drag handles without opening the card when they are pressed', async () => {
@@ -267,7 +313,7 @@ describe('CodesScreen', () => {
     ]} setCodes={vi.fn()} playDelete={vi.fn()} />)
 
     expect(within(screen.getAllByRole('listitem')[0]).getByText('Older manual first')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /sort: manual order/i })).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /sort/i })).toHaveValue('manual')
   })
 
   it('plays a staggered sound for each code loaded in the codes view', () => {
