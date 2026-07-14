@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { QR_DATA_TYPES, type SavedQrCode } from '../domain/qr'
 import { encryptAccountWallet } from './accountCrypto'
-import { createAccount, parseStoredAccountSession, signInAccount } from './accountSync'
+import { createAccount, downloadAccountCodes, isAccountReauthenticationRequired, parseStoredAccountSession, signInAccount } from './accountSync'
 
 const codes: SavedQrCode[] = [{
   name: 'Private note',
@@ -75,10 +75,51 @@ describe('encrypted account protocol', () => {
     expect(requests[2].body).not.toContain('do not upload this plaintext')
   })
 
+  it('repairs a legacy wallet left behind after credential migration', async () => {
+    const requests: Array<{ path: string, body: string, authorization: string | null }> = []
+    vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers)
+      requests.push({
+        path: String(input),
+        body: String(init?.body ?? ''),
+        authorization: headers.get('authorization'),
+      })
+      if (requests.length === 1) return new Response(JSON.stringify({
+        sessionToken: 't'.repeat(43),
+        user: { email: 'legacy@example.com' },
+        wallet: { version: 1, codes },
+      }), { status: 200, headers: { 'content-type': 'application/json' } })
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    }))
+
+    await expect(signInAccount('legacy@example.com', 'correct horse battery staple')).resolves.toMatchObject({ codes })
+
+    expect(requests[1].path).toBe('/api/account/wallet')
+    expect(requests[1].authorization).toBe(`Bearer ${'t'.repeat(43)}`)
+    expect(requests[1].body).not.toContain('correct horse')
+    expect(requests[1].body).not.toContain('do not upload this plaintext')
+    expect(JSON.parse(requests[1].body)).toMatchObject({ wallet: { version: 3 } })
+  })
+
   it('invalidates pre-encryption stored sessions so they must migrate through password sign-in', () => {
     expect(parseStoredAccountSession(JSON.stringify({ token: 'legacy', email: 'user@example.com' }))).toBeNull()
     expect(parseStoredAccountSession(JSON.stringify({ token: 'new', email: 'user@example.com', cryptoVersion: 2 }))).toEqual({
       token: 'new', email: 'user@example.com', cryptoVersion: 2,
     })
+  })
+
+  it.each([401, 428])('requires sign-in again when wallet access returns %s', async (status) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ error: 'unauthorized' }), {
+      status,
+      headers: { 'content-type': 'application/json' },
+    })))
+
+    const error = await downloadAccountCodes({ token: 't'.repeat(43), email: 'user@example.com', cryptoVersion: 2 })
+      .then(() => null, (reason: unknown) => reason)
+
+    expect(isAccountReauthenticationRequired(error)).toBe(true)
   })
 })

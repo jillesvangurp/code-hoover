@@ -43,6 +43,7 @@ default-account-sync-signing-in=Generando claves de cifrado e iniciando sesión.
 default-account-sync-restoring=Descifrando los códigos de la cuenta en este dispositivo...
 default-account-sync-restored=Códigos cifrados de la cuenta restaurados.
 default-account-sync-error=Error en la sincronización cifrada de la cuenta.
+default-account-sync-sign-in-again=Vuelve a iniciar sesión para desbloquear la sincronización cifrada. Los códigos locales están seguros en este dispositivo.
 default-account-sync-sign-in-error=No se pudo iniciar sesión.
 default-account-sync-deleting=Eliminando cuenta...
 default-account-sync-deleted=Cuenta eliminada en este dispositivo.

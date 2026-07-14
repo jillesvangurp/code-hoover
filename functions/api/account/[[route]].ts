@@ -160,8 +160,31 @@ function accountKey(userId: string): string {
   return `account:user:${userId}`
 }
 
-function walletKey(userId: string): string {
+function legacyWalletKey(userId: string): string {
   return `account-wallet:${userId}`
+}
+
+function encryptedWalletKey(userId: string): string {
+  return `account-wallet-v2:${userId}`
+}
+
+async function accountWallet(context: PagesContext, account: AccountRecord): Promise<WalletRecord | null> {
+  if ((account.credentialVersion ?? 1) === 1) {
+    return context.env.QR_WALLET_KV.get<WalletRecord>(legacyWalletKey(account.userId), 'json')
+  }
+
+  const encrypted = await context.env.QR_WALLET_KV.get<WalletRecord>(encryptedWalletKey(account.userId), 'json')
+  if (encrypted) {
+    await context.env.QR_WALLET_KV.delete(legacyWalletKey(account.userId))
+    return encrypted
+  }
+
+  const legacy = await context.env.QR_WALLET_KV.get<WalletRecord>(legacyWalletKey(account.userId), 'json')
+  if (legacy?.version === 2 || legacy?.version === 3) {
+    await context.env.QR_WALLET_KV.put(encryptedWalletKey(account.userId), JSON.stringify(legacy))
+    await context.env.QR_WALLET_KV.delete(legacyWalletKey(account.userId))
+  }
+  return legacy
 }
 
 async function sessionKey(token: string): Promise<string> {
@@ -247,7 +270,7 @@ async function register(context: PagesContext): Promise<Response> {
   }
   await context.env.QR_WALLET_KV.put(accountKey(userId), JSON.stringify(account))
   await context.env.QR_WALLET_KV.put(indexKey, JSON.stringify({ userId }))
-  await context.env.QR_WALLET_KV.put(walletKey(userId), JSON.stringify(wallet))
+  await context.env.QR_WALLET_KV.put(encryptedWalletKey(userId), JSON.stringify(wallet))
 
   return jsonResponse({ ...userResponse(account), sessionToken: await createSession(context, userId) })
 }
@@ -273,7 +296,7 @@ async function login(context: PagesContext): Promise<Response> {
     return jsonResponse({ error: 'invalid_login' }, 401)
   }
 
-  const wallet = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(account.userId), 'json')
+  const wallet = await accountWallet(context, account)
   return jsonResponse({ ...userResponse(account), sessionToken: await createSession(context, account.userId), wallet })
 }
 
@@ -294,8 +317,9 @@ async function migrate(context: PagesContext): Promise<Response> {
     credentialVersion: 2,
     updatedAt: Date.now(),
   }
-  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify(wallet))
+  await context.env.QR_WALLET_KV.put(encryptedWalletKey(auth.account.userId), JSON.stringify(wallet))
   await context.env.QR_WALLET_KV.put(accountKey(auth.account.userId), JSON.stringify(migrated))
+  await context.env.QR_WALLET_KV.delete(legacyWalletKey(auth.account.userId))
   return jsonResponse({ ok: true })
 }
 
@@ -308,7 +332,8 @@ async function getMe(context: PagesContext): Promise<Response> {
 async function getWallet(context: PagesContext): Promise<Response> {
   const auth = await authenticate(context)
   if (auth instanceof Response) return auth
-  const wallet = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(auth.account.userId), 'json')
+  const wallet = await accountWallet(context, auth.account)
+  if (wallet?.version === 1) return jsonResponse({ error: 'wallet_reauthentication_required' }, 428)
   return jsonResponse({ wallet })
 }
 
@@ -319,9 +344,10 @@ async function putWallet(context: PagesContext): Promise<Response> {
   const body = await readJsonBody(context.request) as Record<string, unknown>
   const wallet = parseEncryptedWallet(body.wallet)
   if (!wallet) return jsonResponse({ error: 'invalid_encrypted_wallet' }, 400)
-  const current = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(auth.account.userId), 'json')
+  const current = await context.env.QR_WALLET_KV.get<WalletRecord>(encryptedWalletKey(auth.account.userId), 'json')
   if (current?.version === 3 && wallet.version === 2) return jsonResponse({ error: 'wallet_upgrade_required' }, 409)
-  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify(wallet))
+  await context.env.QR_WALLET_KV.put(encryptedWalletKey(auth.account.userId), JSON.stringify(wallet))
+  await context.env.QR_WALLET_KV.delete(legacyWalletKey(auth.account.userId))
   return jsonResponse({ ok: true })
 }
 
@@ -335,7 +361,8 @@ async function deleteAccount(context: PagesContext): Promise<Response> {
   const auth = await authenticate(context)
   if (auth instanceof Response) return auth
   await context.env.QR_WALLET_KV.delete(await sessionKey(auth.token))
-  await context.env.QR_WALLET_KV.delete(walletKey(auth.account.userId))
+  await context.env.QR_WALLET_KV.delete(encryptedWalletKey(auth.account.userId))
+  await context.env.QR_WALLET_KV.delete(legacyWalletKey(auth.account.userId))
   await context.env.QR_WALLET_KV.delete(await emailKey(auth.account.email))
   await context.env.QR_WALLET_KV.delete(accountKey(auth.account.userId))
   return jsonResponse({ ok: true })

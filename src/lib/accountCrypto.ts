@@ -31,6 +31,13 @@ interface RememberedAccountKey {
   kdf: AccountWalletKdf
 }
 
+export class AccountReauthenticationRequiredError extends Error {
+  constructor() {
+    super('Account sign-in required')
+    this.name = 'AccountReauthenticationRequiredError'
+  }
+}
+
 const rememberedKeys = new Map<string, RememberedAccountKey>()
 const textEncoder = new TextEncoder()
 const textDecoder = new TextDecoder()
@@ -199,7 +206,7 @@ async function accountKey(email: string): Promise<RememberedAccountKey> {
   const remembered = rememberedKeys.get(normalized)
   if (remembered) return remembered
   const stored = await readStoredKey(email).catch(() => null)
-  if (!stored) throw new Error('Account encryption key unavailable')
+  if (!stored) throw new AccountReauthenticationRequiredError()
   rememberedKeys.set(normalized, stored)
   return stored
 }
@@ -212,7 +219,7 @@ export async function encryptRememberedAccountWallet(email: string, codes: Saved
 export async function decryptRememberedAccountWallet(email: string, value: unknown): Promise<SavedQrCode[]> {
   const wallet = parseEncryptedAccountWallet(value)
   const stored = await accountKey(email)
-  if (stored.kdf.salt !== wallet.kdf.salt || stored.kdf.iterations !== wallet.kdf.iterations) throw new Error('Account encryption key mismatch')
+  if (stored.kdf.salt !== wallet.kdf.salt || stored.kdf.iterations !== wallet.kdf.iterations) throw new AccountReauthenticationRequiredError()
   return decryptWithKey(wallet, stored.key)
 }
 

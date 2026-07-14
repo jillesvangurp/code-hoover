@@ -139,6 +139,7 @@ default-account-sync-signing-in=Schlüssel werden abgeleitet und die Anmeldung l
 default-account-sync-restoring=Kontocodes werden auf diesem Gerät entschlüsselt...
 default-account-sync-restored=Verschlüsselte Kontocodes wurden wiederhergestellt.
 default-account-sync-error=Verschlüsselte Kontosynchronisierung fehlgeschlagen.
+default-account-sync-sign-in-again=Melde dich erneut an, um die verschlüsselte Synchronisierung zu entsperren. Lokale Codes bleiben auf diesem Gerät erhalten.
 default-account-sync-sign-in-error=Anmeldung fehlgeschlagen.
 default-account-sync-deleting=Konto wird gelöscht...
 default-account-sync-deleted=Konto wurde auf diesem Gerät gelöscht.

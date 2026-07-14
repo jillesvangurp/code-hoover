@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { applyCameraTorch, applyCameraZoom, cameraControlSupport } from './cameraControls'
+import { activeCameraControlSupport, applyCameraTorch, applyCameraZoom, cameraControlSupport, DIGITAL_ZOOM_RANGE } from './cameraControls'
 
 function cameraTrack(capabilities: Record<string, unknown>, settings: Record<string, unknown> = {}) {
   return {
@@ -28,6 +28,27 @@ describe('camera controls', () => {
       torch: false,
       zoom: null,
       zoomValue: 1,
+    })
+  })
+
+  it('provides digital zoom when the camera has no hardware zoom', () => {
+    expect(activeCameraControlSupport(cameraTrack({}))).toEqual({
+      torch: false,
+      zoom: DIGITAL_ZOOM_RANGE,
+      zoomValue: 1,
+      hardwareZoom: false,
+    })
+  })
+
+  it('prefers the camera hardware zoom range when available', () => {
+    expect(activeCameraControlSupport(cameraTrack(
+      { zoom: { min: 1, max: 4, step: 0.25 } },
+      { zoom: 2 },
+    ))).toEqual({
+      torch: false,
+      zoom: { min: 1, max: 4, step: 0.25 },
+      zoomValue: 2,
+      hardwareZoom: true,
     })
   })
 

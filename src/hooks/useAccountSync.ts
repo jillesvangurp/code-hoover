@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mergeSavedCodes, syncableSavedCodes, type SavedQrCode } from '../domain/qr'
-import { createAccount, deleteAccount, downloadAccountCodes, parseStoredAccountSession, signInAccount, signOutAccount, uploadAccountCodes, type AccountSession } from '../lib/accountSync'
+import { createAccount, deleteAccount, downloadAccountCodes, isAccountReauthenticationRequired, parseStoredAccountSession, signInAccount, signOutAccount, uploadAccountCodes, type AccountSession } from '../lib/accountSync'
 import { useLocalStorage } from './useLocalStorage'
 
 type AccountSyncState = 'idle' | 'syncing' | 'synced' | 'error'
@@ -34,6 +34,12 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
   const sessionRef = useRef(session)
   sessionRef.current = session
 
+  const requireSignIn = useCallback(() => {
+    setSession(null)
+    lastSyncedSessionToken.current = null
+    setStatus({ state: 'error', messageId: 'default-account-sync-sign-in-again' })
+  }, [setSession])
+
   const upload = useCallback(async (nextSession: AccountSession, nextCodes: SavedQrCode[], messageId = 'default-account-sync-saved') => {
     setStatus({ state: 'syncing', messageId: 'default-account-sync-saving' })
     try {
@@ -45,11 +51,12 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
       lastSyncedSessionToken.current = nextSession.token
       setCodes(completeCodes)
       setStatus({ state: 'synced', messageId })
-    } catch {
-      setStatus({ state: 'error', messageId: 'default-account-sync-error' })
+    } catch (error) {
+      if (isAccountReauthenticationRequired(error)) requireSignIn()
+      else setStatus({ state: 'error', messageId: 'default-account-sync-error' })
       throw new Error('Account sync failed')
     }
-  }, [setCodes])
+  }, [requireSignIn, setCodes])
 
   const register = useCallback(async (email: string, password: string) => {
     setStatus({ state: 'syncing', messageId: 'default-account-sync-creating' })
@@ -100,11 +107,12 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
       lastUploadedJson.current = JSON.stringify(syncableSavedCodes(completeCodes))
       lastSyncedSessionToken.current = sessionRef.current.token
       setStatus({ state: 'synced', messageId: 'default-account-sync-restored' })
-    } catch {
-      setStatus({ state: 'error', messageId: 'default-account-sync-error' })
+    } catch (error) {
+      if (isAccountReauthenticationRequired(error)) requireSignIn()
+      else setStatus({ state: 'error', messageId: 'default-account-sync-error' })
       throw new Error('Account restore failed')
     }
-  }, [codes, setCodes])
+  }, [codes, requireSignIn, setCodes])
 
   const signOut = useCallback(async () => {
     const currentSession = sessionRef.current
@@ -132,7 +140,8 @@ export function useAccountSync(codes: SavedQrCode[], setCodes: (codes: SavedQrCo
       lastUploadedJson.current = JSON.stringify(syncableSavedCodes(codes))
       lastSyncedSessionToken.current = null
       setStatus((current) => (
-        current.messageId === 'default-account-sync-off'
+        (current.messageId === 'default-account-sync-off'
+          || current.messageId === 'default-account-sync-sign-in-again')
           ? current
           : { state: 'idle', messageId: 'default-account-sync-off' }
       ))

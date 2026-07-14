@@ -20,6 +20,13 @@ export interface CameraControlSupport {
   zoomValue: number
 }
 
+export interface ActiveCameraControlSupport extends Omit<CameraControlSupport, 'zoom'> {
+  zoom: CameraZoomRange
+  hardwareZoom: boolean
+}
+
+export const DIGITAL_ZOOM_RANGE: CameraZoomRange = { min: 1, max: 3, step: 0.1 }
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
@@ -43,6 +50,16 @@ export function cameraControlSupport(track: MediaStreamTrack): CameraControlSupp
     : 1
 
   return { torch, zoom, zoomValue }
+}
+
+export function activeCameraControlSupport(track: MediaStreamTrack): ActiveCameraControlSupport {
+  const support = cameraControlSupport(track)
+  return {
+    torch: support.torch,
+    zoom: support.zoom ?? DIGITAL_ZOOM_RANGE,
+    zoomValue: support.zoomValue,
+    hardwareZoom: support.zoom !== null,
+  }
 }
 
 export async function applyCameraTorch(track: MediaStreamTrack, enabled: boolean): Promise<void> {

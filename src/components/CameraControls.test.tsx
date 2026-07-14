@@ -41,4 +41,20 @@ describe('CameraControls', () => {
     expect(onTorchChange).toHaveBeenCalledWith(true)
     expect(onZoomChange).toHaveBeenCalledWith(2.5)
   })
+
+  it('shows zoom without a flashlight when digital zoom is used', () => {
+    const onZoomChange = vi.fn()
+    render(<CameraControls
+      support={{ torch: false, zoom: { min: 1, max: 3, step: 0.1 }, zoomValue: 1 }}
+      torchOn={false}
+      zoomValue={1}
+      onTorchChange={() => undefined}
+      onZoomChange={onZoomChange}
+      {...labels}
+    />)
+
+    expect(screen.queryByRole('button', { name: /flashlight/i })).not.toBeInTheDocument()
+    fireEvent.change(screen.getByRole('slider', { name: 'Zoom' }), { target: { value: '2' } })
+    expect(onZoomChange).toHaveBeenCalledWith(2)
+  })
 })

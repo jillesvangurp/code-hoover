@@ -1,5 +1,6 @@
 import { parseSavedCodes, type SavedQrCode } from '../domain/qr'
 import {
+  AccountReauthenticationRequiredError,
   decryptAccountWallet,
   decryptRememberedAccountWallet,
   deriveAccountCredential,
@@ -22,6 +23,10 @@ export interface AccountSession {
 export interface AccountResult {
   session: AccountSession
   codes: SavedQrCode[]
+}
+
+export function isAccountReauthenticationRequired(error: unknown): boolean {
+  return error instanceof AccountReauthenticationRequiredError
 }
 
 interface AccountApiResponse {
@@ -115,6 +120,18 @@ export async function signInAccount(email: string, password: string): Promise<Ac
   }
   const value = await readAccountResponse(response)
   const session = sessionFromResponse(value)
+  const legacyWallet = value.wallet as { version?: unknown, codes?: unknown } | undefined
+  if (legacyWallet?.version === 1) {
+    const codes = parseSavedCodes(JSON.stringify(legacyWallet.codes ?? []))
+    const encrypted = await encryptAccountWallet(password, codes)
+    const replacement = await accountRequest('wallet', {
+      method: 'PUT',
+      body: JSON.stringify({ wallet: encrypted.wallet }),
+    }, session)
+    if (!replacement.ok) throw new Error(`Account wallet recovery failed: ${replacement.status}`)
+    await rememberAccountKey(session.email, encrypted.key, encrypted.wallet.kdf)
+    return { session, codes }
+  }
   const decrypted = await decryptAccountWallet(password, parseEncryptedAccountWallet(value.wallet))
   await rememberAccountKey(session.email, decrypted.key, decrypted.wallet.kdf)
   return { session, codes: decrypted.codes }
@@ -136,6 +153,7 @@ export async function deleteAccount(session: AccountSession): Promise<void> {
 
 export async function downloadAccountCodes(session: AccountSession): Promise<SavedQrCode[]> {
   const response = await accountRequest('wallet', undefined, session)
+  if (response.status === 401 || response.status === 428) throw new AccountReauthenticationRequiredError()
   if (!response.ok) throw new Error(`Account restore failed: ${response.status}`)
   const body = await response.json() as { wallet?: unknown }
   if (!body.wallet) return []
@@ -148,6 +166,7 @@ export async function uploadAccountCodes(session: AccountSession, codes: SavedQr
     method: 'PUT',
     body: JSON.stringify({ wallet }),
   }, session)
+  if (response.status === 401) throw new AccountReauthenticationRequiredError()
   if (!response.ok) throw new Error(`Account sync failed: ${response.status}`)
   return codes
 }

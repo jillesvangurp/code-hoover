@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { QR_DATA_TYPES, type SavedQrCode } from '../domain/qr'
-import { decryptAccountWallet, deriveAccountCredential, encryptAccountWallet, parseEncryptedAccountWallet } from './accountCrypto'
+import { AccountReauthenticationRequiredError, decryptAccountWallet, decryptRememberedAccountWallet, deriveAccountCredential, encryptAccountWallet, parseEncryptedAccountWallet } from './accountCrypto'
 
 const codes: SavedQrCode[] = [{
   name: 'Secret office Wi-Fi',
@@ -63,5 +63,12 @@ describe('account wallet encryption', () => {
       cipher: { name: 'AES-GCM', iv: 'AAAAAAAAAAAAAAAA' },
       ciphertext: 'AAAAAAAAAAAAAAAAAAAAAA',
     })).toThrow('Invalid encrypted wallet')
+  })
+
+  it('requires a new sign-in when the remembered encryption key is unavailable', async () => {
+    const { wallet } = await encryptAccountWallet('correct horse battery staple', codes)
+
+    await expect(decryptRememberedAccountWallet('missing-key@example.com', wallet))
+      .rejects.toBeInstanceOf(AccountReauthenticationRequiredError)
   })
 })

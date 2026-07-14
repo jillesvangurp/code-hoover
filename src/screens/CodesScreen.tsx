@@ -198,7 +198,7 @@ function CodeCard({ code, sortableId, viewMode, onClick, sortable = true }: { co
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 text-left transition-colors hover:bg-base-300 ${isDragging ? 'z-10 opacity-70 shadow-xl' : ''} ${isGrid ? 'grid grid-cols-[4.5rem_minmax(0,1fr)] items-center gap-3 p-3' : 'grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3 p-4'}`}
+      className={`qr-intro-card card w-full cursor-pointer overflow-hidden rounded-2xl bg-base-200 text-left transition-colors hover:bg-base-300 ${isDragging ? 'z-10 opacity-70 shadow-xl' : ''} ${isGrid ? 'flex min-w-0 flex-col items-stretch gap-3 p-3 sm:grid sm:grid-cols-[4.5rem_minmax(0,1fr)] sm:items-center' : 'grid grid-cols-[minmax(0,1fr)_5rem] items-center gap-3 p-4'}`}
       onClick={onClick}
     >
       <div className={`min-w-0 ${isGrid ? 'order-2' : ''}`}>
@@ -428,7 +428,7 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
                     <h2 id={`code-type-${records[0].id}`} className="m-0 text-sm font-bold uppercase tracking-wide">{label}</h2>
                     <span className="badge badge-ghost badge-sm">{records.length}</span>
                   </div>
-                  <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
+                  <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-2 gap-3 sm:gap-4' : 'flex w-full flex-col gap-4'}>
                     {records.map(({ code, originalIndex, id }) => <CodeCard key={id} sortableId={id} code={code} viewMode={viewMode} sortable={false} onClick={() => { playOpen?.(); setSelectedIndex(originalIndex) }} />)}
                   </ul>
                 </section>
@@ -439,7 +439,7 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
       ) : (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={displayedCodes.map(({ id }) => id)} strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}>
-            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-1 gap-4 sm:grid-cols-2' : 'flex w-full flex-col gap-4'}>
+            <ul className={viewMode === 'grid' ? 'grid w-full grid-cols-2 gap-3 sm:gap-4' : 'flex w-full flex-col gap-4'}>
               {displayedCodes.map(({ code, originalIndex, id }) => <CodeCard key={id} sortableId={id} code={code} viewMode={viewMode} sortable={sortable} onClick={() => { playOpen?.(); setSelectedIndex(originalIndex) }} />)}
             </ul>
           </SortableContext>

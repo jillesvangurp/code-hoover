@@ -5,7 +5,7 @@ import { CameraControls } from '../components/CameraControls'
 import { ScanReticuleOverlay, type ScanDetection, type ScanDetectionStatus } from '../components/ScanReticuleOverlay'
 import { ScannerStatusOverlay } from '../components/ScannerStatusOverlay'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
-import { applyCameraTorch, applyCameraZoom, cameraControlSupport, type CameraControlSupport } from '../domain/cameraControls'
+import { activeCameraControlSupport, applyCameraTorch, applyCameraZoom, DIGITAL_ZOOM_RANGE, type ActiveCameraControlSupport } from '../domain/cameraControls'
 import { QR_DATA_TYPES, createSavedCodeRecord, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCode, qrDataAsText, savedCodeMatchesPayload, type QrData, type SavedQrCode } from '../domain/qr'
 import { detectionPolygon, type ScanPoint, type ScanRect } from '../domain/scanOverlay'
 import { cameraErrorKind, openReliableCamera, type CameraErrorKind } from '../domain/scannerReliability'
@@ -60,12 +60,14 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
   const [scannerRevision, setScannerRevision] = useState(0)
   const [detections, setDetections] = useState<ScanDetection[]>([])
   const [scanViewport, setScanViewport] = useState({ width: 0, height: 0 })
-  const [cameraSupport, setCameraSupport] = useState<CameraControlSupport | null>(null)
+  const [cameraSupport, setCameraSupport] = useState<ActiveCameraControlSupport | null>(null)
   const [torchOn, setTorchOn] = useState(false)
   const [zoomValue, setZoomValue] = useState(1)
+  const [digitalZoom, setDigitalZoom] = useState(1)
   const videoRef = useRef<HTMLVideoElement>(null)
   const scanSurfaceRef = useRef<HTMLDivElement>(null)
   const cameraTrackRef = useRef<MediaStreamTrack | null>(null)
+  const hardwareZoomRef = useRef(false)
   const { t } = useI18n()
   const playScanRef = useRef(playScanSuccess)
   const codesRef = useRef(codes)
@@ -97,12 +99,21 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
     const track = cameraTrackRef.current
     if (!track) return
     setZoomValue(zoom)
+    if (!hardwareZoomRef.current) {
+      setDigitalZoom(zoom)
+      return
+    }
     try {
       await applyCameraZoom(track, zoom)
-    } catch (error) {
-      const currentZoom = track.getSettings().zoom
-      if (typeof currentZoom === 'number') setZoomValue(currentZoom)
-      console.error('Could not change camera zoom', error)
+      const appliedZoom = track.getSettings().zoom
+      setZoomValue(typeof appliedZoom === 'number' ? appliedZoom : zoom)
+      setDigitalZoom(1)
+    } catch {
+      const fallbackZoom = Math.min(DIGITAL_ZOOM_RANGE.max, Math.max(DIGITAL_ZOOM_RANGE.min, zoom))
+      hardwareZoomRef.current = false
+      setCameraSupport((current) => current ? { ...current, zoom: DIGITAL_ZOOM_RANGE, zoomValue: fallbackZoom, hardwareZoom: false } : current)
+      setZoomValue(fallbackZoom)
+      setDigitalZoom(fallbackZoom)
     }
   }
 
@@ -152,6 +163,8 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
       setCameraError(cameraErrorKind(error))
       setCameraStatus('error')
       setCameraSupport(null)
+      hardwareZoomRef.current = false
+      setDigitalZoom(1)
       cameraTrackRef.current = null
       stream?.getTracks().forEach((track) => track.stop())
       video.pause()
@@ -174,10 +187,12 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
     const attachCameraTrack = (track: MediaStreamTrack) => {
       activeTrack = track
       cameraTrackRef.current = track
-      const support = cameraControlSupport(track)
-      setCameraSupport(support.torch || support.zoom ? support : null)
+      const support = activeCameraControlSupport(track)
+      hardwareZoomRef.current = support.hardwareZoom
+      setCameraSupport(support)
       setTorchOn(track.getSettings().torch === true)
       setZoomValue(support.zoomValue)
+      setDigitalZoom(1)
 
       track.addEventListener('ended', requestRecovery)
       track.addEventListener('mute', () => {
@@ -378,19 +393,24 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
     <>
       <section className="flex w-full flex-col items-center gap-2">
         <div ref={scanSurfaceRef} className="relative mx-auto h-[42vh] w-full overflow-hidden rounded-md border border-base-300 bg-neutral">
-          <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+          <div
+            className="absolute inset-0 origin-center transition-transform duration-150"
+            style={{ transform: `scale(${digitalZoom})` }}
+          >
+            <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+            <ScanReticuleOverlay
+              detections={detections}
+              viewport={scanViewport}
+              capturedLabel={t('default-scan-captured')}
+              savedLabel={t('default-scan-already-saved')}
+            />
+          </div>
           <ScannerStatusOverlay
             status={cameraStatus}
             startingLabel={t('default-camera-starting')}
             errorMessage={cameraError === 'permission' ? t('default-camera-permission-error') : t('default-camera-unavailable-error')}
             retryLabel={t('default-camera-retry')}
             onRetry={retryCamera}
-          />
-          <ScanReticuleOverlay
-            detections={detections}
-            viewport={scanViewport}
-            capturedLabel={t('default-scan-captured')}
-            savedLabel={t('default-scan-already-saved')}
           />
           {cameraStatus === 'active' && cameraSupport && (
             <CameraControls
