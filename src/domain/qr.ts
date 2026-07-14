@@ -202,6 +202,12 @@ export function savedCodeIdentity(code: SavedQrCode): string {
   return `${code.data.type}\n${qrDataAsText(code.data)}`
 }
 
+export function savedCodeMatchesPayload(existing: SavedQrCode, candidate: SavedQrCode): boolean {
+  if (savedCodeIdentity(existing) === savedCodeIdentity(candidate)) return true
+  if (existing.data.type === QR_DATA_TYPES.barcode || candidate.data.type === QR_DATA_TYPES.barcode) return false
+  return existing.text.trim() === candidate.text.trim()
+}
+
 export function mergeSavedCodes(primary: SavedQrCode[], secondary: SavedQrCode[]): SavedQrCode[] {
   const seen = new Set<string>()
   const merged: SavedQrCode[] = []

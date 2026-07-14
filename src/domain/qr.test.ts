@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, serializePersistentSavedCodes, syncableSavedCodes, type SavedQrCode, type VCardData } from './qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCodes, parseVCard, qrDataAsText, savedCodeMatchesPayload, serializePersistentSavedCodes, syncableSavedCodes, type SavedQrCode, type VCardData } from './qr'
 
 describe('saved code compatibility', () => {
   it('reads the legacy serialization format and restores blank names', () => {
@@ -62,6 +62,20 @@ describe('saved code compatibility', () => {
     )
 
     expect(merged[0].createdAt).toBe('2026-07-12T09:00:00.000Z')
+  })
+
+  it('matches the same raw QR payload even when it was saved under a different non-barcode type', () => {
+    const url: SavedQrCode = { name: 'URL', text: 'https://example.com', data: { type: QR_DATA_TYPES.url, url: 'https://example.com' } }
+    const text: SavedQrCode = { name: 'Text', text: 'https://example.com', data: { type: QR_DATA_TYPES.text, text: 'https://example.com' } }
+
+    expect(savedCodeMatchesPayload(url, text)).toBe(true)
+  })
+
+  it('does not collapse barcodes with the same text but different formats', () => {
+    const ean: SavedQrCode = { name: 'EAN', text: '12345678', data: { type: QR_DATA_TYPES.barcode, format: 'EAN_8', text: '12345678' } }
+    const code128: SavedQrCode = { name: 'Code 128', text: '12345678', data: { type: QR_DATA_TYPES.barcode, format: 'CODE_128', text: '12345678' } }
+
+    expect(savedCodeMatchesPayload(ean, code128)).toBe(false)
   })
 })
 

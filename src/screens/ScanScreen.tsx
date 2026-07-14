@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser'
 import { Check, X } from 'lucide-react'
+import { ScanReticuleOverlay, type ScanDetection, type ScanDetectionStatus } from '../components/ScanReticuleOverlay'
 import { BARCODE_FORMAT_NAMES, barcodeFormatName, isQrBarcodeFormat } from '../domain/barcode'
-import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCode, qrDataAsText, type QrData, type SavedQrCode } from '../domain/qr'
+import { QR_DATA_TYPES, defaultDisplayName, mergeSavedCodes, parseQrPayload, parseSavedCode, qrDataAsText, savedCodeMatchesPayload, type QrData, type SavedQrCode } from '../domain/qr'
+import { detectionPolygon, type ScanPoint, type ScanRect } from '../domain/scanOverlay'
 import { useI18n } from '../i18n/context'
 
 interface ScanResult {
@@ -46,14 +48,40 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
   const [scanMultiple, setScanMultiple] = useState(false)
   const [scannerLabel, setScannerLabel] = useState('BarcodeDetector' in window ? 'Barcode Detector API' : '@zxing/browser')
   const [scanning, setScanning] = useState(false)
+  const [detections, setDetections] = useState<ScanDetection[]>([])
+  const [scanViewport, setScanViewport] = useState({ width: 0, height: 0 })
   const videoRef = useRef<HTMLVideoElement>(null)
+  const scanSurfaceRef = useRef<HTMLDivElement>(null)
   const { t } = useI18n()
   const playScanRef = useRef(playScanSuccess)
   const codesRef = useRef(codes)
   const scanMultipleRef = useRef(scanMultiple)
+  const scanStatusesRef = useRef(new Map<string, ScanDetectionStatus>())
+  const sessionScansRef = useRef(new Set<string>())
   playScanRef.current = playScanSuccess
   codesRef.current = codes
   scanMultipleRef.current = scanMultiple
+
+  useEffect(() => {
+    const surface = scanSurfaceRef.current
+    if (!surface) return
+    const measure = () => {
+      const bounds = surface.getBoundingClientRect()
+      setScanViewport({ width: bounds.width, height: bounds.height })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(surface)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const cutoff = Date.now() - 900
+      setDetections((current) => current.filter(({ lastSeen }) => lastSeen >= cutoff))
+    }, 250)
+    return () => window.clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     const video = videoRef.current
@@ -64,20 +92,41 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
     let detectionTimer: number | null = null
     const reader = new BrowserMultiFormatReader(undefined, { delayBetweenScanAttempts: 300 })
 
-    const addScan = (text: string, format: number) => {
+    const addScan = (text: string, format: number): ScanDetectionStatus | null => {
       const rawText = text.trim()
-      if (!rawText) return
-      setScans((current) => {
-        if (current.some((scan) => scan.text === rawText)) return current
+      if (!rawText) return null
+      let status = scanStatusesRef.current.get(rawText)
+      if (!status) {
         const entry = savedCodeFromScan(rawText, format)
+        const alreadySaved = codesRef.current.some((code) => savedCodeMatchesPayload(code, entry))
         const nextCodes = mergeSavedCodes(codesRef.current, [entry])
-        if (nextCodes.length !== codesRef.current.length) {
+        status = alreadySaved ? 'saved' : 'captured'
+        scanStatusesRef.current.set(rawText, status)
+        if (!alreadySaved) {
           codesRef.current = nextCodes
           setCodes(nextCodes)
         }
+      }
+      if (!sessionScansRef.current.has(rawText)) {
+        sessionScansRef.current.add(rawText)
+        setScans((current) => [{ text: rawText, format }, ...current])
         playScanRef.current()
-        return [{ text: rawText, format }, ...current]
-      })
+      }
+      return status
+    }
+
+    const recordDetection = (text: string, format: number, points: ScanPoint[], boundingBox: ScanRect | null) => {
+      const status = addScan(text, format)
+      const source = { width: video.videoWidth || video.clientWidth || 1, height: video.videoHeight || video.clientHeight || 1 }
+      if (!status) return
+      const detection: ScanDetection = {
+        id: `${format}:${text.trim()}`,
+        points: detectionPolygon(points, boundingBox, source),
+        source,
+        status,
+        lastSeen: Date.now(),
+      }
+      setDetections((current) => [detection, ...current.filter(({ id }) => id !== detection.id)])
     }
 
     const startZxing = async () => {
@@ -85,7 +134,10 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
       setScannerLabel('@zxing/browser')
       try {
         controls = await reader.decodeFromVideoDevice(undefined, video, (result) => {
-          if (result) addScan(result.getText(), result.getBarcodeFormat())
+          if (result) {
+            const points = result.getResultPoints().map((point) => ({ x: point.getX(), y: point.getY() }))
+            recordDetection(result.getText(), result.getBarcodeFormat(), points, null)
+          }
         })
       } catch (error) {
         if (!stopped) console.error('Could not start barcode scanner', error)
@@ -110,7 +162,14 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
           try {
             const barcodes = await detector.detect(video)
             for (const barcode of scanMultipleRef.current ? barcodes : barcodes.slice(0, 1)) {
-              addScan(barcode.rawValue, BARCODE_FORMAT_NAMES.indexOf(barcode.format.replaceAll('-', '_').toUpperCase()))
+              const format = BARCODE_FORMAT_NAMES.indexOf(barcode.format.replaceAll('-', '_').toUpperCase())
+              const boundingBox = barcode.boundingBox ? {
+                x: barcode.boundingBox.x,
+                y: barcode.boundingBox.y,
+                width: barcode.boundingBox.width,
+                height: barcode.boundingBox.height,
+              } : null
+              recordDetection(barcode.rawValue, format, barcode.cornerPoints ?? [], boundingBox)
             }
           } catch {
             // Individual frames can fail while the camera is starting or refocusing.
@@ -143,7 +202,16 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
   return (
     <>
       <section className="flex w-full flex-col items-center gap-2">
-        <video ref={videoRef} className="mx-auto h-[42vh] w-full rounded-md border object-cover" muted playsInline />
+        <div ref={scanSurfaceRef} className="relative mx-auto h-[42vh] w-full overflow-hidden rounded-md border border-base-300 bg-neutral">
+          <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+          <ScanReticuleOverlay
+            detections={detections}
+            viewport={scanViewport}
+            capturedLabel={t('default-scan-captured')}
+            savedLabel={t('default-scan-already-saved')}
+          />
+        </div>
+        <p className="sr-only" aria-live="polite">{scans.length > 0 ? t('default-scanned-codes', { count: scans.length }) : ''}</p>
         <label className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-md border border-base-300 bg-base-100 px-3 py-2 text-sm">
           <span className="font-medium">{t('default-scan-multiple')}</span>
           <span className="flex shrink-0 items-center gap-2">

@@ -112,6 +112,50 @@
     opacity: 0;
   }
 
+  .scan-reticule-shape {
+    fill: transparent;
+    stroke-width: 3;
+    vector-effect: non-scaling-stroke;
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 0.8));
+    stroke-linejoin: round;
+  }
+
+  .scan-reticule-captured {
+    stroke: var(--color-success);
+    animation: scan-reticule-lock 420ms ease-out both;
+  }
+
+  .scan-reticule-saved {
+    stroke: white;
+    stroke-dasharray: 8 6;
+    animation: scan-reticule-saved 320ms ease-out both;
+  }
+
+  .scan-reticule-label {
+    position: absolute;
+    max-width: calc(100% - 12px);
+    overflow: hidden;
+    border-radius: 0.375rem;
+    padding: 0.2rem 0.45rem;
+    color: black;
+    font-size: 0.65rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: 0.05em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.45);
+  }
+
+  .scan-reticule-label-captured {
+    background: var(--color-success);
+  }
+
+  .scan-reticule-label-saved {
+    background: white;
+  }
+
   .loading-splash {
     animation: loading-splash-out 180ms ease-in 720ms both;
   }
@@ -391,13 +435,43 @@
     .qr-intro-code-frame::after,
     .qr-intro-code,
     .barcode-intro-matrix,
-    .barcode-intro-code {
+    .barcode-intro-code,
+    .scan-reticule-shape {
       animation: none;
     }
 
     .app-shell-loading {
       opacity: 1;
     }
+  }
+}
+
+@keyframes scan-reticule-lock {
+  0% {
+    opacity: 0.35;
+    stroke: white;
+    stroke-width: 2;
+  }
+  45% {
+    opacity: 1;
+    stroke: white;
+    stroke-width: 5;
+  }
+  100% {
+    opacity: 1;
+    stroke: var(--color-success);
+    stroke-width: 3;
+  }
+}
+
+@keyframes scan-reticule-saved {
+  from {
+    opacity: 0.3;
+    stroke-dashoffset: 14;
+  }
+  to {
+    opacity: 1;
+    stroke-dashoffset: 0;
   }
 }
 
