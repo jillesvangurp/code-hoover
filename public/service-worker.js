@@ -1,6 +1,6 @@
 /* global self, caches */
 
-const CACHE_NAME = 'code-hoover-v1'
+const CACHE_NAME = 'code-hoover-v2'
 const CORE_ASSETS = ['/', '/index.html', '/favicon.svg', '/manifest.webmanifest']
 
 async function addBuildAssets(cache) {
@@ -42,6 +42,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
 
   if (request.method !== 'GET' || url.origin !== self.location.origin) return
+  if (url.pathname.startsWith('/api/')) return
 
   if (request.mode === 'navigate') {
     event.respondWith(

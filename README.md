@@ -10,7 +10,7 @@ Code Hoover is a small React web application for scanning, creating, and saving 
 - Save, edit, delete, and reorder codes in local browser storage.
 - Create URLs, text codes, WiFi credentials, and vCards.
 - Import and export the saved stash as JSON.
-- Store an encrypted copy of a wallet online with Cloudflare KV.
+- Sync an end-to-end encrypted wallet through Cloudflare KV.
 - Copy raw values or open detected links.
 - Use the app in English, German, Dutch, French, or Japanese.
 - Follow the system light/dark preference and switch themes manually.
@@ -38,7 +38,7 @@ All application dependencies are managed through `package.json` and `package-loc
 
 ## Cloudflare Pages
 
-This app is static after `npm run build`, with a small Cloudflare Pages Function under `functions/` for encrypted wallet storage. The deploy command builds and uploads `dist/` plus the Function to a Pages project named `qr-wallet`:
+This app is static after `npm run build`, with a small Cloudflare Pages Function under `functions/` for ciphertext storage and account authentication. The deploy command builds and uploads `dist/` plus the Function to a Pages project named `qr-wallet`:
 
 ```bash
 npm run deploy:cloudflare
@@ -50,4 +50,6 @@ Run it from a shell where Wrangler is authenticated, or set Cloudflare API crede
 
 The React implementation preserves the existing `localStorage` keys and legacy `codes.json` format. Existing saved codes and exported files can therefore be used without migration.
 
-Cloud storage is opt-in. The browser generates a sync key, encrypts the saved codes with Web Crypto, and uploads only the encrypted payload to Cloudflare KV. Keep the sync key if you want to restore the same wallet on another browser.
+Account sync is opt-in and end-to-end encrypted. The browser derives separate authentication and encryption material from the account password, encrypts codes with AES-256-GCM using Web Crypto, and uploads only a versioned ciphertext envelope. The password and decryption key never leave the device. The server stores a one-way verifier for authentication and cannot merge, inspect, or decrypt wallet contents.
+
+Accounts created before encrypted account sync are migrated after the next successful password sign-in: the browser proves the password using the account's existing one-way verifier, downloads the legacy wallet once, encrypts it locally, and replaces it with ciphertext before normal syncing resumes. The plaintext password is not sent during migration.

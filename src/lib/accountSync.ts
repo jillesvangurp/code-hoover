@@ -1,10 +1,22 @@
 import { parseSavedCodes, type SavedQrCode } from '../domain/qr'
+import {
+  decryptAccountWallet,
+  decryptRememberedAccountWallet,
+  deriveAccountCredential,
+  deriveLegacyAccountCredential,
+  encryptAccountWallet,
+  encryptRememberedAccountWallet,
+  forgetAccountKey,
+  parseEncryptedAccountWallet,
+  rememberAccountKey,
+} from './accountCrypto'
 
 const API_PREFIX = '/api/account'
 
 export interface AccountSession {
   token: string
   email: string
+  cryptoVersion: 2
 }
 
 export interface AccountResult {
@@ -17,25 +29,22 @@ interface AccountApiResponse {
   user: {
     email: string
   }
-  codes?: unknown
+  wallet?: unknown
 }
 
 function parseAccountSession(value: unknown): AccountSession | null {
   if (!value || typeof value !== 'object') return null
   const candidate = value as Record<string, unknown>
-  if (typeof candidate.token !== 'string' || typeof candidate.email !== 'string') return null
-  return { token: candidate.token, email: candidate.email }
+  if (typeof candidate.token !== 'string' || typeof candidate.email !== 'string' || candidate.cryptoVersion !== 2) return null
+  return { token: candidate.token, email: candidate.email, cryptoVersion: 2 }
 }
 
 export function parseStoredAccountSession(value: string): AccountSession | null {
   return parseAccountSession(JSON.parse(value))
 }
 
-function parseAccountResult(value: AccountApiResponse): AccountResult {
-  return {
-    session: { token: value.sessionToken, email: value.user.email },
-    codes: value.codes ? parseSavedCodes(JSON.stringify(value.codes)) : [],
-  }
+function sessionFromResponse(value: AccountApiResponse): AccountSession {
+  return { token: value.sessionToken, email: value.user.email, cryptoVersion: 2 }
 }
 
 async function accountRequest(path: string, init?: RequestInit, session?: AccountSession): Promise<Response> {
@@ -49,47 +58,96 @@ async function accountRequest(path: string, init?: RequestInit, session?: Accoun
   })
 }
 
-async function readAccountResult(response: Response): Promise<AccountResult> {
+async function readAccountResponse(response: Response): Promise<AccountApiResponse> {
   if (!response.ok) throw new Error(`Account request failed: ${response.status}`)
-  return parseAccountResult(await response.json() as AccountApiResponse)
+  return response.json() as Promise<AccountApiResponse>
 }
 
 export async function createAccount(email: string, password: string, codes: SavedQrCode[]): Promise<AccountResult> {
-  return readAccountResult(await accountRequest('register', {
+  const [{ wallet, key }, credential] = await Promise.all([
+    encryptAccountWallet(password, codes),
+    deriveAccountCredential(email, password),
+  ])
+  const value = await readAccountResponse(await accountRequest('register', {
     method: 'POST',
-    body: JSON.stringify({ email, password, codes }),
+    body: JSON.stringify({ email, credential, wallet }),
   }))
+  const session = sessionFromResponse(value)
+  await rememberAccountKey(session.email, key, wallet.kdf)
+  return { session, codes }
+}
+
+async function legacySignIn(email: string, password: string, credential: string, legacySalt: string): Promise<AccountResult> {
+  const legacyCredential = await deriveLegacyAccountCredential(password, legacySalt)
+  const legacyValue = await readAccountResponse(await accountRequest('login', {
+    method: 'POST',
+    body: JSON.stringify({ email, legacyCredential }),
+  }))
+  const session = sessionFromResponse(legacyValue)
+  const legacyWallet = legacyValue.wallet as { version?: unknown, codes?: unknown } | undefined
+  if (!legacyWallet) throw new Error('Legacy account migration failed')
+  const encrypted = legacyWallet.version === 2
+    ? await decryptAccountWallet(password, legacyWallet)
+    : null
+  const codes = encrypted?.codes ?? (legacyWallet.version === 1
+    ? parseSavedCodes(JSON.stringify(legacyWallet.codes ?? []))
+    : (() => { throw new Error('Legacy account migration failed') })())
+  const next = encrypted ?? await encryptAccountWallet(password, codes)
+  const migration = await accountRequest('migrate', {
+    method: 'POST',
+    body: JSON.stringify({ credential, wallet: next.wallet }),
+  }, session)
+  if (!migration.ok) throw new Error(`Account migration failed: ${migration.status}`)
+  await rememberAccountKey(session.email, next.key, next.wallet.kdf)
+  return { session, codes }
 }
 
 export async function signInAccount(email: string, password: string): Promise<AccountResult> {
-  return readAccountResult(await accountRequest('login', {
+  const credential = await deriveAccountCredential(email, password)
+  const response = await accountRequest('login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
-  }))
+    body: JSON.stringify({ email, credential }),
+  })
+  if (response.status === 428) {
+    const body = await response.json() as { legacySalt?: unknown }
+    if (typeof body.legacySalt !== 'string') throw new Error('Legacy account migration failed')
+    return legacySignIn(email, password, credential, body.legacySalt)
+  }
+  const value = await readAccountResponse(response)
+  const session = sessionFromResponse(value)
+  const decrypted = await decryptAccountWallet(password, parseEncryptedAccountWallet(value.wallet))
+  await rememberAccountKey(session.email, decrypted.key, decrypted.wallet.kdf)
+  return { session, codes: decrypted.codes }
 }
 
 export async function signOutAccount(session: AccountSession): Promise<void> {
-  await accountRequest('logout', { method: 'POST' }, session)
+  try {
+    await accountRequest('logout', { method: 'POST' }, session)
+  } finally {
+    await forgetAccountKey(session.email)
+  }
 }
 
 export async function deleteAccount(session: AccountSession): Promise<void> {
   const response = await accountRequest('me', { method: 'DELETE' }, session)
   if (!response.ok) throw new Error(`Account delete failed: ${response.status}`)
+  await forgetAccountKey(session.email)
 }
 
 export async function downloadAccountCodes(session: AccountSession): Promise<SavedQrCode[]> {
   const response = await accountRequest('wallet', undefined, session)
   if (!response.ok) throw new Error(`Account restore failed: ${response.status}`)
-  const body = await response.json() as { codes?: unknown }
-  return parseSavedCodes(JSON.stringify(body.codes ?? []))
+  const body = await response.json() as { wallet?: unknown }
+  if (!body.wallet) return []
+  return decryptRememberedAccountWallet(session.email, body.wallet)
 }
 
 export async function uploadAccountCodes(session: AccountSession, codes: SavedQrCode[]): Promise<SavedQrCode[]> {
+  const wallet = await encryptRememberedAccountWallet(session.email, codes)
   const response = await accountRequest('wallet', {
     method: 'PUT',
-    body: JSON.stringify({ codes }),
+    body: JSON.stringify({ wallet }),
   }, session)
   if (!response.ok) throw new Error(`Account sync failed: ${response.status}`)
-  const body = await response.json() as { codes?: unknown }
-  return parseSavedCodes(JSON.stringify(body.codes ?? codes))
+  return codes
 }

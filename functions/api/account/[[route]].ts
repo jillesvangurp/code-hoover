@@ -19,6 +19,7 @@ interface AccountRecord {
   email: string
   passwordHash: string
   passwordSalt: string
+  credentialVersion?: 1 | 2
   createdAt: number
   updatedAt: number
 }
@@ -29,14 +30,30 @@ interface SessionRecord {
   expiresAt: number
 }
 
-interface WalletRecord {
+interface LegacyWalletRecord {
   version: 1
   updatedAt: number
   codes: unknown[]
 }
 
-const MAX_BODY_BYTES = 256 * 1024
-const PASSWORD_MIN_LENGTH = 8
+interface EncryptedWalletRecord {
+  version: 2
+  kdf: {
+    name: 'PBKDF2'
+    hash: 'SHA-256'
+    iterations: number
+    salt: string
+  }
+  cipher: {
+    name: 'AES-GCM'
+    iv: string
+  }
+  ciphertext: string
+}
+
+type WalletRecord = LegacyWalletRecord | EncryptedWalletRecord
+
+const MAX_BODY_BYTES = 512 * 1024
 const SESSION_DAYS = 90
 const PBKDF2_ITERATIONS = 100_000
 const jsonHeaders = {
@@ -77,9 +94,36 @@ function normalizeEmail(value: unknown): string | null {
   return email
 }
 
-function parsePassword(value: unknown): string | null {
-  if (typeof value !== 'string' || value.length < PASSWORD_MIN_LENGTH || value.length > 256) return null
-  return value
+function parseCredential(value: unknown): string | null {
+  return typeof value === 'string' && /^[A-Za-z0-9_-]{43}$/.test(value) ? value : null
+}
+
+function validBase64Url(value: unknown, byteLength?: number): value is string {
+  if (typeof value !== 'string' || !/^[A-Za-z0-9_-]+$/.test(value)) return false
+  try {
+    return byteLength === undefined || base64UrlDecode(value).byteLength === byteLength
+  } catch {
+    return false
+  }
+}
+
+function parseEncryptedWallet(value: unknown): EncryptedWalletRecord | null {
+  if (!value || typeof value !== 'object') return null
+  const candidate = value as Record<string, unknown>
+  const kdf = candidate.kdf as Record<string, unknown> | undefined
+  const cipher = candidate.cipher as Record<string, unknown> | undefined
+  if (candidate.version !== 2 || !kdf || !cipher) return null
+  if (kdf.name !== 'PBKDF2' || kdf.hash !== 'SHA-256' || !Number.isInteger(kdf.iterations)) return null
+  const iterations = Number(kdf.iterations)
+  if (iterations < 100_000 || iterations > 1_000_000 || !validBase64Url(kdf.salt, 16)) return null
+  if (cipher.name !== 'AES-GCM' || !validBase64Url(cipher.iv, 12)) return null
+  if (!validBase64Url(candidate.ciphertext) || candidate.ciphertext.length < 22 || candidate.ciphertext.length > 500_000) return null
+  return {
+    version: 2,
+    kdf: { name: 'PBKDF2', hash: 'SHA-256', iterations, salt: kdf.salt },
+    cipher: { name: 'AES-GCM', iv: cipher.iv },
+    ciphertext: candidate.ciphertext,
+  }
 }
 
 function randomId(bytes = 16): string {
@@ -94,20 +138,12 @@ async function sha256Hex(value: string): Promise<string> {
 function safeEqual(left: string, right: string): boolean {
   if (left.length !== right.length) return false
   let diff = 0
-  for (let index = 0; index < left.length; index += 1) {
-    diff |= left.charCodeAt(index) ^ right.charCodeAt(index)
-  }
+  for (let index = 0; index < left.length; index += 1) diff |= left.charCodeAt(index) ^ right.charCodeAt(index)
   return diff === 0
 }
 
 async function passwordHash(password: string, salt: string): Promise<string> {
-  const material = await crypto.subtle.importKey(
-    'raw',
-    new TextEncoder().encode(password),
-    'PBKDF2',
-    false,
-    ['deriveBits'],
-  )
+  const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits'])
   const bits = await crypto.subtle.deriveBits(
     { name: 'PBKDF2', hash: 'SHA-256', salt: toArrayBuffer(base64UrlDecode(salt)), iterations: PBKDF2_ITERATIONS },
     material,
@@ -153,32 +189,6 @@ async function readJsonBody(request: Request): Promise<unknown> {
   return JSON.parse(new TextDecoder().decode(body))
 }
 
-function parseCodes(value: unknown): unknown[] | null {
-  if (!Array.isArray(value)) return null
-  if (JSON.stringify(value).length > MAX_BODY_BYTES) return null
-  return value
-}
-
-function savedCodeIdentity(value: unknown): string {
-  if (!value || typeof value !== 'object') return JSON.stringify(value)
-  const candidate = value as Record<string, unknown>
-  const data = candidate.data && typeof candidate.data === 'object' ? candidate.data as Record<string, unknown> : null
-  if (data?.type === 'qr.QrData.Barcode') return `${data.type}\n${String(data.format ?? '')}\n${String(data.text ?? candidate.text ?? '')}`
-  return `${String(data?.type ?? '')}\n${String(candidate.text ?? '')}`
-}
-
-function mergeCodes(primary: unknown[], secondary: unknown[]): unknown[] {
-  const seen = new Set<string>()
-  const merged: unknown[] = []
-  for (const code of [...primary, ...secondary]) {
-    const identity = savedCodeIdentity(code)
-    if (seen.has(identity)) continue
-    seen.add(identity)
-    merged.push(code)
-  }
-  return merged
-}
-
 async function createSession(context: PagesContext, userId: string): Promise<string> {
   const token = randomId(32)
   const now = Date.now()
@@ -191,8 +201,7 @@ async function createSession(context: PagesContext, userId: string): Promise<str
 }
 
 function bearerToken(request: Request): string | null {
-  const header = request.headers.get('authorization')
-  const match = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(header ?? '')
+  const match = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.get('authorization') ?? '')
   return match?.[1] ?? null
 }
 
@@ -217,9 +226,9 @@ function userResponse(account: AccountRecord): { user: { id: string, email: stri
 async function register(context: PagesContext): Promise<Response> {
   const body = await readJsonBody(context.request) as Record<string, unknown>
   const email = normalizeEmail(body.email)
-  const password = parsePassword(body.password)
-  const codes = parseCodes(body.codes ?? [])
-  if (!email || !password || !codes) return jsonResponse({ error: 'invalid_account' }, 400)
+  const credential = parseCredential(body.credential)
+  const wallet = parseEncryptedWallet(body.wallet)
+  if (!email || !credential || !wallet) return jsonResponse({ error: 'invalid_account' }, 400)
 
   const indexKey = await emailKey(email)
   if (await context.env.QR_WALLET_KV.get(indexKey, 'json')) return jsonResponse({ error: 'account_exists' }, 409)
@@ -231,32 +240,63 @@ async function register(context: PagesContext): Promise<Response> {
     userId,
     email,
     passwordSalt,
-    passwordHash: await passwordHash(password, passwordSalt),
+    passwordHash: await passwordHash(credential, passwordSalt),
+    credentialVersion: 2,
     createdAt: now,
     updatedAt: now,
   }
   await context.env.QR_WALLET_KV.put(accountKey(userId), JSON.stringify(account))
   await context.env.QR_WALLET_KV.put(indexKey, JSON.stringify({ userId }))
-  await context.env.QR_WALLET_KV.put(walletKey(userId), JSON.stringify({ version: 1, updatedAt: now, codes } satisfies WalletRecord))
+  await context.env.QR_WALLET_KV.put(walletKey(userId), JSON.stringify(wallet))
 
-  return jsonResponse({ ...userResponse(account), sessionToken: await createSession(context, userId), codes })
+  return jsonResponse({ ...userResponse(account), sessionToken: await createSession(context, userId) })
 }
 
 async function login(context: PagesContext): Promise<Response> {
   const body = await readJsonBody(context.request) as Record<string, unknown>
   const email = normalizeEmail(body.email)
-  const password = parsePassword(body.password)
-  if (!email || !password) return jsonResponse({ error: 'invalid_login' }, 400)
+  if (!email) return jsonResponse({ error: 'invalid_login' }, 400)
 
   const index = await context.env.QR_WALLET_KV.get<{ userId: string }>(await emailKey(email), 'json')
   const account = index ? await context.env.QR_WALLET_KV.get<AccountRecord>(accountKey(index.userId), 'json') : null
   if (!account) return jsonResponse({ error: 'invalid_login' }, 401)
-  if (!safeEqual(await passwordHash(password, account.passwordSalt), account.passwordHash)) {
+
+  const credentialVersion = account.credentialVersion ?? 1
+  if (credentialVersion === 1 && body.credential !== undefined) {
+    return jsonResponse({ error: 'legacy_login_required', legacySalt: account.passwordSalt }, 428)
+  }
+  const suppliedSecret = credentialVersion === 2 ? parseCredential(body.credential) : parseCredential(body.legacyCredential)
+  const suppliedHash = credentialVersion === 2 && suppliedSecret
+    ? await passwordHash(suppliedSecret, account.passwordSalt)
+    : suppliedSecret
+  if (!suppliedHash || !safeEqual(suppliedHash, account.passwordHash)) {
     return jsonResponse({ error: 'invalid_login' }, 401)
   }
 
   const wallet = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(account.userId), 'json')
-  return jsonResponse({ ...userResponse(account), sessionToken: await createSession(context, account.userId), codes: wallet?.codes ?? [] })
+  return jsonResponse({ ...userResponse(account), sessionToken: await createSession(context, account.userId), wallet })
+}
+
+async function migrate(context: PagesContext): Promise<Response> {
+  const auth = await authenticate(context)
+  if (auth instanceof Response) return auth
+  if ((auth.account.credentialVersion ?? 1) !== 1) return jsonResponse({ error: 'already_migrated' }, 409)
+  const body = await readJsonBody(context.request) as Record<string, unknown>
+  const credential = parseCredential(body.credential)
+  const wallet = parseEncryptedWallet(body.wallet)
+  if (!credential || !wallet) return jsonResponse({ error: 'invalid_migration' }, 400)
+
+  const passwordSalt = randomId(16)
+  const migrated: AccountRecord = {
+    ...auth.account,
+    passwordSalt,
+    passwordHash: await passwordHash(credential, passwordSalt),
+    credentialVersion: 2,
+    updatedAt: Date.now(),
+  }
+  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify(wallet))
+  await context.env.QR_WALLET_KV.put(accountKey(auth.account.userId), JSON.stringify(migrated))
+  return jsonResponse({ ok: true })
 }
 
 async function getMe(context: PagesContext): Promise<Response> {
@@ -269,21 +309,18 @@ async function getWallet(context: PagesContext): Promise<Response> {
   const auth = await authenticate(context)
   if (auth instanceof Response) return auth
   const wallet = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(auth.account.userId), 'json')
-  return jsonResponse({ codes: wallet?.codes ?? [], updatedAt: wallet?.updatedAt ?? 0 })
+  return jsonResponse({ wallet })
 }
 
 async function putWallet(context: PagesContext): Promise<Response> {
   const auth = await authenticate(context)
   if (auth instanceof Response) return auth
+  if ((auth.account.credentialVersion ?? 1) !== 2) return jsonResponse({ error: 'migration_required' }, 428)
   const body = await readJsonBody(context.request) as Record<string, unknown>
-  const codes = parseCodes(body.codes)
-  if (!codes) return jsonResponse({ error: 'invalid_codes' }, 400)
-  const wallet = await context.env.QR_WALLET_KV.get<WalletRecord>(walletKey(auth.account.userId), 'json')
-  const mergedCodes = mergeCodes(wallet?.codes ?? [], codes)
-  if (JSON.stringify(mergedCodes).length > MAX_BODY_BYTES) return jsonResponse({ error: 'payload_too_large' }, 413)
-  const updatedAt = Date.now()
-  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify({ version: 1, updatedAt, codes: mergedCodes } satisfies WalletRecord))
-  return jsonResponse({ ok: true, codes: mergedCodes, updatedAt })
+  const wallet = parseEncryptedWallet(body.wallet)
+  if (!wallet) return jsonResponse({ error: 'invalid_encrypted_wallet' }, 400)
+  await context.env.QR_WALLET_KV.put(walletKey(auth.account.userId), JSON.stringify(wallet))
+  return jsonResponse({ ok: true })
 }
 
 async function logout(context: PagesContext): Promise<Response> {
@@ -307,6 +344,7 @@ async function handle(context: PagesContext): Promise<Response> {
     const path = route(context)
     if (context.request.method === 'POST' && path === 'register') return register(context)
     if (context.request.method === 'POST' && path === 'login') return login(context)
+    if (context.request.method === 'POST' && path === 'migrate') return migrate(context)
     if (context.request.method === 'POST' && path === 'logout') return logout(context)
     if (context.request.method === 'GET' && path === 'me') return getMe(context)
     if (context.request.method === 'DELETE' && path === 'me') return deleteAccount(context)
