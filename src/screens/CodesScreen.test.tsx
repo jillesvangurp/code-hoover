@@ -1,6 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { reorderDisplayedCodes } from '../domain/codeOrder'
 import { AddCodeScreen, CodesScreen } from './CodesScreen'
 
@@ -20,6 +20,8 @@ vi.mock('../components/BarcodeIntroFrame', () => ({
     />
   ),
 }))
+
+afterEach(() => vi.useRealTimers())
 
 describe('CodesScreen', () => {
   it('adds a URL code through the add screen', async () => {
@@ -316,27 +318,41 @@ describe('CodesScreen', () => {
     expect(screen.getByRole('combobox', { name: /sort/i })).toHaveValue('manual')
   })
 
-  it('plays a staggered sound for each code loaded in the codes view', () => {
+  it('plays at most ten staggered code sounds on the first codes visit', () => {
+    vi.useFakeTimers()
+    const playCodeLoad = vi.fn()
+    const onCodeLoadSoundsPlayed = vi.fn()
+    const codes = Array.from({ length: 14 }, (_, index) => ({
+      name: `Code ${index + 1}`,
+      text: `https://example.com/${index + 1}`,
+      data: { type: 'qr.QrData.Url', url: `https://example.com/${index + 1}` } as const,
+    }))
+
+    render(<CodesScreen codes={codes} setCodes={vi.fn()} playDelete={vi.fn()} playCodeLoad={playCodeLoad} onCodeLoadSoundsPlayed={onCodeLoadSoundsPlayed} />)
+
+    act(() => vi.advanceTimersByTime(500))
+
+    expect(playCodeLoad).toHaveBeenNthCalledWith(1, 0)
+    expect(playCodeLoad).toHaveBeenNthCalledWith(10, 9)
+    expect(playCodeLoad).toHaveBeenCalledTimes(10)
+    expect(onCodeLoadSoundsPlayed).toHaveBeenCalledOnce()
+
+    vi.useRealTimers()
+  })
+
+  it('keeps later codes visits quiet', () => {
     vi.useFakeTimers()
     const playCodeLoad = vi.fn()
 
-    render(<CodesScreen codes={[
-      {
-        name: 'First',
-        text: 'https://first.example',
-        data: { type: 'qr.QrData.Url', url: 'https://first.example' },
-      },
-      {
-        name: 'Second',
-        text: 'https://second.example',
-        data: { type: 'qr.QrData.Url', url: 'https://second.example' },
-      },
-    ]} setCodes={vi.fn()} playDelete={vi.fn()} playCodeLoad={playCodeLoad} />)
+    render(<CodesScreen codes={[{
+      name: 'Example',
+      text: 'https://example.com',
+      data: { type: 'qr.QrData.Url', url: 'https://example.com' },
+    }]} setCodes={vi.fn()} playDelete={vi.fn()} playCodeLoad={playCodeLoad} shouldPlayCodeLoadSounds={false} />)
 
-    act(() => vi.advanceTimersByTime(42))
+    act(() => vi.advanceTimersByTime(500))
 
-    expect(playCodeLoad).toHaveBeenNthCalledWith(1, 0)
-    expect(playCodeLoad).toHaveBeenNthCalledWith(2, 1)
+    expect(playCodeLoad).not.toHaveBeenCalled()
 
     vi.useRealTimers()
   })

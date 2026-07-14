@@ -12,6 +12,8 @@ interface ScanResult {
   format: number
 }
 
+const DETECTION_HOLD_MS = 2500
+
 interface ScanScreenProps {
   codes: SavedQrCode[]
   setCodes: (codes: SavedQrCode[]) => void
@@ -77,7 +79,7 @@ export function ScanScreen({ codes, setCodes, playScanSuccess }: ScanScreenProps
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      const cutoff = Date.now() - 900
+      const cutoff = Date.now() - DETECTION_HOLD_MS
       setDetections((current) => current.filter(({ lastSeen }) => lastSeen >= cutoff))
     }, 250)
     return () => window.clearInterval(timer)

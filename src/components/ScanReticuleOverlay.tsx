@@ -43,6 +43,7 @@ export function ScanReticuleOverlay({ detections, viewport, capturedLabel, saved
             className={`scan-reticule-label scan-reticule-label-${detection.status}`}
             style={{ left: Math.max(6, bounds.x), top: Math.max(6, bounds.y - 30) }}
           >
+            {detection.status === 'captured' && <span className="scan-reticule-check">✓</span>}
             {detection.status === 'captured' ? capturedLabel : savedLabel}
           </span>
         )

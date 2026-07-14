@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { closestCenter, DndContext, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
 import { rectSortingStrategy, sortableKeyboardCoordinates, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -21,6 +21,7 @@ import { UrlPreview } from '../components/UrlPreview'
 const EMPTY_STATE_SAMPLE_URL = 'https://tryformation.com'
 type CodesViewMode = 'list' | 'grid'
 type CodesSortOrder = 'manual' | 'newest' | 'oldest' | 'type'
+const MAX_CODE_LOAD_SOUNDS = 10
 
 function parseCodesSortOrder(value: string): CodesSortOrder {
   try {
@@ -39,6 +40,8 @@ interface CodesScreenProps {
   playOpen?: () => void
   playToggle?: () => void
   playCodeLoad?: (index: number) => void
+  shouldPlayCodeLoadSounds?: boolean
+  onCodeLoadSoundsPlayed?: () => void
   showLoadEffect?: boolean
 }
 
@@ -318,12 +321,13 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
   )
 }
 
-export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, showLoadEffect = false }: CodesScreenProps) {
+export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, shouldPlayCodeLoadSounds = true, onCodeLoadSoundsPlayed, showLoadEffect = false }: CodesScreenProps) {
   const { locale, t } = useI18n()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [viewMode, setViewMode] = useState<CodesViewMode>('list')
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOrder, setSortOrder] = useLocalStorage<CodesSortOrder>('codes-sort-order', 'newest', parseCodesSortOrder)
+  const didPlayCodeLoadSounds = useRef(false)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
@@ -368,10 +372,17 @@ export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle,
 
   const closeCodeModal = useCallback(() => setSelectedIndex(null), [])
   useEffect(() => {
-    if (!playCodeLoad || showLoadEffect || !codes.length) return
-    const timers = codes.map((_, index) => window.setTimeout(() => playCodeLoad(index), index * 42))
+    if (!playCodeLoad || !shouldPlayCodeLoadSounds || didPlayCodeLoadSounds.current || showLoadEffect || !codes.length) return
+    const soundCount = Math.min(codes.length, MAX_CODE_LOAD_SOUNDS)
+    const timers = Array.from({ length: soundCount }, (_, index) => window.setTimeout(() => {
+      if (index === 0) {
+        didPlayCodeLoadSounds.current = true
+        onCodeLoadSoundsPlayed?.()
+      }
+      playCodeLoad(index)
+    }, index * 42))
     return () => timers.forEach(window.clearTimeout)
-  }, [codeLoadKey, codes, playCodeLoad, showLoadEffect])
+  }, [codeLoadKey, codes, onCodeLoadSoundsPlayed, playCodeLoad, shouldPlayCodeLoadSounds, showLoadEffect])
 
   return (
     <>

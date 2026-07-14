@@ -16,6 +16,7 @@ describe('ScanReticuleOverlay', () => {
 
     expect(container.querySelector('.scan-reticule-captured')).toBeInTheDocument()
     expect(container.querySelector('.scan-reticule-saved')).toBeInTheDocument()
+    expect(container.querySelector('.scan-reticule-check')).toHaveTextContent('✓')
     expect(screen.getByText('Scanned')).toBeInTheDocument()
     expect(screen.getByText('Saved')).toBeInTheDocument()
   })
