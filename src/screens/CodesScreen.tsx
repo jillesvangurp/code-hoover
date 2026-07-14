@@ -23,6 +23,16 @@ type CodesViewMode = 'list' | 'grid'
 type CodesSortOrder = 'manual' | 'newest' | 'oldest' | 'type'
 const MAX_CODE_LOAD_SOUNDS = 10
 
+function parseCodesViewMode(value: string): CodesViewMode {
+  try {
+    const parsed: unknown = JSON.parse(value)
+    if (parsed === 'list' || parsed === 'grid') return parsed
+  } catch {
+    if (value === 'list' || value === 'grid') return value
+  }
+  return 'list'
+}
+
 function parseCodesSortOrder(value: string): CodesSortOrder {
   try {
     const parsed: unknown = JSON.parse(value)
@@ -324,7 +334,7 @@ export function AddCodeScreen({ codes, setCodes, onDone, playSave }: AddCodeScre
 export function CodesScreen({ codes, setCodes, playDelete, playOpen, playToggle, playCodeLoad, shouldPlayCodeLoadSounds = true, onCodeLoadSoundsPlayed, showLoadEffect = false }: CodesScreenProps) {
   const { locale, t } = useI18n()
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
-  const [viewMode, setViewMode] = useState<CodesViewMode>('list')
+  const [viewMode, setViewMode] = useLocalStorage<CodesViewMode>('codes-view-mode', 'list', parseCodesViewMode)
   const [searchQuery, setSearchQuery] = useState('')
   const [sortOrder, setSortOrder] = useLocalStorage<CodesSortOrder>('codes-sort-order', 'newest', parseCodesSortOrder)
   const didPlayCodeLoadSounds = useRef(false)

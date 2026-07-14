@@ -197,6 +197,25 @@ describe('CodesScreen', () => {
     expect(playToggle).toHaveBeenCalledOnce()
   })
 
+  it('restores the grid preference when the codes screen returns', async () => {
+    const user = userEvent.setup()
+    const code = {
+      name: 'Remembered example',
+      text: 'https://example.com',
+      data: { type: 'qr.QrData.Url' as const, url: 'https://example.com' },
+    }
+    const { unmount } = render(<CodesScreen codes={[code]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    await user.click(screen.getByRole('button', { name: /grid/i }))
+    expect(localStorage.getItem('codes-view-mode')).toBe(JSON.stringify('grid'))
+
+    unmount()
+    render(<CodesScreen codes={[code]} setCodes={vi.fn()} playDelete={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: /grid/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('listitem')).toHaveClass('grid-cols-[4.5rem_minmax(0,1fr)]', 'p-3')
+  })
+
   it('shows newest codes first and can change the sort order', async () => {
     const user = userEvent.setup()
     render(<CodesScreen codes={[
