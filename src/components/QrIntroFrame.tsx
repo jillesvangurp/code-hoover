@@ -10,9 +10,10 @@ interface QrIntroFrameProps {
   className?: string
   style?: CSSProperties
   expandable?: boolean
+  quietZone?: boolean
 }
 
-export function QrIntroFrame({ text, label, size = 200, className = '', style, expandable = false }: QrIntroFrameProps) {
+export function QrIntroFrame({ text, label, size = 200, className = '', style, expandable = false, quietZone = false }: QrIntroFrameProps) {
   const { t } = useI18n()
   const [expanded, setExpanded] = useState(false)
   const toggleExpanded = () => {
@@ -25,7 +26,7 @@ export function QrIntroFrame({ text, label, size = 200, className = '', style, e
       <span className="qr-intro-finder qr-intro-finder-top-left" aria-hidden="true" />
       <span className="qr-intro-finder qr-intro-finder-top-right" aria-hidden="true" />
       <span className="qr-intro-finder qr-intro-finder-bottom-left" aria-hidden="true" />
-      <QrCodeImage text={text} size={size} className="qr-intro-code pointer-events-none h-full w-full" alt={label} loading="lazy" />
+      <QrCodeImage text={text} size={size} margin={quietZone || expanded ? 4 : 0} className="qr-intro-code pointer-events-none h-full w-full" alt={label} loading="lazy" />
     </>
   )
 

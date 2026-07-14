@@ -13,7 +13,7 @@ export function FixedCodeModal({ url, label, onClose }: { url: string; label: st
     <div className="modal modal-open" role="dialog" aria-modal="true" aria-label={label}>
       <div className="modal-box relative flex h-full w-full max-w-full flex-col items-center justify-center gap-6">
         <button type="button" className="btn btn-ghost btn-sm btn-circle absolute right-4 top-4" aria-label={t('default-close')} onClick={() => { onClose(); history.back() }}><X /></button>
-        <QrIntroFrame text={url} size={700} className="qr-detail-code-frame qr-detail-code-frame-large" label={label} />
+        <QrIntroFrame text={url} size={700} className="qr-detail-code-frame qr-detail-code-frame-large" label={label} quietZone />
         <CodeImageActions source={{ kind: 'qr', text: url }} name={label} />
         <hr className="w-24 border-base-300" />
         <a className="link link-primary text-lg" href={url} target="_blank" rel="noopener noreferrer">{label}</a>
